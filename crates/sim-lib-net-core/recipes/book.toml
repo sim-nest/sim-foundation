@@ -1,0 +1,5 @@
+book = "net-core"
+title = "Net Core"
+summary = "Side-effect-free HTTP and stream parsing descriptors."
+order = 344
+chapters = ["01-basics"]

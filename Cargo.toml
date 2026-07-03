@@ -1,0 +1,21 @@
+
+[workspace]
+resolver = "3"
+members = [
+  "crates/sim-cookbook",
+  "crates/sim-lib-net-core",
+  "crates/sim-lib-surface-card",
+  "crates/sim-macros",
+  "crates/sim-table-core",
+  "crates/sim-value",
+  "xtask",
+]
+
+[workspace.package]
+edition = "2024"
+license = "MPL-2.0"
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

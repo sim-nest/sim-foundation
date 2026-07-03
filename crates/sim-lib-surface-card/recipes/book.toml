@@ -1,0 +1,5 @@
+book = "surface/card"
+title = "Surface Card"
+summary = "Codec-neutral surface descriptors and external naming policy."
+order = 92
+chapters = ["01-basics"]

@@ -1,0 +1,16 @@
+[package]
+name = "sim-value"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Ergonomic construction and access for kernel Expr data."
+readme = "README.md"
+publish = true
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[dependencies]
+sim-kernel = { version = "0.1.0" }
+
+[lints]
+workspace = true

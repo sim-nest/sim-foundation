@@ -1,0 +1,8 @@
+id = "external-name"
+title = "External name descriptor"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["surface-card", "descriptor", "naming"]
+requires = ["surface/card", "codec/lisp"]

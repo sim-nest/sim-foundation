@@ -1,0 +1,15 @@
+{
+  "schema": "sim.card-index.v1",
+  "cards": [
+    "crates/sim-lib-net-core/recipes/01-basics/chapter.toml",
+    "crates/sim-lib-net-core/recipes/01-basics/response-head/purpose.md",
+    "crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml",
+    "crates/sim-lib-net-core/recipes/01-basics/response-head/setup.siml",
+    "crates/sim-lib-net-core/recipes/book.toml",
+    "crates/sim-lib-surface-card/recipes/01-basics/chapter.toml",
+    "crates/sim-lib-surface-card/recipes/01-basics/external-name/purpose.md",
+    "crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml",
+    "crates/sim-lib-surface-card/recipes/01-basics/external-name/setup.siml",
+    "crates/sim-lib-surface-card/recipes/book.toml"
+  ]
+}

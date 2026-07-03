@@ -1,0 +1,8 @@
+id = "response-head"
+title = "Response head descriptor"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["net", "http", "parser"]
+requires = ["net-core", "codec/lisp"]
