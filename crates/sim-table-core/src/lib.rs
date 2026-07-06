@@ -29,9 +29,11 @@
 #![deny(missing_docs)]
 
 pub mod citizen_fields;
+pub mod manifest;
 pub mod op;
 pub mod path;
 
+pub use manifest::backend_manifest;
 pub use op::{TableOp, TableOpError, decode_table_op, encode_table_op};
 pub use path::{TablePath, TablePathError, is_legal_table_segment};
 

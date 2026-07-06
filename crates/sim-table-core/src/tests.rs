@@ -135,3 +135,17 @@ fn citizen_operation_spec_rejects_malformed_op() {
     let err = table_op_expr::decode(&expr).unwrap_err();
     assert!(err.to_string().contains("invalid table operation"));
 }
+
+#[test]
+fn backend_manifest_is_empty_host_registered_abi_0_1() {
+    use sim_kernel::{AbiVersion, LibTarget, Version};
+
+    let manifest = crate::backend_manifest(Symbol::qualified("table", "hash"), "9.9.9");
+    assert_eq!(manifest.id, Symbol::qualified("table", "hash"));
+    assert_eq!(manifest.version, Version("9.9.9".to_owned()));
+    assert_eq!(manifest.abi, AbiVersion { major: 0, minor: 1 });
+    assert_eq!(manifest.target, LibTarget::HostRegistered);
+    assert!(manifest.requires.is_empty());
+    assert!(manifest.capabilities.is_empty());
+    assert!(manifest.exports.is_empty());
+}

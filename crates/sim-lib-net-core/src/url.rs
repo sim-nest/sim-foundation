@@ -61,6 +61,36 @@ pub fn parse_url(url: &str) -> Result<UrlParts, NetError> {
     })
 }
 
+/// Parse a URL and require a specific `scheme`, applying `default_path` when the
+/// URL carries no path component.
+///
+/// A policy-free convenience over [`parse_url`] for transport callers that know
+/// which scheme they speak and want a usable request target:
+///
+/// * The scheme must equal `scheme` exactly, else
+///   [`NetError::UnexpectedScheme`] is returned. (Callers still get default-port
+///   resolution for `http`/`https` from [`parse_url`].)
+/// * When the URL had no path, [`parse_url`] yields `/`; `parse_url_for_scheme`
+///   substitutes `default_path` in that case, so a bare `scheme://host` becomes
+///   a request target at the caller's default endpoint.
+pub fn parse_url_for_scheme(
+    url: &str,
+    scheme: &str,
+    default_path: &str,
+) -> Result<UrlParts, NetError> {
+    let mut parts = parse_url(url)?;
+    if parts.scheme != scheme {
+        return Err(NetError::UnexpectedScheme {
+            expected: scheme.to_owned(),
+            found: parts.scheme,
+        });
+    }
+    if parts.path == "/" {
+        parts.path = default_path.to_owned();
+    }
+    Ok(parts)
+}
+
 fn default_port_for_scheme(scheme: &str, url: &str) -> Result<u16, NetError> {
     match scheme {
         "http" => Ok(80),

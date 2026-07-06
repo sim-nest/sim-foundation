@@ -3,8 +3,10 @@
 use sim_kernel::{Expr, NumberLiteral, Symbol};
 
 use crate::access::{
-    as_f64, as_i64, entry_field, entry_field_any, entry_required, extra_fields, field, field_any,
-    field_bool, field_str, remove, required, required_bool, required_map, required_str,
+    as_f64, as_i64, entry_field, entry_field_any, entry_required, entry_required_bool,
+    entry_required_bool_any, entry_required_list, entry_required_list_any, entry_required_str,
+    entry_required_str_any, entry_required_sym, entry_required_sym_any, extra_fields, field,
+    field_any, field_bool, field_str, remove, required, required_bool, required_map, required_str,
     required_sym, set,
 };
 use crate::build::{entry, float, int, keyword, list, map, num_q, sym, text, vector};
@@ -280,4 +282,105 @@ fn set_at_matches_the_scene_and_editor_semantics() {
         ("nested", map(vec![("x", int(99)), ("y", int(20))])),
     ]);
     assert_eq!(updated, expected);
+}
+
+#[test]
+fn entry_required_str_reads_string_and_rejects_wrong_type_with_expr_kind() {
+    let ok = vec![entry("name", text("hi"))];
+    assert_eq!(
+        entry_required_str(&ok, "name", "string field").unwrap(),
+        "hi"
+    );
+
+    let wrong = vec![entry("name", int(3))];
+    let err = entry_required_str(&wrong, "name", "string field").unwrap_err();
+    let text = err.to_string();
+    assert!(text.contains("string field"), "expected label: {text}");
+    assert!(text.contains("number"), "expr_kind found label: {text}");
+}
+
+#[test]
+fn entry_required_str_reports_missing_field_with_context() {
+    let entries = vec![entry("other", text("x"))];
+    let err = entry_required_str(&entries, "name", "string field").unwrap_err();
+    assert!(err.to_string().contains("missing field name"));
+}
+
+#[test]
+fn entry_required_sym_reads_symbol() {
+    let entries = vec![entry("kind", sym("packet"))];
+    assert_eq!(
+        entry_required_sym(&entries, "kind", "symbol field").unwrap(),
+        &Symbol::new("packet")
+    );
+    let wrong = vec![entry("kind", text("packet"))];
+    assert!(entry_required_sym(&wrong, "kind", "symbol field").is_err());
+}
+
+#[test]
+fn entry_required_bool_reads_bool() {
+    let entries = vec![entry("live", Expr::Bool(true))];
+    assert!(entry_required_bool(&entries, "live", "bool field").unwrap());
+    let wrong = vec![entry("live", int(1))];
+    assert!(entry_required_bool(&wrong, "live", "bool field").is_err());
+}
+
+#[test]
+fn entry_required_list_borrows_items() {
+    let entries = vec![entry("items", list(vec![int(1), int(2)]))];
+    assert_eq!(
+        entry_required_list(&entries, "items", "list field").unwrap(),
+        &[int(1), int(2)]
+    );
+    let wrong = vec![entry("items", vector(vec![int(1)]))];
+    assert!(entry_required_list(&wrong, "items", "list field").is_err());
+}
+
+#[test]
+fn entry_required_str_matches_bare_symbol_key_only() {
+    // A string key is NOT matched by the strict reader; the _any variant is.
+    let string_keyed = vec![(text("name"), text("hi"))];
+    assert!(entry_required_str(&string_keyed, "name", "string field").is_err());
+    assert_eq!(
+        entry_required_str_any(&string_keyed, "name", "string field").unwrap(),
+        "hi"
+    );
+}
+
+#[test]
+fn entry_required_any_variants_match_symbol_and_string_keys() {
+    let symbol_keyed = vec![entry("role", text("user"))];
+    let string_keyed = vec![(text("role"), text("user"))];
+    assert_eq!(
+        entry_required_str_any(&symbol_keyed, "role", "string field").unwrap(),
+        "user"
+    );
+    assert_eq!(
+        entry_required_str_any(&string_keyed, "role", "string field").unwrap(),
+        "user"
+    );
+
+    let sym_any = vec![(text("kind"), sym("packet"))];
+    assert_eq!(
+        entry_required_sym_any(&sym_any, "kind", "symbol field").unwrap(),
+        &Symbol::new("packet")
+    );
+    let bool_any = vec![(text("live"), Expr::Bool(false))];
+    assert!(!entry_required_bool_any(&bool_any, "live", "bool field").unwrap());
+    let list_any = vec![(text("items"), list(vec![int(7)]))];
+    assert_eq!(
+        entry_required_list_any(&list_any, "items", "list field").unwrap(),
+        &[int(7)]
+    );
+}
+
+#[test]
+fn entry_required_any_rejects_wrong_type_with_expr_kind() {
+    let entries = vec![(text("live"), text("nope"))];
+    let err = entry_required_bool_any(&entries, "live", "bool field").unwrap_err();
+    let msg = err.to_string();
+    assert!(
+        msg.contains("bool field") && msg.contains("string"),
+        "{msg}"
+    );
 }

@@ -28,6 +28,7 @@ mod error;
 mod http;
 mod line;
 mod ndjson;
+mod read;
 mod sse;
 mod url;
 
@@ -35,8 +36,9 @@ pub use error::NetError;
 pub use http::{HttpBodyMode, HttpHead, body_mode, parse_http_head};
 pub use line::LineDecoder;
 pub use ndjson::NdjsonDecoder;
+pub use read::{CapOutcome, HeadOutcome, read_capped_line, read_head_until_double_crlf};
 pub use sse::{SseDecoder, SseEvent};
-pub use url::{UrlParts, parse_url};
+pub use url::{UrlParts, parse_url, parse_url_for_scheme};
 
 #[cfg(test)]
 mod tests;

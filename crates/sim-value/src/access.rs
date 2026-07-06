@@ -95,6 +95,140 @@ pub fn entry_required<'a>(
         .ok_or_else(|| Error::Eval(format!("{context} is missing field {name}")))
 }
 
+/// Build a [`Error::TypeMismatch`] whose `found` label names the actual `Expr`
+/// variant via [`expr_kind`](crate::kind::expr_kind). The one home for the
+/// `Err(Error::TypeMismatch { expected, found: expr_kind(other) })` tail that
+/// every typed slice reader across the constellation re-grew.
+fn type_mismatch(expected: &'static str, found: &Expr) -> Error {
+    Error::TypeMismatch {
+        expected,
+        found: crate::kind::expr_kind(found),
+    }
+}
+
+/// Look up a required *bare-symbol*-keyed field in an entry slice, with a
+/// context-labeled error when missing. The bare-key analog of [`entry_required`]
+/// (which also accepts `Expr::String` keys): the typed `entry_required_*`
+/// readers build on this so they are drop-in replacements for the bare-symbol
+/// `string_field`/`symbol_field`/`bool_field`/`list_field` forks that stream,
+/// music, fabric, and view crates each re-grew without loosening key matching.
+fn entry_required_bare<'a>(
+    entries: &'a [(Expr, Expr)],
+    name: &str,
+    context: &str,
+) -> Result<&'a Expr> {
+    entry_field(entries, name)
+        .ok_or_else(|| Error::Eval(format!("{context} is missing field {name}")))
+}
+
+/// Read a required string-valued field from an entry slice by *bare-symbol* key.
+/// Returns a [`Error::TypeMismatch`] naming the found variant when the field is
+/// present but not an `Expr::String`. The typed, slice-level counterpart of
+/// [`required_str`] and the one home for the bare-symbol `string_field` readers.
+/// Use [`entry_required_str_any`] when string keys must also match.
+pub fn entry_required_str<'a>(
+    entries: &'a [(Expr, Expr)],
+    name: &str,
+    expected: &'static str,
+) -> Result<&'a str> {
+    match entry_required_bare(entries, name, expected)? {
+        Expr::String(value) => Ok(value),
+        other => Err(type_mismatch(expected, other)),
+    }
+}
+
+/// Read a required symbol-valued field from an entry slice by *bare-symbol* key,
+/// borrowing the [`Symbol`]. Bare-symbol counterpart of the `symbol_field` forks.
+pub fn entry_required_sym<'a>(
+    entries: &'a [(Expr, Expr)],
+    name: &str,
+    expected: &'static str,
+) -> Result<&'a Symbol> {
+    match entry_required_bare(entries, name, expected)? {
+        Expr::Symbol(value) => Ok(value),
+        other => Err(type_mismatch(expected, other)),
+    }
+}
+
+/// Read a required bool-valued field (`Expr::Bool`) from an entry slice by
+/// *bare-symbol* key. Bare-symbol counterpart of the `bool_field` forks.
+pub fn entry_required_bool(
+    entries: &[(Expr, Expr)],
+    name: &str,
+    expected: &'static str,
+) -> Result<bool> {
+    match entry_required_bare(entries, name, expected)? {
+        Expr::Bool(value) => Ok(*value),
+        other => Err(type_mismatch(expected, other)),
+    }
+}
+
+/// Borrow a required list-valued field's items (`Expr::List`) from an entry
+/// slice by *bare-symbol* key. Bare-symbol counterpart of the `list_field` forks.
+pub fn entry_required_list<'a>(
+    entries: &'a [(Expr, Expr)],
+    name: &str,
+    expected: &'static str,
+) -> Result<&'a [Expr]> {
+    match entry_required_bare(entries, name, expected)? {
+        Expr::List(items) => Ok(items),
+        other => Err(type_mismatch(expected, other)),
+    }
+}
+
+/// Namespace-agnostic sibling of [`entry_required_str`]: matches a bare-symbol
+/// OR `Expr::String` key (via [`entry_required`]/[`entry_field_any`]). Use this
+/// for provider records (OpenAI, Ollama, MCP) that mix symbol and string keys.
+pub fn entry_required_str_any<'a>(
+    entries: &'a [(Expr, Expr)],
+    name: &str,
+    expected: &'static str,
+) -> Result<&'a str> {
+    match entry_required(entries, name, expected)? {
+        Expr::String(value) => Ok(value),
+        other => Err(type_mismatch(expected, other)),
+    }
+}
+
+/// Namespace-agnostic sibling of [`entry_required_sym`] (bare-symbol OR string
+/// key), borrowing the [`Symbol`].
+pub fn entry_required_sym_any<'a>(
+    entries: &'a [(Expr, Expr)],
+    name: &str,
+    expected: &'static str,
+) -> Result<&'a Symbol> {
+    match entry_required(entries, name, expected)? {
+        Expr::Symbol(value) => Ok(value),
+        other => Err(type_mismatch(expected, other)),
+    }
+}
+
+/// Namespace-agnostic sibling of [`entry_required_bool`] (bare-symbol OR string
+/// key).
+pub fn entry_required_bool_any(
+    entries: &[(Expr, Expr)],
+    name: &str,
+    expected: &'static str,
+) -> Result<bool> {
+    match entry_required(entries, name, expected)? {
+        Expr::Bool(value) => Ok(*value),
+        other => Err(type_mismatch(expected, other)),
+    }
+}
+
+/// Namespace-agnostic sibling of [`entry_required_list`] (bare-symbol OR string
+/// key), borrowing the list items.
+pub fn entry_required_list_any<'a>(
+    entries: &'a [(Expr, Expr)],
+    name: &str,
+    expected: &'static str,
+) -> Result<&'a [Expr]> {
+    match entry_required(entries, name, expected)? {
+        Expr::List(items) => Ok(items),
+        other => Err(type_mismatch(expected, other)),
+    }
+}
+
 /// Read a required string-valued field, with a context label for diagnostics.
 /// This is the one home for the `string_field`/`required_field`-style readers
 /// that coerce to `&str`; callers wanting a domain-specific error keep a thin

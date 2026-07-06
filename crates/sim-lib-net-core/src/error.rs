@@ -12,6 +12,14 @@ pub enum NetError {
     /// The URL scheme is not one this crate recognizes for default-port
     /// resolution.
     UnsupportedScheme(String),
+    /// The URL scheme did not match the scheme a caller required (via
+    /// [`parse_url_for_scheme`](crate::parse_url_for_scheme)).
+    UnexpectedScheme {
+        /// The scheme the caller required.
+        expected: String,
+        /// The scheme actually found in the URL.
+        found: String,
+    },
     /// The URL port component could not be parsed as a `u16`.
     InvalidPort(String),
     /// The HTTP response head (status line + headers) was malformed.
@@ -25,6 +33,9 @@ impl core::fmt::Display for NetError {
         match self {
             Self::MalformedUrl(url) => write!(formatter, "malformed url {url}"),
             Self::UnsupportedScheme(scheme) => write!(formatter, "unsupported url scheme {scheme}"),
+            Self::UnexpectedScheme { expected, found } => {
+                write!(formatter, "expected url scheme {expected}, found {found}")
+            }
             Self::InvalidPort(url) => write!(formatter, "invalid port in url {url}"),
             Self::InvalidHead(detail) => write!(formatter, "invalid http head: {detail}"),
             Self::OversizeBody(limit) => {
