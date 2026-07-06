@@ -1,7 +1,7 @@
 use crate::{
     CapOutcome, HeadOutcome, HttpBodyMode, LineDecoder, NdjsonDecoder, NetError, SseDecoder,
-    body_mode, parse_http_head, parse_url, parse_url_for_scheme, read_capped_line,
-    read_head_until_double_crlf,
+    body_mode, parse_http_head, parse_url, parse_url_for_scheme,
+    parse_url_for_scheme_preserving_path, read_capped_line, read_head_until_double_crlf,
 };
 
 #[test]
@@ -182,6 +182,90 @@ fn parse_url_for_scheme_applies_default_path_when_absent() {
     // An explicit path is kept as-is.
     let explicit = parse_url_for_scheme("http://host/actual", "http", "/v1/models").unwrap();
     assert_eq!(explicit.path, "/actual");
+}
+
+#[test]
+fn parse_url_for_scheme_resolves_ws_default_port() {
+    let u = parse_url_for_scheme_preserving_path("ws://host/path", "ws", "/").unwrap();
+    assert_eq!(u.port, 80);
+    assert_eq!(u.host, "host");
+    assert_eq!(u.path, "/path");
+}
+
+#[test]
+fn parse_url_for_scheme_preserving_resolves_wss_default_port() {
+    let u = parse_url_for_scheme_preserving_path("wss://host/socket", "wss", "/").unwrap();
+    assert_eq!(u.port, 443);
+    assert_eq!(u.host, "host");
+    assert_eq!(u.path, "/socket");
+}
+
+#[test]
+fn parse_url_for_scheme_preserving_keeps_http_https_behavior() {
+    // http/https default ports and explicit ports are unchanged.
+    let http = parse_url_for_scheme_preserving_path("http://host", "http", "/base").unwrap();
+    assert_eq!(http.port, 80);
+    assert_eq!(http.path, "/base"); // no path component -> default substituted
+
+    let https =
+        parse_url_for_scheme_preserving_path("https://host:8443/v1", "https", "/base").unwrap();
+    assert_eq!(https.port, 8443);
+    assert_eq!(https.path, "/v1");
+}
+
+#[test]
+fn parse_url_for_scheme_preserving_rejects_scheme_mismatch() {
+    assert_eq!(
+        parse_url_for_scheme_preserving_path("http://host/x", "ws", "/"),
+        Err(NetError::UnexpectedScheme {
+            expected: "ws".to_owned(),
+            found: "http".to_owned(),
+        })
+    );
+}
+
+#[test]
+fn parse_url_for_scheme_preserving_keeps_trailing_slash() {
+    // A caller's trailing slash is significant and preserved verbatim, unlike
+    // `parse_url`/`parse_url_for_scheme` which trim it.
+    let with_slash = parse_url_for_scheme_preserving_path("ws://host/a/", "ws", "/def").unwrap();
+    assert_eq!(with_slash.path, "/a/");
+
+    // A bare authority with a lone `/` yields `/`, NOT the default path: the
+    // default is only substituted when there is no path component at all.
+    let root = parse_url_for_scheme_preserving_path("ws://host/", "ws", "/def").unwrap();
+    assert_eq!(root.path, "/");
+
+    // No path component at all -> the caller's default path is substituted.
+    let none = parse_url_for_scheme_preserving_path("ws://host", "ws", "/def").unwrap();
+    assert_eq!(none.path, "/def");
+
+    // Contrast: `parse_url_for_scheme` trims the trailing slash and substitutes
+    // the default for a lone `/`.
+    assert_eq!(
+        parse_url_for_scheme("http://host/a/", "http", "/def")
+            .unwrap()
+            .path,
+        "/a"
+    );
+}
+
+#[test]
+fn parse_url_for_scheme_preserving_rejects_unsupported_and_bad_port() {
+    // Unknown scheme without an explicit port has no default.
+    assert!(matches!(
+        parse_url_for_scheme_preserving_path("ftp://host/x", "ftp", "/"),
+        Err(NetError::UnsupportedScheme(_))
+    ));
+    // A non-numeric port is rejected.
+    assert!(matches!(
+        parse_url_for_scheme_preserving_path("ws://host:nope/x", "ws", "/"),
+        Err(NetError::InvalidPort(_))
+    ));
+    // An explicit port on an otherwise-unknown scheme is accepted (ports are
+    // data; only default resolution is table-bound).
+    let u = parse_url_for_scheme_preserving_path("ftp://host:21/x", "ftp", "/").unwrap();
+    assert_eq!(u.port, 21);
 }
 
 #[test]
