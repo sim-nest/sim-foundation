@@ -7,7 +7,7 @@ Cookbook engine for SIM: runnable, crate-local tutorial recipes.
 ## Package Metadata
 
 - Manifest: `crates/sim-cookbook/Cargo.toml`
-- Publish: `false`
+- Publish: `true`
 - Targets: `lib`
 
 ## Crate Documentation

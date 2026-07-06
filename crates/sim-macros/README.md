@@ -7,7 +7,7 @@ Proc-macro surface for authored SIM libraries.
 ## Package Metadata
 
 - Manifest: `crates/sim-macros/Cargo.toml`
-- Publish: `false`
+- Publish: `true`
 - Targets: `proc-macro`
 
 ## Crate Documentation

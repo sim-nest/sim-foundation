@@ -7,7 +7,7 @@ Ergonomic construction and access for kernel Expr data.
 ## Package Metadata
 
 - Manifest: `crates/sim-value/Cargo.toml`
-- Publish: `false`
+- Publish: `true`
 - Targets: `lib`
 
 ## Crate Documentation

@@ -7,7 +7,7 @@ Shared table substrate: path validation and the table operation protocol.
 ## Package Metadata
 
 - Manifest: `crates/sim-table-core/Cargo.toml`
-- Publish: `false`
+- Publish: `true`
 - Targets: `lib`
 
 ## Crate Documentation
