@@ -1,10 +1,46 @@
 # sim-foundation
 
-sim-foundation is a repository in the SIM constellation. SIM is an expandable
-Rust runtime built around a small protocol kernel plus a large set of loadable
-libraries: the kernel defines contracts, libraries provide behavior. This repo
-holds the foundation layer -- the dependency-light substrate crates that many
-other libraries build on instead of re-growing the same code.
+Ergonomic, dependency-light building blocks for working with SIM's kernel data:
+build and read `Expr` values, validate table paths, author libraries with
+proc-macros, and shape codec-neutral surfaces -- without re-growing the same
+substrate in every library.
+
+SIM is a small Rust protocol kernel plus a large set of loadable libraries (it
+is not a Lisp runtime); the kernel defines contracts and libraries provide
+behavior. The `sim` command-line binary is a separate install
+(`cargo install sim-run`), and the full walkthrough lives in the `sim-say`
+front page. This repo is a set of **libraries** -- the shared groundwork many
+other SIM libraries build on.
+
+## Quick start
+
+sim-foundation is a set of libraries you add to a Rust project. The primary
+crate is `sim-value`, which gives you ergonomic construction and access for the
+kernel `Expr` graph:
+
+```bash
+cargo add sim-value
+```
+
+```rust
+use sim_value::access::{field, set};
+use sim_value::build::{int, map};
+
+let value = map(vec![("a", int(1)), ("b", int(2))]);
+assert_eq!(field(&value, "a"), Some(&int(1)));
+
+// immutable update: siblings are preserved
+let updated = set(&value, "a", int(9));
+assert_eq!(field(&updated, "a"), Some(&int(9)));
+assert_eq!(field(&updated, "b"), Some(&int(2)));
+```
+
+(Adapted from the passing doctest in `crates/sim-value/src/lib.rs:16`.)
+
+## How it works
+
+This repo holds the foundation layer -- the dependency-light substrate crates
+that many other libraries build on instead of re-growing the same code.
 
 It provides ergonomic construction and access for the kernel `Expr` graph, the
 shared table path and operation protocol, the proc-macro surface for authoring
