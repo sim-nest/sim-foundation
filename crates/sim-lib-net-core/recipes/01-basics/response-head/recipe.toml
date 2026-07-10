@@ -4,5 +4,5 @@ codec = "lisp"
 setup = "setup.siml"
 purpose = "purpose.md"
 order = 10
-tags = ["net", "http", "parser"]
+tags = ["net", "http", "parser", "sandbox-descriptor"]
 requires = ["net-core", "codec/lisp"]

@@ -1,4 +1,4 @@
-# External name descriptor
+# Surface-card external name (descriptor)
 
-This recipe records the surface-card naming boundary: one internal symbol can
-project to tool-safe or human-readable external names.
+Documents a surface card's external-name binding (an external `skill/do.thing` name mapped to an
+operation). It is registry metadata describing a name binding, not a sandbox-evaluable expression.

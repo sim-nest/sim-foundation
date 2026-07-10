@@ -1,5 +1,4 @@
-# Response head descriptor
+# Net-core HTTP response head (descriptor)
 
-Net-core recipes should stay in the parser layer. This recipe describes a
-parsed HTTP response head and stream body framing choices without creating a
-client, server, or network connection.
+Documents the net-core HTTP response head: status line and headers (here a 200). It is a transport
+frame descriptor, not an expression the cookbook sandbox eval stack reduces to a value.
