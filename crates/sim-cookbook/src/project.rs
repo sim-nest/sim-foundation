@@ -5,8 +5,24 @@
 //! chapter and sort deterministically. Loading another lib adds its book; the
 //! view always reflects exactly the recipes currently loaded.
 
-use crate::model::{BookView, ChapterView, CookbookView, RecipeCard};
+use crate::model::{BookView, ChapterView, CookbookView, FamilyView, GroupedView, RecipeCard};
 use crate::store::RecipeStore;
+
+/// The level-1 family id for a book, derived from its id prefix with NO extra
+/// metadata: the segment before the first `/` (`numbers/cas` -> `numbers`,
+/// `organ/binding` -> `organ`, `codec/lisp` -> `codec`), else before the first
+/// `-` (`audio-dsp` -> `audio`, `stream-audio` -> `stream`), else the whole id
+/// (`agent` -> `agent`, `core` -> `core`). This is how the constellation groups
+/// by subsystem without a hand-maintained family list.
+pub fn family_of(book: &str) -> &str {
+    match book.split_once('/') {
+        Some((family, _)) => family,
+        None => match book.split_once('-') {
+            Some((family, _)) => family,
+            None => book,
+        },
+    }
+}
 
 /// All cards in deterministic global order: by book order then id, chapter
 /// order then name, recipe order then id. Two recipes never compare equal
@@ -57,6 +73,27 @@ pub fn view(store: &RecipeStore) -> CookbookView {
         chapters[ci].recipes.push(card.clone());
     }
     CookbookView { books }
+}
+
+/// Group the store's cards into the two-level [`GroupedView`]: family -> domain
+/// book -> chapter -> recipe. Books keep the deterministic [`view`] order, and a
+/// family appears where its lowest-ordered book falls, so the whole catalog
+/// presents by subsystem stably.
+pub fn grouped_view(store: &RecipeStore) -> GroupedView {
+    let mut families: Vec<FamilyView> = Vec::new();
+    for book in view(store).books {
+        let family = family_of(&book.id).to_string();
+        match families.iter_mut().find(|f| f.family == family) {
+            Some(f) => f.books.push(book),
+            None => families.push(FamilyView {
+                family,
+                books: vec![book],
+            }),
+        }
+    }
+    // `view` already ordered books by book_order; the first book in each family
+    // is therefore its lowest-ordered book, giving a stable family order.
+    GroupedView { families }
 }
 
 /// Rank recipes matching `query` (case-insensitive). A title match scores
@@ -184,6 +221,83 @@ mod tests {
         assert_eq!(hits.len(), 2);
         // empty query returns nothing.
         assert!(search(&store, "  ").is_empty());
+    }
+
+    #[test]
+    fn family_of_derives_from_prefix() {
+        assert_eq!(family_of("numbers/cas"), "numbers");
+        assert_eq!(family_of("organ/binding"), "organ");
+        assert_eq!(family_of("codec/lisp"), "codec");
+        assert_eq!(family_of("audio-dsp"), "audio");
+        assert_eq!(family_of("stream-audio"), "stream");
+        assert_eq!(family_of("agent-runner-core"), "agent");
+        assert_eq!(family_of("agent"), "agent");
+        assert_eq!(family_of("core"), "core");
+    }
+
+    // Two books under the same family plus one under another, to prove grouping.
+    fn family_store() -> RecipeStore {
+        let cas: Vec<(&str, &[u8])> = vec![
+            (
+                "book.toml",
+                b"book = \"numbers/cas\"\ntitle = \"CAS\"\norder = 210\n" as &[u8],
+            ),
+            (
+                "01-basics/simplify/recipe.toml",
+                b"id = \"simplify\"\ntitle = \"Simplify\"\ncodec = \"lisp\"\nsetup = \"s\"\npurpose = \"p\"\n",
+            ),
+            ("01-basics/simplify/s", b"(quote x)"),
+            ("01-basics/simplify/p", b"simplify"),
+        ];
+        let f64: Vec<(&str, &[u8])> = vec![
+            (
+                "book.toml",
+                b"book = \"numbers/f64\"\ntitle = \"F64\"\norder = 200\n" as &[u8],
+            ),
+            (
+                "01-basics/add/recipe.toml",
+                b"id = \"add\"\ntitle = \"Add\"\ncodec = \"lisp\"\nsetup = \"s\"\npurpose = \"p\"\n",
+            ),
+            ("01-basics/add/s", b"(+ 1 2)"),
+            ("01-basics/add/p", b"add"),
+        ];
+        let lisp: Vec<(&str, &[u8])> = vec![
+            (
+                "book.toml",
+                b"book = \"codec/lisp\"\ntitle = \"Lisp\"\norder = 100\n" as &[u8],
+            ),
+            (
+                "01-basics/quote/recipe.toml",
+                b"id = \"quote\"\ntitle = \"Quote\"\ncodec = \"lisp\"\nsetup = \"s\"\npurpose = \"p\"\n",
+            ),
+            ("01-basics/quote/s", b"(quote a)"),
+            ("01-basics/quote/p", b"quote"),
+        ];
+        let mut store = RecipeStore::new();
+        store.register_book(&cas).unwrap();
+        store.register_book(&f64).unwrap();
+        store.register_book(&lisp).unwrap();
+        store
+    }
+
+    #[test]
+    fn grouped_view_nests_family_domain_book() {
+        let grouped = grouped_view(&family_store());
+        // codec (book_order 100) sorts before numbers (lowest book_order 200).
+        assert_eq!(grouped.families.len(), 2);
+        assert_eq!(grouped.families[0].family, "codec");
+        assert_eq!(grouped.families[0].books.len(), 1);
+        assert_eq!(grouped.families[0].books[0].id, "codec/lisp");
+        // numbers holds both f64 (200) and cas (210), f64 first by book_order.
+        let numbers = &grouped.families[1];
+        assert_eq!(numbers.family, "numbers");
+        let ids: Vec<&str> = numbers.books.iter().map(|b| b.id.as_str()).collect();
+        assert_eq!(ids, ["numbers/f64", "numbers/cas"]);
+        // Leaves reach the recipes intact.
+        assert_eq!(
+            numbers.books[0].chapters[0].recipes[0].id,
+            "numbers/f64/01-basics/add"
+        );
     }
 
     #[test]

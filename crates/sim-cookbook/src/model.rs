@@ -95,6 +95,30 @@ pub struct BookView {
     pub chapters: Vec<ChapterView>,
 }
 
+/// The full catalog grouped into a two-level tree: family -> domain (book) ->
+/// chapter -> recipe (COOK8.00 COVERAGE axis).
+///
+/// The grouping needs NO per-recipe metadata: the level-1 family is derived from
+/// each book's id prefix (`numbers/cas` -> `numbers`, `organ/binding` ->
+/// `organ`, `audio-dsp` -> `audio`), and the level-2 domain is the book itself.
+/// So the whole constellation browses by subsystem without a hand-maintained
+/// group list.
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct GroupedView {
+    /// Families in the order their lowest-ordered book appears in
+    /// [`CookbookView`] (book order is total, so this order is deterministic).
+    pub families: Vec<FamilyView>,
+}
+
+/// One level-1 family (subsystem) in a [`GroupedView`], holding its domain books.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FamilyView {
+    /// Family id derived from the book prefix (`numbers`, `organ`, `codec`, ...).
+    pub family: String,
+    /// The domain books in this family, in the same order as [`CookbookView`].
+    pub books: Vec<BookView>,
+}
+
 /// One chapter within a [`BookView`].
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChapterView {

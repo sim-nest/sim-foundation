@@ -110,12 +110,19 @@ fn optional_strings(doc: &TomlDoc, key: &str) -> Result<Vec<String>, String> {
 }
 
 /// Parse and validate `recipe.toml` text.
+///
+/// Unknown top-level keys and unknown `[[table]]`s are IGNORED, not rejected
+/// (COOK8.00). A recipe may carry a rich descriptor vocabulary beyond the core
+/// runnable fields -- the `30-agents` `a30-*` descriptors add `recipe_number`,
+/// `source_chapter`, `descriptor_shape`, `assert_*`, and more -- and every such
+/// recipe must still embed and aggregate into the complete cookbook catalog.
+/// Rejecting unknown keys blocked embedding those libs (the EMBED-ALL HAZARD),
+/// which the COVERAGE goal cannot tolerate. Typo protection on the CORE fields
+/// stays: a missing or empty required key (`id`/`title`/`codec`/`setup`/
+/// `purpose`) still errors, and the on-disk `cookbook-lint` gate remains the
+/// place for structural recipe linting.
 pub fn parse_recipe(text: &str) -> Result<RecipeManifest, String> {
     let doc = toml_lite::parse(text)?;
-    doc.reject_unknown_top(&[
-        "id", "title", "codec", "setup", "purpose", "order", "tags", "requires",
-    ])?;
-    doc.reject_unknown_tables(&["expect"])?;
     let mut expect = Vec::new();
     for table in doc.tables_named("expect") {
         let form = table
@@ -304,12 +311,50 @@ result = "3"
     }
 
     #[test]
-    fn unknown_key_rejected() {
-        let err = parse_recipe(
+    fn unknown_key_ignored_not_rejected() {
+        // COOK8.00: unknown top-level keys are ignored so rich descriptors embed.
+        let m = parse_recipe(
             "id = \"x\"\ntitle = \"X\"\ncodec = \"l\"\nsetup = \"s\"\npurpose = \"p\"\nbogus = 1\n",
         )
-        .unwrap_err();
-        assert!(err.contains("unknown key `bogus`"), "{err}");
+        .unwrap();
+        assert_eq!(m.id, "x");
+    }
+
+    #[test]
+    fn parses_rich_descriptor_keys() {
+        // An `a30-*` descriptor carries a structured vocabulary beyond the core
+        // runnable fields. It must parse (and thus embed) unchanged; the extra
+        // keys are ignored, and the core fields still resolve.
+        let rich = r#"
+id = "a30-009-agentic-workflow"
+title = "Agentic workflow"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 9
+tags = ["30-agents", "sandbox-descriptor"]
+requires = ["agent", "codec/lisp"]
+recipe_number = 9
+source_chapter = 7
+architecture_family = "agentic-workflow"
+runner_mode = "fake"
+safety_posture = "offline"
+capabilities = ["read-eval", "workflow-state"]
+descriptor_shape = "agentic-workflow-trace"
+assert_tags = ["30-agents", "chapter-07"]
+assert_capabilities = ["read-eval"]
+assert_setup_codec = "lisp"
+expected = "expected.txt"
+[[expect]]
+form = 0
+result = "(agentic-workflow-trace)"
+"#;
+        let m = parse_recipe(rich).unwrap();
+        assert_eq!(m.id, "a30-009-agentic-workflow");
+        assert_eq!(m.codec, "lisp");
+        assert_eq!(m.order, 9);
+        assert_eq!(m.requires, ["agent", "codec/lisp"]);
+        assert_eq!(m.expect[0].result, "(agentic-workflow-trace)");
     }
 
     #[test]
