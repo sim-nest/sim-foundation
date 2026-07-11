@@ -15,6 +15,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod digest;
 mod embed;
 mod embed_codegen;
 mod manifest;
@@ -24,6 +25,7 @@ mod project;
 mod store;
 mod toml_lite;
 
+pub use digest::{audio_digest, frame_digest};
 pub use embed::{EmbeddedDir, recipes_from_embedded};
 pub use embed_codegen::{generate_embed_code, write_embed};
 pub use manifest::{
