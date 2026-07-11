@@ -1,6 +1,6 @@
 [package]
 name = "sim-lib-surface-card"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MPL-2.0"
 description = "Shared, plain-data surface-card spine."
@@ -10,7 +10,11 @@ repository = "https://github.com/sim-nest/sim-foundation"
 homepage = "https://github.com/sim-nest/sim-foundation"
 
 [dependencies]
+sim-cookbook = { version = "0.1.0", path = "../sim-cookbook" }
 sim-kernel = { version = "0.1.0" }
+
+[build-dependencies]
+sim-cookbook = { version = "0.1.0", path = "../sim-cookbook" }
 
 [lints]
 workspace = true

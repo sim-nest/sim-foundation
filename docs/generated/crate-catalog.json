@@ -23,6 +23,7 @@
       "readme": "crates/sim-lib-net-core/README.md",
       "root": "crates/sim-lib-net-core",
       "target_kinds": [
+        "custom-build",
         "lib"
       ]
     },
@@ -35,6 +36,7 @@
       "readme": "crates/sim-lib-surface-card/README.md",
       "root": "crates/sim-lib-surface-card",
       "target_kinds": [
+        "custom-build",
         "lib"
       ]
     },
