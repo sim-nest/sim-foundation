@@ -40,5 +40,9 @@ pub use read::{CapOutcome, HeadOutcome, read_capped_line, read_head_until_double
 pub use sse::{SseDecoder, SseEvent};
 pub use url::{UrlParts, parse_url, parse_url_for_scheme, parse_url_for_scheme_preserving_path};
 
+/// Cookbook recipes for this lib, embedded at build time.
+pub static RECIPES: sim_cookbook::EmbeddedDir =
+    include!(concat!(env!("OUT_DIR"), "/cookbook_recipes.rs"));
+
 #[cfg(test)]
 mod tests;

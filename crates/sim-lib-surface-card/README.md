@@ -8,7 +8,7 @@ Shared, plain-data surface-card spine.
 
 - Manifest: `crates/sim-lib-surface-card/Cargo.toml`
 - Publish: `true`
-- Targets: `lib`
+- Targets: `custom-build, lib`
 
 ## Crate Documentation
 

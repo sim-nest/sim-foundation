@@ -8,7 +8,7 @@ Reusable, side-effect-free HTTP/streaming parsing primitives.
 
 - Manifest: `crates/sim-lib-net-core/Cargo.toml`
 - Publish: `true`
-- Targets: `lib`
+- Targets: `custom-build, lib`
 
 ## Crate Documentation
 
