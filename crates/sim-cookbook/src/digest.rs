@@ -71,14 +71,45 @@ pub fn audio_digest(samples: &[i64]) -> String {
 /// assert_ne!(frame_digest(b"abc"), frame_digest(b"abd"));
 /// ```
 pub fn frame_digest(bytes: &[u8]) -> String {
+    format!(
+        "(frame (bytes {}) (hash {}))",
+        bytes.len(),
+        fnv1a64_hex(bytes)
+    )
+}
+
+/// Compute the 64-bit FNV-1a hash for `bytes`.
+///
+/// This is the same fixed content hash used by [`frame_digest`], exposed so
+/// other deterministic cookbook and recipe helpers can share one implementation
+/// instead of carrying local copies.
+///
+/// # Examples
+///
+/// ```
+/// # use sim_cookbook::fnv1a64;
+/// assert_eq!(fnv1a64(&[]), 0xcbf2_9ce4_8422_2325);
+/// assert_eq!(fnv1a64(b"abc"), 0xe71f_a219_0541_574b);
+/// ```
+pub fn fnv1a64(bytes: &[u8]) -> u64 {
     const FNV_OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
     const FNV_PRIME: u64 = 0x0000_0100_0000_01b3;
-    let mut hash = FNV_OFFSET;
-    for &byte in bytes {
-        hash ^= u64::from(byte);
-        hash = hash.wrapping_mul(FNV_PRIME);
-    }
-    format!("(frame (bytes {}) (hash {hash:016x}))", bytes.len())
+
+    bytes.iter().fold(FNV_OFFSET, |hash, byte| {
+        (hash ^ u64::from(*byte)).wrapping_mul(FNV_PRIME)
+    })
+}
+
+/// Compute the lowercase 16-digit hexadecimal FNV-1a digest for `bytes`.
+///
+/// # Examples
+///
+/// ```
+/// # use sim_cookbook::fnv1a64_hex;
+/// assert_eq!(fnv1a64_hex(&[]), "cbf29ce484222325");
+/// ```
+pub fn fnv1a64_hex(bytes: &[u8]) -> String {
+    format!("{:016x}", fnv1a64(bytes))
 }
 
 #[cfg(test)]
@@ -119,5 +150,14 @@ mod tests {
         assert_eq!(frame_digest(b"abc"), frame_digest(b"abc"));
         assert_ne!(frame_digest(b"abc"), frame_digest(b"abd"));
         assert!(frame_digest(b"abc").starts_with("(frame (bytes 3) (hash "));
+    }
+
+    #[test]
+    fn fnv1a64_uses_standard_basis_and_is_content_sensitive() {
+        assert_eq!(fnv1a64(&[]), 0xcbf2_9ce4_8422_2325);
+        assert_eq!(fnv1a64_hex(&[]), "cbf29ce484222325");
+        assert_eq!(fnv1a64_hex(b"abc"), "e71fa2190541574b");
+        assert_eq!(fnv1a64(b"abc"), fnv1a64(b"abc"));
+        assert_ne!(fnv1a64(b"abc"), fnv1a64(b"abd"));
     }
 }
