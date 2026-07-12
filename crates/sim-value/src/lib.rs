@@ -7,6 +7,7 @@
 //! so it does not touch the kernel boundary.
 //!
 //! - [`build`]: constructors (`sym`, `int`, `float`, `text`, `list`, `map`, ...);
+//! - [`capability_names_from_expr`]: parses capability-name expressions;
 //! - [`access`]: reading and immutable updates (`field`, `set`, `remove`, ...);
 //! - [`kind`]: the one `Expr` variant classifier (`expr_kind`);
 //! - [`path`]: one value-addressing primitive (`Path`, `get`, `set_at`).
@@ -31,8 +32,11 @@
 
 pub mod access;
 pub mod build;
+pub mod capability;
 pub mod kind;
 pub mod path;
+
+pub use capability::capability_names_from_expr;
 
 #[cfg(test)]
 mod tests;
