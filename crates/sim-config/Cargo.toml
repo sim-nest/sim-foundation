@@ -1,0 +1,18 @@
+[package]
+name = "sim-config"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Table and Dir substrate for layered SIM configuration."
+readme = "README.md"
+publish = true
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[dependencies]
+sim-kernel = { version = "0.1.0" }
+sim-table-core = { version = "0.1.1", path = "../sim-table-core" }
+sim-value = { version = "0.1.2", path = "../sim-value" }
+
+[lints]
+workspace = true
