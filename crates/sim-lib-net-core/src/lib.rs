@@ -3,10 +3,10 @@
 //! Reusable, side-effect-free HTTP/streaming parsing and wire-format helpers.
 //!
 //! This is a leaf parsing crate: it contains URL parsing, HTTP response-head
-//! parsing, body-mode classification, line framing, and SSE/NDJSON record
-//! decoders, plus small text encoders for shared wire identifiers. It
-//! deliberately contains **no** socket/TLS I/O and **no** application policy --
-//! callers own transport and event mapping.
+//! parsing, body-mode classification, chunked-transfer decoding, line framing,
+//! and SSE/NDJSON record decoders, plus small text encoders for shared wire
+//! identifiers. It deliberately contains **no** socket/TLS I/O and **no**
+//! application policy -- callers own transport and event mapping.
 //!
 //! The behavior here was extracted from `sim-lib-agent-runner-http` so that
 //! multiple runtime libs can share one tested implementation of the wire
@@ -25,6 +25,7 @@
 //! assert_eq!(decoder.push(b"c\n"), vec![b"bc".to_vec()]);
 //! ```
 
+mod body;
 mod error;
 mod hex;
 mod http;
@@ -34,6 +35,7 @@ mod read;
 mod sse;
 mod url;
 
+pub use body::decode_chunked;
 pub use error::NetError;
 pub use hex::hex_encode;
 pub use http::{HttpBodyMode, HttpHead, body_mode, parse_http_head};

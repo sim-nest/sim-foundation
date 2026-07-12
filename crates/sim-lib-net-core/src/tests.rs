@@ -1,6 +1,6 @@
 use crate::{
     CapOutcome, HeadOutcome, HttpBodyMode, LineDecoder, NdjsonDecoder, NetError, SseDecoder,
-    body_mode, parse_http_head, parse_url, parse_url_for_scheme,
+    body_mode, decode_chunked, parse_http_head, parse_url, parse_url_for_scheme,
     parse_url_for_scheme_preserving_path, read_capped_line, read_head_until_double_crlf,
 };
 
@@ -73,6 +73,43 @@ fn zero_content_length_reads_until_eof() {
 
     let bare = parse_http_head("HTTP/1.1 200 OK\r\n").unwrap();
     assert_eq!(body_mode(&bare).unwrap(), HttpBodyMode::UntilEof);
+}
+
+#[test]
+fn decode_chunked_reassembles_multiple_chunks() {
+    let decoded = decode_chunked(b"4\r\nWiki\r\n5;name=value\r\npedia\r\n0\r\n\r\n", 16).unwrap();
+    assert_eq!(decoded, b"Wikipedia");
+}
+
+#[test]
+fn decode_chunked_accepts_terminal_zero_and_trailers() {
+    let decoded = decode_chunked(b"1\r\na\r\n0\r\nX-Trace: yes\r\n\r\n", 8).unwrap();
+    assert_eq!(decoded, b"a");
+}
+
+#[test]
+fn decode_chunked_rejects_oversize_output() {
+    assert_eq!(
+        decode_chunked(b"5\r\nhello\r\n0\r\n\r\n", 4),
+        Err(NetError::OversizeBody(4))
+    );
+}
+
+#[test]
+fn decode_chunked_rejects_bad_or_truncated_frames() {
+    assert!(matches!(
+        decode_chunked(b"not-hex\r\n", 16),
+        Err(NetError::InvalidChunkSize(_))
+    ));
+    assert_eq!(
+        decode_chunked(b"5\r\nabc", 16),
+        Err(NetError::TruncatedChunk)
+    );
+    assert_eq!(
+        decode_chunked(b"1\r\na\n0\r\n\r\n", 16),
+        Err(NetError::InvalidChunkDelimiter)
+    );
+    assert_eq!(decode_chunked(b"0\r\n", 16), Err(NetError::TruncatedChunk));
 }
 
 #[test]

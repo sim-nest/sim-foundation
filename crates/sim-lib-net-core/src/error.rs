@@ -24,6 +24,12 @@ pub enum NetError {
     InvalidPort(String),
     /// The HTTP response head (status line + headers) was malformed.
     InvalidHead(String),
+    /// A chunked-transfer size line was malformed.
+    InvalidChunkSize(String),
+    /// A chunked-transfer body ended before a complete chunk or trailer section.
+    TruncatedChunk,
+    /// A chunked-transfer chunk or trailer section used the wrong delimiter.
+    InvalidChunkDelimiter,
     /// A length-prefixed or buffered payload exceeded the caller's size limit.
     OversizeBody(usize),
 }
@@ -38,6 +44,9 @@ impl core::fmt::Display for NetError {
             }
             Self::InvalidPort(url) => write!(formatter, "invalid port in url {url}"),
             Self::InvalidHead(detail) => write!(formatter, "invalid http head: {detail}"),
+            Self::InvalidChunkSize(detail) => write!(formatter, "invalid chunk size: {detail}"),
+            Self::TruncatedChunk => write!(formatter, "truncated chunked body"),
+            Self::InvalidChunkDelimiter => write!(formatter, "invalid chunked body delimiter"),
             Self::OversizeBody(limit) => {
                 write!(formatter, "payload exceeded size limit of {limit} bytes")
             }
