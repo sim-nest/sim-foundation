@@ -22,6 +22,11 @@
 /// amplitude, and the integer root-mean-square. All arithmetic is integer, so
 /// the result is identical on every platform and every run.
 ///
+/// The sum of squares accumulates in `u128` with a saturating add, so an
+/// extreme buffer (many samples near `i64::MAX`) saturates to `u128::MAX`
+/// rather than overflowing -- still deterministic. Callers quantize to a small
+/// fixed range (e.g. 16-bit PCM), so saturation never occurs in practice.
+///
 /// # Examples
 ///
 /// ```
@@ -36,13 +41,10 @@
 pub fn audio_digest(samples: &[i64]) -> String {
     let n = samples.len();
     let peak = samples.iter().map(|s| s.unsigned_abs()).max().unwrap_or(0);
-    let sum_sq: u128 = samples
-        .iter()
-        .map(|s| {
-            let a = i128::from(*s);
-            (a * a) as u128
-        })
-        .sum();
+    let sum_sq: u128 = samples.iter().fold(0u128, |acc, s| {
+        let a = i128::from(*s);
+        acc.saturating_add((a * a) as u128)
+    });
     let rms = if n == 0 {
         0
     } else {
