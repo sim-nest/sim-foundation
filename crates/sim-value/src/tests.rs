@@ -1,6 +1,6 @@
 //! Tests for the value ergonomics.
 
-use sim_kernel::{Expr, NumberLiteral, Symbol};
+use sim_kernel::{CapabilityName, Error, Expr, NumberLiteral, Symbol};
 
 use crate::access::{
     as_f64, as_i64, entry_field, entry_field_any, entry_required, entry_required_bool,
@@ -9,7 +9,8 @@ use crate::access::{
     field_any, field_bool, field_str, remove, required, required_bool, required_map, required_str,
     required_sym, set,
 };
-use crate::build::{entry, float, int, keyword, list, map, num_q, sym, text, vector};
+use crate::build::{entry, float, int, keyword, list, map, num_q, qsym, sym, text, vector};
+use crate::capability_names_from_expr;
 use crate::kind::expr_kind;
 use crate::path::{Path, PathError, get, remove_at, set_at};
 
@@ -200,6 +201,38 @@ fn expr_kind_tokens_are_stable() {
     assert_eq!(expr_kind(&list(vec![])), "list");
     assert_eq!(expr_kind(&vector(vec![])), "vector");
     assert_eq!(expr_kind(&map(vec![])), "map");
+}
+
+#[test]
+fn capability_names_read_nil_singletons_lists_and_vectors() {
+    assert_eq!(capability_names_from_expr(&Expr::Nil).unwrap(), Vec::new());
+    assert_eq!(
+        capability_names_from_expr(&sym("read-eval")).unwrap(),
+        vec![CapabilityName::new("read-eval")]
+    );
+    assert_eq!(
+        capability_names_from_expr(&list(vec![sym("read-eval"), text("net.http")])).unwrap(),
+        vec![
+            CapabilityName::new("read-eval"),
+            CapabilityName::new("net.http")
+        ]
+    );
+    assert_eq!(
+        capability_names_from_expr(&vector(vec![sym("ai"), qsym("net", "http")])).unwrap(),
+        vec![CapabilityName::new("ai"), CapabilityName::new("net/http")]
+    );
+}
+
+#[test]
+fn capability_names_reject_non_capability_items() {
+    let err = capability_names_from_expr(&list(vec![int(1)])).unwrap_err();
+    assert!(matches!(
+        err,
+        Error::TypeMismatch {
+            expected: "capability symbol or string",
+            found: "non-capability"
+        }
+    ));
 }
 
 #[test]
