@@ -2,9 +2,9 @@
 //!
 //! Configuration is plain kernel data: a [`ConfigTable`] is one library's
 //! `Expr::Map`, and a [`ConfigDir`] maps library ids to those tables. This crate
-//! provides the data model, merge/provenance rules, typed read views, and safe
-//! path helpers used by loaders and codecs without introducing a parallel
-//! configuration value enum.
+//! provides the data model, merge/provenance rules, shape-backed defaults,
+//! typed read views, and safe path helpers used by loaders and codecs without
+//! introducing a parallel configuration value enum.
 //!
 //! # Example
 //!
@@ -37,6 +37,7 @@ use sim_kernel::{Expr, Symbol, id::SymbolError};
 pub mod merge;
 pub mod path;
 pub mod report;
+pub mod shape;
 pub mod source;
 pub mod table;
 pub mod view;
@@ -44,6 +45,7 @@ pub mod view;
 pub use merge::{ConfigLayer, EffectiveConfig, MergeTrace, merge_layers};
 pub use path::{ConfigRoots, lib_config_path};
 pub use report::{ConfigReport, ConfigReportEntry};
+pub use shape::{ConfigSecretField, ConfigShape, ConfigShapeResult, LibConfigDefaults};
 pub use source::{ConfigSource, ProbeMode};
 pub use table::{ConfigDir, ConfigTable, lib_symbol_from_str};
 pub use view::ConfigView;

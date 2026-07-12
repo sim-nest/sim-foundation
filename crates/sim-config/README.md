@@ -2,7 +2,8 @@
 
 `sim-config` is the Table and Dir substrate for layered SIM configuration. It
 keeps configuration as kernel `Expr::Map` data, merges layers with provenance,
-offers typed read views, and builds safe per-library config paths.
+binds shape-checked defaults, offers typed read views, and builds safe
+per-library config paths.
 
 It does not introduce a private config value model. Decoders, bootloaders,
 probes, and explicit overrides all produce the same `ConfigDir` shape, then
@@ -16,6 +17,8 @@ process override.
 - `ConfigLayer`, `EffectiveConfig`, `MergeTrace`, and `merge_layers`.
 - Merge rules for scalar replacement, nested table overlays, id-keyed repeated
   table replacement, and absent-field preservation.
+- `ConfigShape` and `LibConfigDefaults` for shape-backed defaults, unknown-field
+  reports, and secret-field metadata.
 - `ConfigView` typed accessors over table fields.
 - `ConfigRoots` and `lib_config_path` for root selection and safe
   `libs/<lib-id>.toml` paths.
