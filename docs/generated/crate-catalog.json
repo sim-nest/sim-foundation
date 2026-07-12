@@ -1,7 +1,19 @@
 {
   "generator": "xtask crate-catalog v1",
-  "package_count": 7,
+  "package_count": 8,
   "packages": [
+    {
+      "description": "Table and Dir substrate for layered SIM configuration.",
+      "generated_readme": false,
+      "manifest": "crates/sim-config/Cargo.toml",
+      "name": "sim-config",
+      "publish": "true",
+      "readme": "crates/sim-config/README.md",
+      "root": "crates/sim-config",
+      "target_kinds": [
+        "lib"
+      ]
+    },
     {
       "description": "Cookbook engine for SIM: runnable, crate-local tutorial recipes.",
       "generated_readme": true,

@@ -1,9 +1,9 @@
 # sim-foundation
 
 Ergonomic, dependency-light building blocks for working with SIM's kernel data:
-build and read `Expr` values, validate table paths, author libraries with
-proc-macros, and shape codec-neutral surfaces -- without re-growing the same
-substrate in every library.
+build and read `Expr` values, merge table-shaped configuration, validate table
+paths, author libraries with proc-macros, and shape codec-neutral surfaces --
+without re-growing the same substrate in every library.
 
 SIM is a small Rust protocol kernel plus a large set of loadable libraries (it
 is not a Lisp runtime); the kernel defines contracts and libraries provide
@@ -43,11 +43,12 @@ This repo holds the foundation layer -- the dependency-light substrate crates
 that many other libraries build on instead of re-growing the same code.
 
 It provides ergonomic construction and access for the kernel `Expr` graph, the
-shared table path and operation protocol, the proc-macro surface for authoring
-libraries, the crate-local cookbook engine, reusable HTTP/streaming parsing
-primitives, and the codec-neutral surface-card spine. These crates depend only
-on `sim-kernel` (and, where noted, on `sim-value`); they add data ergonomics and
-protocol shape, not runtime behavior, so they stay below the kernel boundary.
+shared configuration table/Dir substrate, the shared table path and operation
+protocol, the proc-macro surface for authoring libraries, the crate-local
+cookbook engine, reusable HTTP/streaming parsing primitives, and the
+codec-neutral surface-card spine. These crates depend only on `sim-kernel` (and,
+where noted, on `sim-value`); they add data ergonomics and protocol shape, not
+runtime behavior, so they stay below the kernel boundary.
 
 ## Crates
 
@@ -61,6 +62,10 @@ protocol shape, not runtime behavior, so they stay below the kernel boundary.
   `TableOp` protocol, whose `encode_table_op`/`decode_table_op` round-trip
   through the kernel `Expr` graph in the wire spellings table backends speak.
   Depends only on `sim-kernel` and `sim-value`.
+- `sim-config` -- the shared configuration substrate: `ConfigTable` and
+  `ConfigDir` over kernel `Expr::Map`, layered merge/provenance rules,
+  `ConfigView` typed accessors, and safe per-library config paths. Depends only
+  on `sim-kernel`, `sim-value`, and `sim-table-core`.
 - `sim-macros` -- the proc-macro surface for authored SIM libraries: the
   `#[sim_class]`, `#[sim_constructor]`, `#[sim_fn]`, `#[case]`, and `#[shape]`
   markers, plus `#[sim_lib(...)]`, which scans an inline module for those
@@ -83,12 +88,11 @@ protocol shape, not runtime behavior, so they stay below the kernel boundary.
 
 These crates are foundation substrate, not runtime behavior. Each is a leaf or
 near-leaf in the dependency graph, depending only on `sim-kernel` and
-`sim-value`. They exist because the same code -- value ergonomics, table path
-validation, library-authoring macros, cookbook projection, wire framing, and
-surface naming -- was independently re-grown across libs, and this repo is the
-single tested home for it. Concrete runtime operations layer over these crates
-elsewhere in the constellation; the foundation layer adds data ergonomics and
-protocol shape and does not touch the kernel boundary.
+`sim-value`. They keep common code -- value ergonomics, configuration merging,
+table path validation, library-authoring macros, cookbook projection, wire
+framing, and surface naming -- in one tested home. Concrete runtime operations
+layer over these crates elsewhere in the constellation; the foundation layer
+adds data ergonomics and protocol shape and does not touch the kernel boundary.
 
 ## Validation
 

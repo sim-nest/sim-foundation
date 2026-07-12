@@ -6,6 +6,7 @@ Generated from Cargo metadata by `xtask crate-catalog v1`.
 
 | Package | Publish | Targets | Description |
 | --- | --- | --- | --- |
+| `sim-config` | `true` | `lib` | Table and Dir substrate for layered SIM configuration. |
 | `sim-cookbook` | `true` | `lib` | Cookbook engine for SIM: runnable, crate-local tutorial recipes. |
 | `sim-lib-net-core` | `true` | `custom-build, lib` | Reusable, side-effect-free HTTP/streaming parsing primitives. |
 | `sim-lib-surface-card` | `true` | `custom-build, lib` | Shared, plain-data surface-card spine. |

@@ -12,4 +12,4 @@ Reusable, side-effect-free HTTP/streaming parsing primitives.
 
 ## Crate Documentation
 
-Reusable, side-effect-free HTTP/streaming parsing primitives.
+Reusable, side-effect-free HTTP/streaming parsing and wire-format helpers.
