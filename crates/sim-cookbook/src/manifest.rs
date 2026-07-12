@@ -181,10 +181,16 @@ pub fn parse_book(text: &str) -> Result<BookManifest, String> {
 }
 
 /// Parse `chapter.toml` text (all fields optional).
+///
+/// Like [`parse_recipe`], unknown keys and tables are IGNORED rather than
+/// rejected (COOK8.03). Rich `30-agents`/`40-atelier` chapters across the
+/// constellation carry an extended vocabulary (e.g. `tags`) beyond the core
+/// `title`/`order`/`summary`, and every such chapter must embed and aggregate
+/// into the complete catalog -- rejecting unknown keys blocked embedding those
+/// books (the EMBED-ALL HAZARD). Structural chapter linting stays with the
+/// on-disk `cookbook-lint` gate.
 pub fn parse_chapter(text: &str) -> Result<ChapterManifest, String> {
     let doc = toml_lite::parse(text)?;
-    doc.reject_unknown_top(&["title", "order", "summary"])?;
-    doc.reject_unknown_tables(&[])?;
     let title = match doc.get("title") {
         Some(v) => Some(v.as_str().map_err(|e| format!("`title`: {e}"))?.to_string()),
         None => None,
@@ -370,6 +376,18 @@ result = "(agentic-workflow-trace)"
         let chapter = parse_chapter("title = \"Basics\"\norder = 10\n").unwrap();
         assert_eq!(chapter.title.as_deref(), Some("Basics"));
         assert_eq!(chapter.order, Some(10));
+    }
+
+    #[test]
+    fn chapter_unknown_key_ignored_not_rejected() {
+        // COOK8.03: rich 30-agents chapters carry `tags` beyond the core chapter
+        // fields; they must embed unchanged, so unknown keys are ignored.
+        let chapter = parse_chapter(
+            "title = \"30 Agents\"\norder = 20\nsummary = \"s\"\ntags = [\"30-agents\"]\n",
+        )
+        .unwrap();
+        assert_eq!(chapter.title.as_deref(), Some("30 Agents"));
+        assert_eq!(chapter.order, Some(20));
     }
 
     #[test]
