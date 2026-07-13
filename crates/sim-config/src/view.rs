@@ -1,25 +1,33 @@
 //! Typed read view over a config table.
 
 use sim_kernel::Expr;
-use sim_value::access::{as_i64, as_str, field_any};
+use sim_value::access::{as_i64, as_str, entry_field_any};
 
 use crate::{ConfigError, ConfigResult, ConfigTable};
 
 /// Borrowed typed accessors over one config table.
 #[derive(Clone, Copy, Debug)]
 pub struct ConfigView<'a> {
-    table: &'a ConfigTable,
+    entries: &'a [(Expr, Expr)],
 }
 
 impl<'a> ConfigView<'a> {
     /// Creates a view over `table`.
     pub fn new(table: &'a ConfigTable) -> Self {
-        Self { table }
+        let Expr::Map(entries) = &table.table else {
+            unreachable!("ConfigTable guarantees an Expr::Map table")
+        };
+        Self { entries }
+    }
+
+    /// Creates a view over already-borrowed table entries.
+    pub fn from_entries(entries: &'a [(Expr, Expr)]) -> Self {
+        Self { entries }
     }
 
     /// Returns the raw expression for `key`.
     pub fn get(&self, key: &str) -> Option<&'a Expr> {
-        field_any(&self.table.table, key)
+        entry_field_any(self.entries, key)
     }
 
     /// Reads an optional string field.
@@ -74,6 +82,62 @@ impl<'a> ConfigView<'a> {
         }
     }
 
+    /// Reads an optional list of string values.
+    ///
+    /// Missing fields read as an empty vector so callers can treat absent
+    /// arrays as the natural zero value. A present non-list field, or any
+    /// non-string list item, is reported as a type mismatch.
+    pub fn string_array(&self, key: &str) -> ConfigResult<Vec<String>> {
+        let Some(value) = self.get(key) else {
+            return Ok(Vec::new());
+        };
+        let Expr::List(items) = value else {
+            return Err(ConfigError::TypeMismatch {
+                key: key.to_owned(),
+                expected: "a string list",
+            });
+        };
+        items
+            .iter()
+            .enumerate()
+            .map(|(index, item)| match item {
+                Expr::String(value) => Ok(value.clone()),
+                _ => Err(ConfigError::TypeMismatch {
+                    key: format!("{key}[{index}]"),
+                    expected: "a string",
+                }),
+            })
+            .collect()
+    }
+
+    /// Reads an optional repeated table field as borrowed table views.
+    ///
+    /// Config codecs represent `[[name]]` repeated tables as a list of map
+    /// expressions. Missing fields read as an empty vector. A present field must
+    /// be a list whose items are maps.
+    pub fn tables(&self, key: &str) -> ConfigResult<Vec<ConfigView<'a>>> {
+        let Some(value) = self.get(key) else {
+            return Ok(Vec::new());
+        };
+        let Expr::List(items) = value else {
+            return Err(ConfigError::TypeMismatch {
+                key: key.to_owned(),
+                expected: "a table list",
+            });
+        };
+        items
+            .iter()
+            .enumerate()
+            .map(|(index, item)| match item {
+                Expr::Map(entries) => Ok(ConfigView::from_entries(entries)),
+                _ => Err(ConfigError::TypeMismatch {
+                    key: format!("{key}[{index}]"),
+                    expected: "a table",
+                }),
+            })
+            .collect()
+    }
+
     fn required_error(&self, key: &str, expected: &'static str) -> ConfigError {
         if self.get(key).is_some() {
             ConfigError::TypeMismatch {
@@ -91,7 +155,7 @@ impl<'a> ConfigView<'a> {
 #[cfg(test)]
 mod tests {
     use sim_kernel::Symbol;
-    use sim_value::build::{int, map, text};
+    use sim_value::build::{int, list, map, text};
 
     use super::*;
 
@@ -116,6 +180,73 @@ mod tests {
             ConfigError::TypeMismatch {
                 key: "limit".to_owned(),
                 expected: "a string"
+            }
+        );
+    }
+
+    #[test]
+    fn view_reads_string_arrays_and_repeated_tables() {
+        let table = ConfigTable::new(
+            Symbol::qualified("sim", "cookbook"),
+            map(vec![
+                (
+                    "minimum_loaded",
+                    list(vec![text("codec/lisp"), text("numbers/i64")]),
+                ),
+                (
+                    "loadable_lib",
+                    list(vec![
+                        map(vec![
+                            ("id", text("numbers/i64")),
+                            ("source", text("symbol:numbers/i64")),
+                        ]),
+                        map(vec![
+                            ("id", text("numbers/cas")),
+                            ("source", text("symbol:numbers/cas")),
+                        ]),
+                    ]),
+                ),
+            ]),
+        )
+        .unwrap();
+        let view = ConfigView::new(&table);
+
+        assert_eq!(
+            view.string_array("minimum_loaded").unwrap(),
+            ["codec/lisp", "numbers/i64"]
+        );
+        let loadable = view.tables("loadable_lib").unwrap();
+        assert_eq!(loadable.len(), 2);
+        assert_eq!(loadable[0].string("id"), Some("numbers/i64"));
+        assert_eq!(loadable[1].string("source"), Some("symbol:numbers/cas"));
+        assert!(view.string_array("missing").unwrap().is_empty());
+        assert!(view.tables("missing").unwrap().is_empty());
+    }
+
+    #[test]
+    fn view_reports_array_shape_errors() {
+        let table = ConfigTable::new(
+            Symbol::qualified("sim", "cookbook"),
+            map(vec![
+                ("minimum_loaded", text("codec/lisp")),
+                ("loadable_lib", list(vec![text("bad")])),
+            ]),
+        )
+        .unwrap();
+        let view = ConfigView::new(&table);
+
+        assert_eq!(
+            view.string_array("minimum_loaded").unwrap_err(),
+            ConfigError::TypeMismatch {
+                key: "minimum_loaded".to_owned(),
+                expected: "a string list"
+            }
+        );
+        assert_eq!(
+            view.tables("loadable_lib").unwrap_err(),
+            ConfigError::TypeMismatch {
+                key: "loadable_lib[0]".to_owned(),
+                expected: "a table"
             }
         );
     }
