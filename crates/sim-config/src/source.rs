@@ -47,9 +47,10 @@ pub enum ConfigSource {
 }
 
 /// Probe mode for config defaults.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ProbeMode {
     /// Deterministic, modeled inventory; performs no real I/O.
+    #[default]
     Modeled,
     /// Capability-gated real inventory.
     Real,
