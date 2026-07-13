@@ -15,6 +15,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod config;
 mod digest;
 mod embed;
 mod embed_codegen;

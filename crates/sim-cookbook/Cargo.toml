@@ -9,5 +9,10 @@ publish = true
 repository = "https://github.com/sim-nest/sim-foundation"
 homepage = "https://github.com/sim-nest/sim-foundation"
 
+[dependencies]
+sim-config = { version = "0.1.1", path = "../sim-config" }
+sim-kernel = { version = "0.1.0" }
+sim-value = { version = "0.1.2", path = "../sim-value" }
+
 [lints]
 workspace = true

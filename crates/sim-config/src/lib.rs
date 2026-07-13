@@ -36,6 +36,7 @@ use sim_kernel::{Expr, Symbol, id::SymbolError};
 
 pub mod merge;
 pub mod path;
+pub mod probe;
 pub mod report;
 pub mod shape;
 pub mod source;
@@ -44,6 +45,9 @@ pub mod view;
 
 pub use merge::{ConfigLayer, EffectiveConfig, MergeTrace, merge_layers};
 pub use path::{ConfigRoots, lib_config_path};
+pub use probe::{
+    ConfigProbe, ConfigProbeCaps, ConfigProbeReport, ConfigProbeRequest, ConfigProbeStatus,
+};
 pub use report::{ConfigReport, ConfigReportEntry};
 pub use shape::{ConfigSecretField, ConfigShape, ConfigShapeResult, LibConfigDefaults};
 pub use source::{ConfigSource, ProbeMode};
