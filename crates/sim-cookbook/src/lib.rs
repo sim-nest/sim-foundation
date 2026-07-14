@@ -30,8 +30,8 @@ pub use digest::{audio_digest, fnv1a64, fnv1a64_hex, frame_digest};
 pub use embed::{EmbeddedDir, recipes_from_embedded};
 pub use embed_codegen::{generate_embed_code, write_embed};
 pub use manifest::{
-    BookManifest, ChapterManifest, DEFAULT_ORDER, Diagnostic, RecipeManifest, lint_dir, parse_book,
-    parse_chapter, parse_recipe,
+    BookManifest, ChapterManifest, DEFAULT_ORDER, Diagnostic, RecipeManifest, lint_dir,
+    lint_dir_strict_no_quote, parse_book, parse_chapter, parse_recipe,
 };
 pub use model::{
     BookView, ChapterView, CheckResult, CookbookView, Expectation, FamilyView, GroupedView,

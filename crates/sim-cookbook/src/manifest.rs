@@ -217,6 +217,18 @@ pub fn parse_chapter(text: &str) -> Result<ChapterManifest, String> {
 /// setup and purpose files exist, and that required fields are present. Returns
 /// every problem found, so an author sees all errors at once.
 pub fn lint_dir(dir: &Path) -> Result<(), Vec<Diagnostic>> {
+    lint_dir_impl(dir, false)
+}
+
+/// Lint one recipe directory and reject bare-quote setup files.
+///
+/// This stricter gate is kept separate from [`lint_dir`] while the constellation
+/// still contains older recipe setups that are being converted repo by repo.
+pub fn lint_dir_strict_no_quote(dir: &Path) -> Result<(), Vec<Diagnostic>> {
+    lint_dir_impl(dir, true)
+}
+
+fn lint_dir_impl(dir: &Path, strict_no_quote: bool) -> Result<(), Vec<Diagnostic>> {
     let mut problems = Vec::new();
     let recipe_path = dir.join("recipe.toml");
     let text = match std::fs::read_to_string(&recipe_path) {
@@ -242,6 +254,22 @@ pub fn lint_dir(dir: &Path) -> Result<(), Vec<Diagnostic>> {
             recipe_path.display().to_string(),
             format!("setup file `{}` does not exist", manifest.setup),
         ));
+    } else if strict_no_quote {
+        let setup_path = dir.join(&manifest.setup);
+        match std::fs::read_to_string(&setup_path) {
+            Ok(setup) => {
+                if setup_is_bare_quote(&setup) {
+                    problems.push(Diagnostic::new(
+                        setup_path.display().to_string(),
+                        "recipe setup must not be a bare quote; use an operation, codec form, or read-construct",
+                    ));
+                }
+            }
+            Err(err) => problems.push(Diagnostic::new(
+                setup_path.display().to_string(),
+                format!("cannot read setup file `{}`: {err}", manifest.setup),
+            )),
+        }
     }
     if !dir.join(&manifest.purpose).is_file() {
         problems.push(Diagnostic::new(
@@ -254,6 +282,11 @@ pub fn lint_dir(dir: &Path) -> Result<(), Vec<Diagnostic>> {
     } else {
         Err(problems)
     }
+}
+
+fn setup_is_bare_quote(source: &str) -> bool {
+    let trimmed = source.trim_start();
+    trimmed.starts_with("(quote") || trimmed.starts_with("( quote")
 }
 
 #[cfg(test)]
@@ -428,5 +461,39 @@ result = "(agentic-workflow-trace)"
             "{problems:?}"
         );
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    fn write_recipe_with_setup(dir: &Path, setup: &str) {
+        std::fs::write(dir.join("recipe.toml"), VALID_RECIPE).unwrap();
+        std::fs::write(dir.join("setup.siml"), setup).unwrap();
+        std::fs::write(dir.join("purpose.md"), "Add.").unwrap();
+    }
+
+    #[test]
+    fn default_lint_allows_bare_quote_until_strict_gate_is_requested() {
+        let dir = temp_recipe_dir("default-quote");
+        write_recipe_with_setup(&dir, "(quote add-two-numbers)");
+        assert!(lint_dir(&dir).is_ok());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn strict_lint_reports_bare_quote_setups() {
+        for (tag, setup) in [
+            ("single-line-quote", "(quote add-two-numbers)"),
+            ("spaced-quote", "  ( quote add-two-numbers)"),
+            ("multi-line-quote", "\n(quote\n  add-two-numbers\n)"),
+        ] {
+            let dir = temp_recipe_dir(tag);
+            write_recipe_with_setup(&dir, setup);
+            let problems = lint_dir_strict_no_quote(&dir).unwrap_err();
+            assert!(
+                problems.iter().any(|d| {
+                    d.path.ends_with("setup.siml") && d.message.contains("must not be a bare quote")
+                }),
+                "{tag}: {problems:?}"
+            );
+            let _ = std::fs::remove_dir_all(&dir);
+        }
     }
 }
