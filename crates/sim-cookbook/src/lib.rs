@@ -35,9 +35,9 @@ pub use manifest::{
 };
 pub use model::{
     BookView, ChapterView, CheckResult, CookbookView, Expectation, FamilyView, GroupedView,
-    RecipeCard, RecipeRun, RecipeSource,
+    LibView, RecipeCard, RecipeRun, RecipeSource,
 };
 pub use overlay::{OverlayDirectives, apply_directives, load_overlay, parse_overlay};
-pub use project::{family_of, grouped_view, next, ordered_cards, search, view};
+pub use project::{family_of, grouped_view, lib_view, next, ordered_cards, search, view};
 pub use store::RecipeStore;
 pub use toml_lite::TomlValue;

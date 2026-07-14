@@ -5,7 +5,9 @@
 //! chapter and sort deterministically. Loading another lib adds its book; the
 //! view always reflects exactly the recipes currently loaded.
 
-use crate::model::{BookView, ChapterView, CookbookView, FamilyView, GroupedView, RecipeCard};
+use crate::model::{
+    BookView, ChapterView, CookbookView, FamilyView, GroupedView, LibView, RecipeCard,
+};
 use crate::store::RecipeStore;
 
 /// The level-1 family id for a book, derived from its id prefix with NO extra
@@ -73,6 +75,86 @@ pub fn view(store: &RecipeStore) -> CookbookView {
         chapters[ci].recipes.push(card.clone());
     }
     CookbookView { books }
+}
+
+/// Group the projected store into one top-level entry per known loadable lib.
+///
+/// Loaded libs expose their recipe chapters as `groups`; unloaded libs expose
+/// the single lifecycle load recipe that projected the lib into the store.
+pub fn lib_view(store: &RecipeStore) -> Vec<LibView> {
+    let mut libs: Vec<LibView> = Vec::new();
+    for card in ordered_cards(store) {
+        let target = lib_target(card);
+        let index = match libs.iter().position(|lib| lib.id == target.id) {
+            Some(index) => index,
+            None => {
+                libs.push(LibView {
+                    id: target.id.clone(),
+                    title: card.book_title.clone(),
+                    loaded: target.loaded,
+                    groups: Vec::new(),
+                    recipes: Vec::new(),
+                });
+                libs.len() - 1
+            }
+        };
+        let lib = &mut libs[index];
+        lib.loaded |= target.loaded;
+        if target.loaded {
+            push_grouped_recipe(lib, card);
+        } else {
+            lib.recipes.push(card.clone());
+        }
+    }
+    libs
+}
+
+struct LibTarget {
+    id: String,
+    loaded: bool,
+}
+
+fn lib_target(card: &RecipeCard) -> LibTarget {
+    let action = tag_value(card, "cookbook-action:");
+    let lib = tag_value(card, "cookbook-lib:");
+    match (action, lib) {
+        (Some("load"), Some(id)) => LibTarget {
+            id: id.to_owned(),
+            loaded: false,
+        },
+        (Some("unload"), Some(id)) => LibTarget {
+            id: id.to_owned(),
+            loaded: true,
+        },
+        _ => LibTarget {
+            id: card.book.clone(),
+            loaded: true,
+        },
+    }
+}
+
+fn tag_value<'a>(card: &'a RecipeCard, prefix: &str) -> Option<&'a str> {
+    card.tags.iter().find_map(|tag| tag.strip_prefix(prefix))
+}
+
+fn push_grouped_recipe(lib: &mut LibView, card: &RecipeCard) {
+    let index = match lib
+        .groups
+        .iter()
+        .position(|group| group.name == card.chapter)
+    {
+        Some(index) => index,
+        None => {
+            lib.groups.push(ChapterView {
+                name: card.chapter.clone(),
+                title: card.chapter_title.clone(),
+                summary: card.chapter_summary.clone(),
+                recipes: Vec::new(),
+            });
+            lib.groups.len() - 1
+        }
+    };
+    lib.groups[index].recipes.push(card.clone());
 }
 
 /// Group the store's cards into the two-level [`GroupedView`]: family -> domain
@@ -233,6 +315,93 @@ mod tests {
         assert_eq!(family_of("agent-runner-core"), "agent");
         assert_eq!(family_of("agent"), "agent");
         assert_eq!(family_of("core"), "core");
+    }
+
+    fn lifecycle_card(
+        id: &str,
+        lib: &str,
+        title: &str,
+        action: &str,
+        book_order: i64,
+    ) -> RecipeCard {
+        RecipeCard {
+            id: id.to_string(),
+            book: if action == "load" {
+                "cookbook/loadable".to_string()
+            } else {
+                lib.to_string()
+            },
+            chapter: "cookbook-lifecycle".to_string(),
+            chapter_title: "Lifecycle".to_string(),
+            chapter_summary: String::new(),
+            title: title.to_string(),
+            codec: "lisp".to_string(),
+            setup: b"(quote ok)".to_vec(),
+            purpose: title.to_string(),
+            order: if action == "load" { 0 } else { i64::MAX },
+            chapter_order: if action == "load" { 0 } else { i64::MAX },
+            book_order,
+            book_title: title.to_string(),
+            book_summary: String::new(),
+            tags: vec![
+                format!("cookbook-action:{action}"),
+                format!("cookbook-lib:{lib}"),
+            ],
+            requires: Vec::new(),
+            expect: Vec::new(),
+            source: crate::RecipeSource::Crate {
+                lib: "sim/cookbook".to_string(),
+            },
+        }
+    }
+
+    #[test]
+    fn lib_view_uses_top_level_lib_entries_for_loaded_and_unloaded_libs() {
+        let mut store = RecipeStore::new();
+        store
+            .insert_card(lifecycle_card(
+                "cookbook/load/numbers/i64",
+                "numbers/i64",
+                "Numbers (i64)",
+                "load",
+                50,
+            ))
+            .unwrap();
+        for card in ordered_cards(&family_store())
+            .into_iter()
+            .filter(|card| card.book == "codec/lisp")
+        {
+            store.insert_card(card.clone()).unwrap();
+        }
+        store
+            .insert_card(lifecycle_card(
+                "codec/lisp/cookbook-lifecycle/unload",
+                "codec/lisp",
+                "Lisp",
+                "unload",
+                200,
+            ))
+            .unwrap();
+
+        let libs = lib_view(&store);
+
+        assert_eq!(libs.len(), 2);
+        assert_eq!(libs[0].id, "numbers/i64");
+        assert!(!libs[0].loaded);
+        assert!(libs[0].groups.is_empty());
+        assert_eq!(libs[0].recipes.len(), 1);
+        assert_eq!(libs[0].recipes[0].id, "cookbook/load/numbers/i64");
+        assert_eq!(libs[1].id, "codec/lisp");
+        assert!(libs[1].loaded);
+        assert!(libs[1].recipes.is_empty());
+        assert_eq!(
+            libs[1].groups[0].recipes[0].id,
+            "codec/lisp/01-basics/quote"
+        );
+        assert_eq!(
+            libs[1].groups.last().unwrap().recipes[0].id,
+            "codec/lisp/cookbook-lifecycle/unload"
+        );
     }
 
     // Two books under the same family plus one under another, to prove grouping.
