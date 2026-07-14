@@ -26,6 +26,7 @@
 //! ```
 
 mod body;
+mod cookbook;
 mod error;
 mod hex;
 mod http;
@@ -36,6 +37,7 @@ mod sse;
 mod url;
 
 pub use body::decode_chunked;
+pub use cookbook::{ResponseHeadDemo, response_head_demo};
 pub use error::NetError;
 pub use hex::hex_encode;
 pub use http::{HttpBodyMode, HttpHead, body_mode, parse_http_head};

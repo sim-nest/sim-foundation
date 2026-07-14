@@ -23,9 +23,11 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod cookbook;
 mod descriptor;
 mod name;
 
+pub use cookbook::{ExternalNameDemo, external_name_demo};
 pub use descriptor::SurfaceDescriptor;
 pub use name::{ExternalNamePolicy, external_name};
 
