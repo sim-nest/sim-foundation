@@ -1,5 +1,11 @@
-use sim_kernel::{Expr, Symbol};
+use std::sync::Arc;
 
+use sim_kernel::{CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, NoopEvalPolicy, Symbol};
+
+use crate::capabilities::{
+    edit, exec, find, fs_read, fs_read_aliases, fs_write, fs_write_aliases,
+    granted_capability_or_alias, net_http, net_http_aliases, require_with_aliases,
+};
 use crate::citizen_fields::{path_segments, table_op_expr};
 use crate::op::{TableOp, TableOpError, decode_table_op, encode_table_op};
 use crate::path::{TablePath, TablePathError, is_legal_table_segment};
@@ -8,6 +14,45 @@ use crate::path::{TablePath, TablePathError, is_legal_table_segment};
 fn legal_segment_accepts_normal_name() {
     assert!(is_legal_table_segment("alpha"));
     assert!(is_legal_table_segment("a.b"));
+}
+
+fn seated_cx() -> (Cx, GrantSeat) {
+    Cx::new_seated(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
+}
+
+#[test]
+fn canonical_capability_names_are_stable() {
+    assert_eq!(fs_read().as_str(), "fs/read");
+    assert_eq!(fs_write().as_str(), "fs/write");
+    assert_eq!(find().as_str(), "find");
+    assert_eq!(edit().as_str(), "edit");
+    assert_eq!(exec().as_str(), "exec");
+    assert_eq!(net_http().as_str(), "net/http");
+}
+
+#[test]
+fn require_with_aliases_accepts_canonical_and_compatibility_names() {
+    let (mut cx, seat) = seated_cx();
+    seat.grant(&mut cx, CapabilityName::new("stream.file.write"));
+    assert!(require_with_aliases(&cx, fs_write(), fs_write_aliases()).is_ok());
+
+    let granted = granted_capability_or_alias(&cx, fs_write(), fs_write_aliases()).unwrap();
+    assert_eq!(granted.as_str(), "stream.file.write");
+
+    let (mut cx, seat) = seated_cx();
+    seat.grant(&mut cx, net_http());
+    assert!(require_with_aliases(&cx, net_http(), net_http_aliases()).is_ok());
+}
+
+#[test]
+fn require_with_aliases_denies_with_canonical_name() {
+    let (cx, _) = seated_cx();
+    let err = require_with_aliases(&cx, fs_read(), fs_read_aliases()).unwrap_err();
+    assert!(matches!(
+        err,
+        sim_kernel::Error::CapabilityDenied { capability }
+            if capability == fs_read()
+    ));
 }
 
 #[test]
