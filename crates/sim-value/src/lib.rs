@@ -9,6 +9,7 @@
 //! - [`build`]: constructors (`sym`, `int`, `float`, `text`, `list`, `map`, ...);
 //! - [`capability_names_from_expr`]: parses capability-name expressions;
 //! - [`access`]: reading and immutable updates (`field`, `set`, `remove`, ...);
+//! - [`edit`]: side-effect-free exact and line-range text edits;
 //! - [`kind`]: the one `Expr` variant classifier (`expr_kind`);
 //! - [`path`]: one value-addressing primitive (`Path`, `get`, `set_at`).
 //!
@@ -33,6 +34,7 @@
 pub mod access;
 pub mod build;
 pub mod capability;
+pub mod edit;
 pub mod kind;
 pub mod path;
 

@@ -11,6 +11,7 @@ use crate::access::{
 };
 use crate::build::{entry, float, int, keyword, list, map, num_q, qsym, sym, text, vector};
 use crate::capability_names_from_expr;
+use crate::edit::{edit, edit_lines};
 use crate::kind::expr_kind;
 use crate::path::{Path, PathError, get, remove_at, set_at};
 
@@ -233,6 +234,48 @@ fn capability_names_reject_non_capability_items() {
             found: "non-capability"
         }
     ));
+}
+
+#[test]
+fn edit_absent_pattern_errors() {
+    let err = edit("alpha beta", "gamma", "delta", false).unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "evaluation error: edit: pattern not found: \"gamma\""
+    );
+}
+
+#[test]
+fn edit_ambiguous_pattern_errors() {
+    let err = edit("alpha beta alpha", "alpha", "delta", false).unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "evaluation error: edit: pattern is not unique (2 matches); pass replace_all"
+    );
+}
+
+#[test]
+fn edit_unique_pattern_round_trips() {
+    assert_eq!(
+        edit("alpha beta", "beta", "gamma", false).unwrap(),
+        "alpha gamma"
+    );
+}
+
+#[test]
+fn edit_replace_all_replaces_every_match() {
+    assert_eq!(
+        edit("alpha beta alpha", "alpha", "delta", true).unwrap(),
+        "delta beta delta"
+    );
+}
+
+#[test]
+fn edit_lines_replaces_inclusive_range() {
+    assert_eq!(
+        edit_lines("a\nb\nc\n", 2, 3, "B\nC\n").unwrap(),
+        "a\nB\nC\n"
+    );
 }
 
 #[test]
