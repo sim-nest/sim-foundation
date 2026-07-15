@@ -38,6 +38,39 @@ pub enum HttpBodyMode {
     Empty,
 }
 
+/// Build a simple HTTP/1.1 request head.
+///
+/// This is a policy-free formatter: callers choose the method, target,
+/// headers, content length, and transport. The helper rejects CR/LF injection
+/// and malformed method/header names, then emits a `Connection: close` head so
+/// socket callers can use response EOF as a body boundary when needed.
+pub fn build_http_request_head(
+    method: &str,
+    target: &str,
+    host: &str,
+    content_length: Option<usize>,
+    headers: &[(String, String)],
+) -> Result<String, NetError> {
+    validate_token("method", method)?;
+    validate_field_value("target", target)?;
+    validate_field_value("host", host)?;
+
+    let mut head = format!("{method} {target} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n");
+    if let Some(length) = content_length {
+        head.push_str(&format!("Content-Length: {length}\r\n"));
+    }
+    for (name, value) in headers {
+        validate_token("header name", name)?;
+        validate_field_value("header value", value)?;
+        head.push_str(name);
+        head.push_str(": ");
+        head.push_str(value);
+        head.push_str("\r\n");
+    }
+    head.push_str("\r\n");
+    Ok(head)
+}
+
 /// Parse a CRLF-delimited HTTP response head.
 ///
 /// Extracted from `sim-lib-agent-runner-http`'s `read_response` head parsing.
@@ -79,6 +112,24 @@ pub fn parse_http_head(head_text: &str) -> Result<HttpHead, NetError> {
         reason,
         headers,
     })
+}
+
+fn validate_token(label: &str, value: &str) -> Result<(), NetError> {
+    if value.is_empty()
+        || value
+            .bytes()
+            .any(|byte| byte <= b' ' || byte == b':' || byte >= 0x7f)
+    {
+        return Err(NetError::InvalidHead(format!("invalid {label}")));
+    }
+    Ok(())
+}
+
+fn validate_field_value(label: &str, value: &str) -> Result<(), NetError> {
+    if value.contains('\r') || value.contains('\n') {
+        return Err(NetError::InvalidHead(format!("invalid {label}")));
+    }
+    Ok(())
 }
 
 /// Classify how the body should be read, matching the client's precedence.

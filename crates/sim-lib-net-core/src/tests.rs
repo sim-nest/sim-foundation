@@ -1,7 +1,8 @@
 use crate::{
     CapOutcome, HeadOutcome, HttpBodyMode, LineDecoder, NdjsonDecoder, NetError, SseDecoder,
-    body_mode, decode_chunked, parse_http_head, parse_url, parse_url_for_scheme,
-    parse_url_for_scheme_preserving_path, read_capped_line, read_head_until_double_crlf,
+    body_mode, build_http_request_head, decode_chunked, parse_http_head, parse_url,
+    parse_url_for_scheme, parse_url_for_scheme_preserving_path, read_capped_line,
+    read_head_until_double_crlf,
 };
 
 #[test]
@@ -55,6 +56,50 @@ fn parses_head_and_classifies_content_length() {
     assert_eq!(head.reason, "OK");
     assert_eq!(head.header("content-type"), Some("application/json"));
     assert_eq!(body_mode(&head).unwrap(), HttpBodyMode::ContentLength(17));
+}
+
+#[test]
+fn builds_http_request_head_with_content_length_and_headers() {
+    let head = build_http_request_head(
+        "PUT",
+        "/items/a",
+        "example.test",
+        Some(5),
+        &[("Content-Type".to_owned(), "text/plain".to_owned())],
+    )
+    .unwrap();
+
+    assert_eq!(
+        head,
+        "PUT /items/a HTTP/1.1\r\n\
+         Host: example.test\r\n\
+         Connection: close\r\n\
+         Content-Length: 5\r\n\
+         Content-Type: text/plain\r\n\
+         \r\n"
+    );
+}
+
+#[test]
+fn request_head_builder_rejects_injection_points() {
+    assert!(matches!(
+        build_http_request_head("G ET", "/", "host", None, &[]),
+        Err(NetError::InvalidHead(_))
+    ));
+    assert!(matches!(
+        build_http_request_head("GET", "/\r\nBad: yes", "host", None, &[]),
+        Err(NetError::InvalidHead(_))
+    ));
+    assert!(matches!(
+        build_http_request_head(
+            "GET",
+            "/",
+            "host",
+            None,
+            &[("Bad\nName".to_owned(), "value".to_owned())],
+        ),
+        Err(NetError::InvalidHead(_))
+    ));
 }
 
 #[test]

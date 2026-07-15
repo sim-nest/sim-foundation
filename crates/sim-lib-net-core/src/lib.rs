@@ -40,7 +40,7 @@ pub use body::decode_chunked;
 pub use cookbook::{ResponseHeadDemo, response_head_demo};
 pub use error::NetError;
 pub use hex::hex_encode;
-pub use http::{HttpBodyMode, HttpHead, body_mode, parse_http_head};
+pub use http::{HttpBodyMode, HttpHead, body_mode, build_http_request_head, parse_http_head};
 pub use line::LineDecoder;
 pub use ndjson::NdjsonDecoder;
 pub use read::{CapOutcome, HeadOutcome, read_capped_line, read_head_until_double_crlf};
