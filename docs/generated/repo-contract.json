@@ -1,18 +1,507 @@
 {
-  "schema": "sim.repo-contract.v1",
-  "repo": "sim-foundation",
-  "lanes": [
-    "target/doc/",
-    "docs/agents/cards.jsonl",
-    "docs/humans/",
-    "docs/diagrams/src/",
-    "docs/diagrams/generated/"
+  "card_count": 4,
+  "cards": [
+    {
+      "id": "browse/catalog",
+      "kind": "browse-root",
+      "owner": "workspace",
+      "summary": "root browse catalog"
+    },
+    {
+      "id": "cookbook/net-core",
+      "kind": "cookbook-recipe",
+      "owner": "sim-lib-net-core",
+      "summary": "Side-effect-free HTTP and stream parsing descriptors."
+    },
+    {
+      "id": "cookbook/surface/card",
+      "kind": "cookbook-recipe",
+      "owner": "sim-lib-surface-card",
+      "summary": "Codec-neutral surface descriptors and external naming policy."
+    },
+    {
+      "id": "registry/catalog",
+      "kind": "browse-registry",
+      "owner": "workspace",
+      "summary": "registry catalog browse card"
+    }
   ],
-  "contracts": [
-    "docs/generated/provenance.json",
-    "docs/generated/repo-contract.json",
-    "docs/generated/rustdoc-index.json",
-    "docs/generated/card-index.json",
-    "docs/generated/feature-map.json"
+  "citizen_count": 0,
+  "citizens": [],
+  "generator": "xtask repo-contract v1",
+  "group_count": 1,
+  "group_order": [
+    "workspace"
+  ],
+  "groups": {
+    "workspace": [
+      "sim-config",
+      "sim-cookbook",
+      "sim-lib-net-core",
+      "sim-lib-surface-card",
+      "sim-macros",
+      "sim-table-core",
+      "sim-value",
+      "xtask"
+    ]
+  },
+  "non_citizen_exemption_count": 0,
+  "non_citizen_exemptions": [],
+  "package_count": 8,
+  "packages": [
+    {
+      "crate_name": "sim_config",
+      "dependencies": [
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-table-core",
+          "rename": null,
+          "target": null
+        },
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-value",
+          "rename": null,
+          "target": null
+        }
+      ],
+      "description": "Table and Dir substrate for layered SIM configuration.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-config/Cargo.toml",
+      "name": "sim-config",
+      "publish": "true",
+      "root": "crates/sim-config",
+      "rustdoc_summary": "Table and Dir substrate for layered SIM configuration.",
+      "target_kinds": [
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_config",
+          "src": "crates/sim-config/src/lib.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_cookbook",
+      "dependencies": [
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-config",
+          "rename": null,
+          "target": null
+        },
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-value",
+          "rename": null,
+          "target": null
+        }
+      ],
+      "description": "Cookbook engine for SIM: runnable, crate-local tutorial recipes.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-cookbook/Cargo.toml",
+      "name": "sim-cookbook",
+      "publish": "true",
+      "root": "crates/sim-cookbook",
+      "rustdoc_summary": "Cookbook engine for SIM: runnable, crate-local tutorial recipes.",
+      "target_kinds": [
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_cookbook",
+          "src": "crates/sim-cookbook/src/lib.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_lib_net_core",
+      "dependencies": [
+        {
+          "kind": "build",
+          "optional": false,
+          "package": "sim-cookbook",
+          "rename": null,
+          "target": null
+        },
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-cookbook",
+          "rename": null,
+          "target": null
+        }
+      ],
+      "description": "Reusable, side-effect-free HTTP/streaming parsing primitives.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-lib-net-core/Cargo.toml",
+      "name": "sim-lib-net-core",
+      "publish": "true",
+      "root": "crates/sim-lib-net-core",
+      "rustdoc_summary": "Reusable, side-effect-free HTTP/streaming parsing and wire-format helpers.",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_lib_net_core",
+          "src": "crates/sim-lib-net-core/src/lib.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "custom-build"
+          ],
+          "name": "build-script-build",
+          "src": "crates/sim-lib-net-core/build.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_lib_surface_card",
+      "dependencies": [
+        {
+          "kind": "build",
+          "optional": false,
+          "package": "sim-cookbook",
+          "rename": null,
+          "target": null
+        },
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-cookbook",
+          "rename": null,
+          "target": null
+        }
+      ],
+      "description": "Shared, plain-data surface-card spine.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-lib-surface-card/Cargo.toml",
+      "name": "sim-lib-surface-card",
+      "publish": "true",
+      "root": "crates/sim-lib-surface-card",
+      "rustdoc_summary": "Shared, plain-data surface-card spine.",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_lib_surface_card",
+          "src": "crates/sim-lib-surface-card/src/lib.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "custom-build"
+          ],
+          "name": "build-script-build",
+          "src": "crates/sim-lib-surface-card/build.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_macros",
+      "dependencies": [],
+      "description": "Proc-macro surface for authored SIM libraries.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-macros/Cargo.toml",
+      "name": "sim-macros",
+      "publish": "true",
+      "root": "crates/sim-macros",
+      "rustdoc_summary": "Proc-macro surface for authored SIM libraries.",
+      "target_kinds": [
+        "proc-macro"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "proc-macro"
+          ],
+          "kind": [
+            "proc-macro"
+          ],
+          "name": "sim_macros",
+          "src": "crates/sim-macros/src/lib.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_table_core",
+      "dependencies": [
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-value",
+          "rename": null,
+          "target": null
+        }
+      ],
+      "description": "Shared table substrate: path validation and the table operation protocol.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-table-core/Cargo.toml",
+      "name": "sim-table-core",
+      "publish": "true",
+      "root": "crates/sim-table-core",
+      "rustdoc_summary": "Shared table substrate: path validation and the table operation protocol.",
+      "target_kinds": [
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_table_core",
+          "src": "crates/sim-table-core/src/lib.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_value",
+      "dependencies": [],
+      "description": "Ergonomic construction and access for kernel Expr data.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-value/Cargo.toml",
+      "name": "sim-value",
+      "publish": "true",
+      "root": "crates/sim-value",
+      "rustdoc_summary": "Ergonomic construction and access for kernel Expr data.",
+      "target_kinds": [
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_value",
+          "src": "crates/sim-value/src/lib.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "xtask",
+      "dependencies": [],
+      "description": "SIM workspace package for xtask.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "xtask/Cargo.toml",
+      "name": "xtask",
+      "publish": "false",
+      "root": "xtask",
+      "rustdoc_summary": "SIM workspace package for xtask.",
+      "target_kinds": [
+        "bin"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "bin"
+          ],
+          "name": "xtask",
+          "src": "xtask/src/main.rs"
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "api_docs": "target/doc/",
+    "generated_by": "cargo run -p xtask -- simdoc",
+    "generation_timestamp": "2026-07-15T21:29:31+02:00",
+    "generator": "xtask repo-contract v1",
+    "git_commit": "045ad38238a3bdf1398d1fb6c7ef42787d8f1796",
+    "repo": "sim-foundation",
+    "schema": "sim.provenance.v1",
+    "source_commit": "045ad38238a3bdf1398d1fb6c7ef42787d8f1796",
+    "source_remote": "https://github.com/sim-nest/sim-foundation",
+    "validation_commands": [
+      "cargo fmt --all --check",
+      "cargo test",
+      "cargo clippy --all-targets -- -D warnings",
+      "cargo doc --no-deps",
+      "cargo run -p xtask -- simdoc --check",
+      "cargo run -p xtask -- check-file-sizes",
+      "cargo run -p xtask -- repo-contract --check --repo .",
+      "cargo run -p xtask -- validation-matrix --check --repo .",
+      "cargo run -p xtask -- crate-catalog --check --repo ."
+    ],
+    "workspace_hash": "50bdb9da4d226119",
+    "workspace_hash_algorithm": "fnv1a64",
+    "workspace_hash_input_count": 78,
+    "workspace_hash_inputs": [
+      "Cargo.toml",
+      "crates/sim-config/Cargo.toml",
+      "crates/sim-config/src/lib.rs",
+      "crates/sim-config/src/merge.rs",
+      "crates/sim-config/src/path.rs",
+      "crates/sim-config/src/probe.rs",
+      "crates/sim-config/src/report.rs",
+      "crates/sim-config/src/shape.rs",
+      "crates/sim-config/src/source.rs",
+      "crates/sim-config/src/table.rs",
+      "crates/sim-config/src/view.rs",
+      "crates/sim-cookbook/Cargo.toml",
+      "crates/sim-cookbook/src/config.rs",
+      "crates/sim-cookbook/src/digest.rs",
+      "crates/sim-cookbook/src/embed.rs",
+      "crates/sim-cookbook/src/embed_codegen.rs",
+      "crates/sim-cookbook/src/lib.rs",
+      "crates/sim-cookbook/src/manifest.rs",
+      "crates/sim-cookbook/src/model.rs",
+      "crates/sim-cookbook/src/overlay.rs",
+      "crates/sim-cookbook/src/project.rs",
+      "crates/sim-cookbook/src/store.rs",
+      "crates/sim-cookbook/src/toml_lite.rs",
+      "crates/sim-lib-net-core/Cargo.toml",
+      "crates/sim-lib-net-core/build.rs",
+      "crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml",
+      "crates/sim-lib-net-core/recipes/book.toml",
+      "crates/sim-lib-net-core/src/body.rs",
+      "crates/sim-lib-net-core/src/cookbook.rs",
+      "crates/sim-lib-net-core/src/error.rs",
+      "crates/sim-lib-net-core/src/hex.rs",
+      "crates/sim-lib-net-core/src/http.rs",
+      "crates/sim-lib-net-core/src/lib.rs",
+      "crates/sim-lib-net-core/src/line.rs",
+      "crates/sim-lib-net-core/src/ndjson.rs",
+      "crates/sim-lib-net-core/src/read.rs",
+      "crates/sim-lib-net-core/src/sse.rs",
+      "crates/sim-lib-net-core/src/tests.rs",
+      "crates/sim-lib-net-core/src/url.rs",
+      "crates/sim-lib-surface-card/Cargo.toml",
+      "crates/sim-lib-surface-card/build.rs",
+      "crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml",
+      "crates/sim-lib-surface-card/recipes/book.toml",
+      "crates/sim-lib-surface-card/src/cookbook.rs",
+      "crates/sim-lib-surface-card/src/descriptor.rs",
+      "crates/sim-lib-surface-card/src/lib.rs",
+      "crates/sim-lib-surface-card/src/name.rs",
+      "crates/sim-macros/Cargo.toml",
+      "crates/sim-macros/src/attrs.rs",
+      "crates/sim-macros/src/function_expand.rs",
+      "crates/sim-macros/src/lib.rs",
+      "crates/sim-macros/src/macro_expand.rs",
+      "crates/sim-macros/src/module_expand/native_export.rs",
+      "crates/sim-macros/src/module_expand.rs",
+      "crates/sim-macros/src/native_class_expand.rs",
+      "crates/sim-macros/src/native_macro_expand.rs",
+      "crates/sim-macros/src/native_number_expand.rs",
+      "crates/sim-macros/src/parse.rs",
+      "crates/sim-macros/src/shape.rs",
+      "crates/sim-macros/src/tests.rs",
+      "crates/sim-table-core/Cargo.toml",
+      "crates/sim-table-core/src/capabilities.rs",
+      "crates/sim-table-core/src/citizen_fields.rs",
+      "crates/sim-table-core/src/lib.rs",
+      "crates/sim-table-core/src/manifest.rs",
+      "crates/sim-table-core/src/op.rs",
+      "crates/sim-table-core/src/path.rs",
+      "crates/sim-table-core/src/tests.rs",
+      "crates/sim-value/Cargo.toml",
+      "crates/sim-value/src/access.rs",
+      "crates/sim-value/src/build.rs",
+      "crates/sim-value/src/capability.rs",
+      "crates/sim-value/src/edit.rs",
+      "crates/sim-value/src/kind.rs",
+      "crates/sim-value/src/lib.rs",
+      "crates/sim-value/src/path.rs",
+      "crates/sim-value/src/tests.rs",
+      "xtask/Cargo.toml"
+    ]
+  },
+  "recipe_book_count": 2,
+  "recipes": [
+    {
+      "book": "net-core",
+      "book_toml": "crates/sim-lib-net-core/recipes/book.toml",
+      "card_id": "cookbook/net-core",
+      "group": "workspace",
+      "package": "sim-lib-net-core",
+      "recipe_count": 1,
+      "recipes": [
+        {
+          "card_id": "net-core/01-basics/response-head",
+          "codec": "lisp",
+          "id": "response-head",
+          "package": "sim-lib-net-core",
+          "recipe_toml": "crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml",
+          "title": "Response head descriptor"
+        }
+      ],
+      "summary": "Side-effect-free HTTP and stream parsing descriptors.",
+      "title": "Net Core"
+    },
+    {
+      "book": "surface/card",
+      "book_toml": "crates/sim-lib-surface-card/recipes/book.toml",
+      "card_id": "cookbook/surface/card",
+      "group": "workspace",
+      "package": "sim-lib-surface-card",
+      "recipe_count": 1,
+      "recipes": [
+        {
+          "card_id": "surface/card/01-basics/external-name",
+          "codec": "lisp",
+          "id": "external-name",
+          "package": "sim-lib-surface-card",
+          "recipe_toml": "crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml",
+          "title": "External name descriptor"
+        }
+      ],
+      "summary": "Codec-neutral surface descriptors and external naming policy.",
+      "title": "Surface Card"
+    }
   ]
 }

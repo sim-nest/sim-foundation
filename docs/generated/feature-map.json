@@ -1,5 +1,45 @@
 {
-  "schema": "sim.feature-map.v1",
-  "repo": "sim-foundation",
-  "packages": []
+  "generator": "xtask repo-contract v1",
+  "packages": [
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-config"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-cookbook"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-lib-net-core"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-lib-surface-card"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-macros"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-table-core"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-value"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "xtask"
+    }
+  ]
 }

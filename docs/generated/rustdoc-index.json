@@ -1,5 +1,61 @@
 {
-  "schema": "sim.rustdoc-index.v1",
-  "repo": "sim-foundation",
-  "target_doc": "target/doc/"
+  "generator": "xtask repo-contract v1",
+  "packages": [
+    {
+      "crate_name": "sim_config",
+      "group": "workspace",
+      "manifest": "crates/sim-config/Cargo.toml",
+      "package": "sim-config",
+      "summary": "Table and Dir substrate for layered SIM configuration."
+    },
+    {
+      "crate_name": "sim_cookbook",
+      "group": "workspace",
+      "manifest": "crates/sim-cookbook/Cargo.toml",
+      "package": "sim-cookbook",
+      "summary": "Cookbook engine for SIM: runnable, crate-local tutorial recipes."
+    },
+    {
+      "crate_name": "sim_lib_net_core",
+      "group": "workspace",
+      "manifest": "crates/sim-lib-net-core/Cargo.toml",
+      "package": "sim-lib-net-core",
+      "summary": "Reusable, side-effect-free HTTP/streaming parsing and wire-format helpers."
+    },
+    {
+      "crate_name": "sim_lib_surface_card",
+      "group": "workspace",
+      "manifest": "crates/sim-lib-surface-card/Cargo.toml",
+      "package": "sim-lib-surface-card",
+      "summary": "Shared, plain-data surface-card spine."
+    },
+    {
+      "crate_name": "sim_macros",
+      "group": "workspace",
+      "manifest": "crates/sim-macros/Cargo.toml",
+      "package": "sim-macros",
+      "summary": "Proc-macro surface for authored SIM libraries."
+    },
+    {
+      "crate_name": "sim_table_core",
+      "group": "workspace",
+      "manifest": "crates/sim-table-core/Cargo.toml",
+      "package": "sim-table-core",
+      "summary": "Shared table substrate: path validation and the table operation protocol."
+    },
+    {
+      "crate_name": "sim_value",
+      "group": "workspace",
+      "manifest": "crates/sim-value/Cargo.toml",
+      "package": "sim-value",
+      "summary": "Ergonomic construction and access for kernel Expr data."
+    },
+    {
+      "crate_name": "xtask",
+      "group": "workspace",
+      "manifest": "xtask/Cargo.toml",
+      "package": "xtask",
+      "summary": "SIM workspace package for xtask."
+    }
+  ]
 }
