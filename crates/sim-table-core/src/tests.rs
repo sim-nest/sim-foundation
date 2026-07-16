@@ -111,6 +111,10 @@ fn key() -> Symbol {
     Symbol::new("k")
 }
 
+fn qualified_key() -> Symbol {
+    Symbol::qualified("cfg", "root")
+}
+
 fn all_ops() -> Vec<TableOp> {
     vec![
         TableOp::Get(key()),
@@ -134,6 +138,21 @@ fn every_op_round_trips() {
         let encoded = encode_table_op(&op);
         let decoded = decode_table_op(&encoded).unwrap();
         assert_eq!(decoded, op, "round trip failed for {op:?}");
+    }
+}
+
+#[test]
+fn keyed_ops_preserve_qualified_symbols() {
+    let key = qualified_key();
+    for op in [
+        TableOp::Get(key.clone()),
+        TableOp::Set(key.clone(), Expr::String("v".to_owned())),
+        TableOp::Has(key.clone()),
+        TableOp::Delete(key.clone()),
+    ] {
+        let encoded = encode_table_op(&op);
+        let decoded = decode_table_op(&encoded).unwrap();
+        assert_eq!(decoded, op, "qualified key changed for {op:?}");
     }
 }
 
@@ -180,6 +199,32 @@ fn decode_rejects_unknown_op() {
         decode_table_op(&expr),
         Err(TableOpError::UnknownOp("frobnicate".to_owned()))
     );
+}
+
+#[test]
+fn dir_ops_reject_illegal_segments() {
+    for (label, key) in [
+        ("empty", Symbol::new("")),
+        ("dot", Symbol::new(".")),
+        ("dotdot", Symbol::new("..")),
+        ("slash", Symbol::new("a/b")),
+        ("backslash", Symbol::new("a\\b")),
+        ("qualified", qualified_key()),
+    ] {
+        for (op_name, op) in [
+            ("mkdir", TableOp::Mkdir(key.clone())),
+            ("opendir", TableOp::Opendir(key.clone())),
+            ("rmdir", TableOp::Rmdir(key.clone())),
+            ("dir?", TableOp::IsDir(key.clone())),
+        ] {
+            let encoded = encode_table_op(&op);
+            assert_eq!(
+                decode_table_op(&encoded),
+                Err(TableOpError::BadArg(op_name.to_owned())),
+                "{op_name} accepted {label} dir segment"
+            );
+        }
+    }
 }
 
 #[test]
