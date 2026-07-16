@@ -25,9 +25,9 @@ pub fn model_defaults_lib_symbol() -> Symbol {
 
 /// Shape-backed contract for the `sim/cookbook` config table.
 ///
-/// The table carries `minimum_loaded` as a string list plus repeated
-/// `loadable_lib` rows. Each row has an `id` shown by the cookbook and a
-/// host-owned `source` key resolved later by the runtime host.
+/// The table carries `minimum_loaded`, `hide`, and `order` string lists plus
+/// repeated `loadable_lib` rows. Each row has an `id` shown by the cookbook and
+/// a host-owned `source` key resolved later by the runtime host.
 pub fn cookbook_config_shape() -> ConfigShape {
     let lib = cookbook_lib_symbol();
     ConfigShape::new(
@@ -36,6 +36,8 @@ pub fn cookbook_config_shape() -> ConfigShape {
             Symbol::qualified("config-shape", "sim/cookbook"),
             vec![
                 FieldSpec::optional("minimum_loaded", FieldShape::StringList),
+                FieldSpec::optional("hide", FieldShape::StringList),
+                FieldSpec::optional("order", FieldShape::StringList),
                 FieldSpec::optional(
                     "loadable_lib",
                     FieldShape::TableList(vec![
@@ -292,13 +294,17 @@ mod tests {
     }
 
     #[test]
-    fn cookbook_shape_accepts_minimum_loaded_and_loadable_rows() {
+    fn cookbook_shape_accepts_provider_fields_together() {
+        use sim_config::ConfigView;
+
         let mut cx = cx();
         let shape = cookbook_config_shape();
         let table = ConfigTable::new(
             cookbook_lib_symbol(),
             map(vec![
                 ("minimum_loaded", string_list(["codec/lisp"])),
+                ("hide", string_list(["demo/hidden"])),
+                ("order", string_list(["numbers/cas", "codec/algol"])),
                 (
                     "loadable_lib",
                     list(vec![
@@ -317,8 +323,15 @@ mod tests {
         .unwrap();
 
         let effective = shape.validate(&mut cx, &table).unwrap();
+        let view = ConfigView::new(&effective);
 
         assert!(matches!(effective.table, Expr::Map(_)));
+        assert_eq!(view.string_array("minimum_loaded").unwrap(), ["codec/lisp"]);
+        assert_eq!(view.string_array("hide").unwrap(), ["demo/hidden"]);
+        assert_eq!(
+            view.string_array("order").unwrap(),
+            ["numbers/cas", "codec/algol"]
+        );
     }
 
     #[test]
