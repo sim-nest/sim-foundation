@@ -1,0 +1,12 @@
+[package]
+name = "sim-macros-fail-missing-site-realize"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+publish = false
+
+[workspace]
+members = []
+
+[dependencies]
+sim = { package = "sim-nest", version = "0.1.0", default-features = false, features = ["core", "shape", "proc-macros"] }

@@ -54,14 +54,15 @@
     },
     {
       "description": "Proc-macro surface for authored SIM libraries.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-macros/Cargo.toml",
       "name": "sim-macros",
       "publish": "true",
       "readme": "crates/sim-macros/README.md",
       "root": "crates/sim-macros",
       "target_kinds": [
-        "proc-macro"
+        "proc-macro",
+        "test"
       ]
     },
     {

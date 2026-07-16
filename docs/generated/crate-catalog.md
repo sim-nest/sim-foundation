@@ -10,7 +10,7 @@ Generated from Cargo metadata by `xtask crate-catalog v1`.
 | `sim-cookbook` | `true` | `lib` | Cookbook engine for SIM: runnable, crate-local tutorial recipes. |
 | `sim-lib-net-core` | `true` | `custom-build, lib` | Reusable, side-effect-free HTTP/streaming parsing primitives. |
 | `sim-lib-surface-card` | `true` | `custom-build, lib` | Shared, plain-data surface-card spine. |
-| `sim-macros` | `true` | `proc-macro` | Proc-macro surface for authored SIM libraries. |
+| `sim-macros` | `true` | `proc-macro, test` | Proc-macro surface for authored SIM libraries. |
 | `sim-table-core` | `true` | `lib` | Shared table substrate: path validation and the table operation protocol. |
 | `sim-value` | `true` | `lib` | Ergonomic construction and access for kernel Expr data. |
 | `xtask` | `false` | `bin` | SIM workspace package for xtask. |
