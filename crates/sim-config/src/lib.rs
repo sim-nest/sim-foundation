@@ -103,6 +103,11 @@ pub enum ConfigError {
         /// The duplicate field name.
         key: String,
     },
+    /// A config Dir contained equivalent spellings for one library id.
+    DuplicateLibId {
+        /// The duplicate library id.
+        lib: Symbol,
+    },
 }
 
 impl From<SymbolError> for ConfigError {
@@ -134,6 +139,13 @@ impl fmt::Display for ConfigError {
             }
             Self::DuplicateField { key } => {
                 write!(f, "config field `{key}` is defined more than once")
+            }
+            Self::DuplicateLibId { lib } => {
+                write!(
+                    f,
+                    "config dir contains duplicate entries for `{}`",
+                    lib.as_qualified_str()
+                )
             }
         }
     }
