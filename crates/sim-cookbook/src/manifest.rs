@@ -6,7 +6,7 @@
 //! per chapter). Parsing is strict: required fields must be present and
 //! non-empty, and unknown keys are rejected so typos surface immediately.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::model::Expectation;
 use crate::toml_lite::{self, TomlDoc};
@@ -53,6 +53,25 @@ pub struct RecipeManifest {
     pub requires: Vec<String>,
     /// Declared expectations.
     pub expect: Vec<Expectation>,
+}
+
+impl RecipeManifest {
+    /// Validate the manifest fields whose meaning depends on a recipe
+    /// directory: embedded relative paths and other per-dir invariants.
+    pub fn validate_for_dir(&self) -> Result<(), Vec<String>> {
+        let mut problems = Vec::new();
+        if let Err(err) = validate_recipe_rel_path("setup", &self.setup) {
+            problems.push(err);
+        }
+        if let Err(err) = validate_recipe_rel_path("purpose", &self.purpose) {
+            problems.push(err);
+        }
+        if problems.is_empty() {
+            Ok(())
+        } else {
+            Err(problems)
+        }
+    }
 }
 
 /// Parsed `book.toml`.
@@ -107,6 +126,39 @@ fn optional_strings(doc: &TomlDoc, key: &str) -> Result<Vec<String>, String> {
             .to_vec()),
         None => Ok(Vec::new()),
     }
+}
+
+fn validate_recipe_rel_path(field: &str, value: &str) -> Result<(), String> {
+    if value.starts_with('/') || value.starts_with('\\') {
+        return Err(format!("`{field}` must be a relative slash path"));
+    }
+    if value.len() >= 2 && value.as_bytes()[1] == b':' && value.as_bytes()[0].is_ascii_alphabetic()
+    {
+        return Err(format!("`{field}` must be a relative slash path"));
+    }
+    if value.contains('\\') {
+        return Err(format!("`{field}` must use `/` separators only"));
+    }
+    for component in value.split('/') {
+        if component.is_empty() {
+            return Err(format!("`{field}` must not contain empty path components"));
+        }
+        if component == "." {
+            return Err(format!("`{field}` must not contain `.` path components"));
+        }
+        if component == ".." {
+            return Err(format!("`{field}` must not contain `..` path components"));
+        }
+    }
+    Ok(())
+}
+
+fn resolve_recipe_rel_path(base: &Path, value: &str) -> PathBuf {
+    let mut path = base.to_path_buf();
+    for component in value.split('/') {
+        path.push(component);
+    }
+    path
 }
 
 /// Parse and validate `recipe.toml` text.
@@ -249,33 +301,51 @@ fn lint_dir_impl(dir: &Path, strict_no_quote: bool) -> Result<(), Vec<Diagnostic
             )]);
         }
     };
-    if !dir.join(&manifest.setup).is_file() {
-        problems.push(Diagnostic::new(
-            recipe_path.display().to_string(),
-            format!("setup file `{}` does not exist", manifest.setup),
-        ));
-    } else if strict_no_quote {
-        let setup_path = dir.join(&manifest.setup);
-        match std::fs::read_to_string(&setup_path) {
-            Ok(setup) => {
-                if setup_is_bare_quote(&setup) {
-                    problems.push(Diagnostic::new(
-                        setup_path.display().to_string(),
-                        "recipe setup must not be a bare quote; use an operation, codec form, or read-construct",
-                    ));
-                }
+    let validated = match manifest.validate_for_dir() {
+        Ok(()) => true,
+        Err(errors) => {
+            for err in errors {
+                problems.push(Diagnostic::new(recipe_path.display().to_string(), err));
             }
-            Err(err) => problems.push(Diagnostic::new(
-                setup_path.display().to_string(),
-                format!("cannot read setup file `{}`: {err}", manifest.setup),
-            )),
+            false
+        }
+    };
+    let setup_path = if validated {
+        Some(resolve_recipe_rel_path(dir, &manifest.setup))
+    } else {
+        None
+    };
+    if let Some(setup_path) = setup_path.as_ref() {
+        if !setup_path.is_file() {
+            problems.push(Diagnostic::new(
+                recipe_path.display().to_string(),
+                format!("setup file `{}` does not exist", manifest.setup),
+            ));
+        } else if strict_no_quote {
+            match std::fs::read_to_string(setup_path) {
+                Ok(setup) => {
+                    if setup_is_bare_quote(&setup) {
+                        problems.push(Diagnostic::new(
+                            setup_path.display().to_string(),
+                            "recipe setup must not be a bare quote; use an operation, codec form, or read-construct",
+                        ));
+                    }
+                }
+                Err(err) => problems.push(Diagnostic::new(
+                    setup_path.display().to_string(),
+                    format!("cannot read setup file `{}`: {err}", manifest.setup),
+                )),
+            }
         }
     }
-    if !dir.join(&manifest.purpose).is_file() {
-        problems.push(Diagnostic::new(
-            recipe_path.display().to_string(),
-            format!("purpose file `{}` does not exist", manifest.purpose),
-        ));
+    if validated {
+        let purpose_path = resolve_recipe_rel_path(dir, &manifest.purpose);
+        if !purpose_path.is_file() {
+            problems.push(Diagnostic::new(
+                recipe_path.display().to_string(),
+                format!("purpose file `{}` does not exist", manifest.purpose),
+            ));
+        }
     }
     if problems.is_empty() {
         Ok(())
@@ -357,6 +427,39 @@ result = "3"
         )
         .unwrap();
         assert_eq!(m.id, "x");
+    }
+
+    #[test]
+    fn manifest_validate_for_dir_rejects_unsafe_paths() {
+        let mut manifest = parse_recipe(
+            "id = \"x\"\ntitle = \"X\"\ncodec = \"l\"\nsetup = \"../setup.siml\"\npurpose = \"/tmp/purpose.md\"\n",
+        )
+        .unwrap();
+        let err = manifest.validate_for_dir().unwrap_err();
+        assert!(
+            err.iter()
+                .any(|msg| msg.contains("`setup` must not contain `..`")),
+            "{err:?}"
+        );
+        assert!(
+            err.iter()
+                .any(|msg| msg.contains("`purpose` must be a relative slash path")),
+            "{err:?}"
+        );
+
+        manifest.setup = "nested\\setup.siml".to_string();
+        manifest.purpose = "notes//purpose.md".to_string();
+        let err = manifest.validate_for_dir().unwrap_err();
+        assert!(
+            err.iter()
+                .any(|msg| msg.contains("`setup` must use `/` separators only")),
+            "{err:?}"
+        );
+        assert!(
+            err.iter()
+                .any(|msg| msg.contains("`purpose` must not contain empty path components")),
+            "{err:?}"
+        );
     }
 
     #[test]
@@ -458,6 +561,65 @@ result = "(agentic-workflow-trace)"
         let problems = lint_dir(&dir).unwrap_err();
         assert!(
             problems.iter().any(|d| d.message.contains("setup.siml")),
+            "{problems:?}"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn lint_dir_allows_manifest_id_that_differs_from_the_directory_name() {
+        let dir = temp_recipe_dir("browser-facade");
+        std::fs::write(
+            dir.join("recipe.toml"),
+            VALID_RECIPE.replace("add-two-numbers", "frame-facade"),
+        )
+        .unwrap();
+        std::fs::write(dir.join("setup.siml"), "(+ 1 2)").unwrap();
+        std::fs::write(dir.join("purpose.md"), "Add.").unwrap();
+        assert!(lint_dir(&dir).is_ok());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn lint_dir_reports_parent_path_components() {
+        let dir = temp_recipe_dir("parent-path");
+        std::fs::write(
+            dir.join("recipe.toml"),
+            VALID_RECIPE.replace("setup.siml", "../setup.siml"),
+        )
+        .unwrap();
+        std::fs::write(dir.join("purpose.md"), "Add.").unwrap();
+        let problems = lint_dir(&dir).unwrap_err();
+        assert!(
+            problems
+                .iter()
+                .any(|d| d.message.contains("`setup` must not contain `..`")),
+            "{problems:?}"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn lint_dir_reports_absolute_and_backslash_paths() {
+        let dir = temp_recipe_dir("absolute-path");
+        std::fs::write(
+            dir.join("recipe.toml"),
+            VALID_RECIPE
+                .replace("setup.siml", "nested\\\\setup.siml")
+                .replace("purpose.md", "/tmp/purpose.md"),
+        )
+        .unwrap();
+        let problems = lint_dir(&dir).unwrap_err();
+        assert!(
+            problems
+                .iter()
+                .any(|d| d.message.contains("`setup` must use `/` separators only")),
+            "{problems:?}"
+        );
+        assert!(
+            problems.iter().any(|d| d
+                .message
+                .contains("`purpose` must be a relative slash path")),
             "{problems:?}"
         );
         let _ = std::fs::remove_dir_all(&dir);
