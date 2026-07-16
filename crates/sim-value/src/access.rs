@@ -1,10 +1,17 @@
 //! Reading and immutable updates for kernel `Expr` data.
 //!
-//! `field` matches an unqualified symbol key equal to `name` -- the existing
-//! majority behavior across the repo. `field_q` covers qualified keys. The
-//! split prevents a silent behavior change for callers that relied on either
-//! form. `set`/`remove` are immutable (clone, then modify) to match every
-//! current caller.
+//! `field` matches an unqualified symbol key equal to `name` -- the authored
+//! SIM-record behavior. `field_q` covers qualified keys, and `field_any`
+//! accepts either a bare-symbol key or an `Expr::String` key for provider-style
+//! maps. The split prevents a silent behavior change for callers that relied on
+//! either form.
+//!
+//! Immutable update helpers follow the same distinction. [`set`] and
+//! [`remove`] operate on the visible field name across bare-symbol and string
+//! keys so provider/config maps do not retain a stale readable value beside a
+//! newly written one. [`set_strict`] and [`remove_strict`] are the authored
+//! SIM-record variants: they only touch bare-symbol keys and leave provider
+//! string keys alone.
 
 use sim_kernel::{Error, Expr, Result, Symbol};
 
@@ -327,7 +334,19 @@ pub fn field_bool(map: &Expr, name: &str) -> Option<bool> {
 /// Read a number value's canonical literal as `i64`.
 pub fn as_i64(value: &Expr) -> Option<i64> {
     match value {
-        Expr::Number(number) => number.canonical.parse::<i64>().ok(),
+        Expr::Number(number) if number.domain.name.as_ref() == "i64" => {
+            number.canonical.parse::<i64>().ok()
+        }
+        _ => None,
+    }
+}
+
+/// Read a number value's canonical literal as `u64`.
+pub fn as_u64(value: &Expr) -> Option<u64> {
+    match value {
+        Expr::Number(number) if number.domain.name.as_ref() == "u64" => {
+            number.canonical.parse::<u64>().ok()
+        }
         _ => None,
     }
 }
@@ -348,31 +367,82 @@ pub fn as_str(value: &Expr) -> Option<&str> {
     }
 }
 
-/// Set (or insert) an unqualified-keyed field, preserving sibling keys, in a
-/// new map value.
-pub fn set(map: &Expr, name: &str, value: Expr) -> Expr {
-    let mut entries = match map {
-        Expr::Map(entries) => entries.clone(),
-        _ => Vec::new(),
+fn set_matching<F>(map: &Expr, name: &str, value: Expr, matches: F) -> Expr
+where
+    F: Fn(&Expr, &str) -> bool,
+{
+    let entries: &[(Expr, Expr)] = match map {
+        Expr::Map(entries) => entries,
+        _ => &[],
     };
-    if let Some(slot) = entries.iter_mut().find(|(key, _)| key_is(key, name)) {
-        slot.1 = value;
-    } else {
-        entries.push((sym(name), value));
+    let mut updated = Vec::with_capacity(entries.len().saturating_add(1));
+    let mut replacement = Some(value);
+    let mut matched = false;
+
+    for (key, existing) in entries {
+        if matches(key, name) {
+            if !matched {
+                updated.push((key.clone(), replacement.take().unwrap()));
+                matched = true;
+            }
+        } else {
+            updated.push((key.clone(), existing.clone()));
+        }
     }
-    Expr::Map(entries)
+
+    if !matched {
+        updated.push((sym(name), replacement.take().unwrap()));
+    }
+
+    Expr::Map(updated)
 }
 
-/// Remove an unqualified-keyed field, returning a new map value.
-pub fn remove(map: &Expr, name: &str) -> Expr {
-    let entries = match map {
-        Expr::Map(entries) => entries.clone(),
-        _ => Vec::new(),
+/// Set (or insert) a visible field by name, matching either a bare-symbol or
+/// string key, preserving sibling keys in a new map value.
+///
+/// When duplicates exist under the same visible name, the first matching entry
+/// keeps its original key spelling and later duplicates are dropped.
+pub fn set(map: &Expr, name: &str, value: Expr) -> Expr {
+    set_matching(map, name, value, key_is_any)
+}
+
+/// Set (or insert) a strict bare-symbol field, preserving sibling keys in a
+/// new map value.
+///
+/// This authored-SIM-record variant ignores provider-style string keys with the
+/// same visible name rather than creating an ambiguous overlay.
+pub fn set_strict(map: &Expr, name: &str, value: Expr) -> Expr {
+    if matches!(map, Expr::Map(entries) if entries.iter().any(|(key, _)| key_is_any(key, name)) && !entries.iter().any(|(key, _)| key_is(key, name)))
+    {
+        return map.clone();
+    }
+    set_matching(map, name, value, key_is)
+}
+
+fn remove_matching<F>(map: &Expr, name: &str, matches: F) -> Expr
+where
+    F: Fn(&Expr, &str) -> bool,
+{
+    let entries: &[(Expr, Expr)] = match map {
+        Expr::Map(entries) => entries,
+        _ => &[],
     };
     Expr::Map(
         entries
-            .into_iter()
-            .filter(|(key, _)| !key_is(key, name))
+            .iter()
+            .filter(|(key, _)| !matches(key, name))
+            .cloned()
             .collect(),
     )
+}
+
+/// Remove a visible field by name, matching either a bare-symbol or string
+/// key, and returning a new map value.
+pub fn remove(map: &Expr, name: &str) -> Expr {
+    remove_matching(map, name, key_is_any)
+}
+
+/// Remove a strict bare-symbol field, returning a new map value.
+pub fn remove_strict(map: &Expr, name: &str) -> Expr {
+    remove_matching(map, name, key_is)
 }

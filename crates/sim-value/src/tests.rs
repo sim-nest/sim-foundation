@@ -3,13 +3,13 @@
 use sim_kernel::{CapabilityName, Error, Expr, NumberLiteral, Symbol};
 
 use crate::access::{
-    as_f64, as_i64, entry_field, entry_field_any, entry_required, entry_required_bool,
+    as_f64, as_i64, as_u64, entry_field, entry_field_any, entry_required, entry_required_bool,
     entry_required_bool_any, entry_required_list, entry_required_list_any, entry_required_str,
     entry_required_str_any, entry_required_sym, entry_required_sym_any, extra_fields, field,
-    field_any, field_bool, field_str, remove, required, required_bool, required_map, required_str,
-    required_sym, set,
+    field_any, field_bool, field_str, remove, remove_strict, required, required_bool, required_map,
+    required_str, required_sym, set, set_strict,
 };
-use crate::build::{entry, float, int, keyword, list, map, num_q, qsym, sym, text, vector};
+use crate::build::{entry, float, int, keyword, list, map, num_q, qsym, sym, text, uint, vector};
 use crate::capability_names_from_expr;
 use crate::edit::{edit, edit_lines};
 use crate::kind::expr_kind;
@@ -169,6 +169,32 @@ fn builders_and_readers_round_trip() {
 }
 
 #[test]
+fn integer_readers_respect_number_domains() {
+    let zero = uint(0);
+    let max_i64 = uint(i64::MAX as u64);
+    let above_i64 = uint(i64::MAX as u64 + 1);
+    let max_u64 = uint(u64::MAX);
+    let qualified_i64 = num_q(Some("numbers"), "i64", "7");
+    let qualified_u64 = num_q(Some("numbers"), "u64", "9");
+
+    assert_eq!(zero, crate::build::num("u64", "0"));
+    assert_eq!(as_u64(&zero), Some(0));
+    assert_eq!(as_u64(&max_i64), Some(i64::MAX as u64));
+    assert_eq!(as_u64(&above_i64), Some(i64::MAX as u64 + 1));
+    assert_eq!(as_u64(&max_u64), Some(u64::MAX));
+    assert_eq!(as_u64(&qualified_u64), Some(9));
+
+    assert_eq!(as_i64(&int(7)), Some(7));
+    assert_eq!(as_i64(&qualified_i64), Some(7));
+    assert_eq!(as_i64(&zero), None);
+    assert_eq!(as_i64(&max_i64), None);
+    assert_eq!(as_i64(&above_i64), None);
+    assert_eq!(as_i64(&max_u64), None);
+    assert_eq!(as_u64(&int(7)), None);
+    assert_eq!(as_i64(&float(7.0)), None);
+}
+
+#[test]
 fn float_canonical_drops_trailing_zero() {
     // Matches the hand-rolled number(f64) helpers this replaces.
     assert_eq!(float(80.0), crate::build::num("f64", "80"));
@@ -191,6 +217,45 @@ fn set_and_remove_preserve_siblings() {
     let removed = remove(&value, "a");
     assert_eq!(field(&removed, "a"), None);
     assert_eq!(field(&removed, "b"), Some(&int(2)));
+}
+
+#[test]
+fn provider_style_updates_replace_visible_keys_without_leaving_duplicates() {
+    let string_keyed = Expr::Map(vec![(text("role"), text("user"))]);
+    let updated = set(&string_keyed, "role", text("admin"));
+    assert_eq!(updated, Expr::Map(vec![(text("role"), text("admin"))]));
+    assert_eq!(field_any(&updated, "role"), Some(&text("admin")));
+
+    let mixed = Expr::Map(vec![
+        (text("role"), text("user")),
+        (sym("role"), text("stale")),
+        (sym("keep"), int(1)),
+    ]);
+    let normalized = set(&mixed, "role", text("admin"));
+    assert_eq!(
+        normalized,
+        Expr::Map(vec![(text("role"), text("admin")), (sym("keep"), int(1))])
+    );
+
+    let removed = remove(&mixed, "role");
+    assert_eq!(removed, Expr::Map(vec![(sym("keep"), int(1))]));
+}
+
+#[test]
+fn strict_updates_only_touch_bare_symbol_fields() {
+    let symbol_keyed = map(vec![("role", text("user"))]);
+    assert_eq!(
+        set_strict(&symbol_keyed, "role", text("admin")),
+        map(vec![("role", text("admin"))])
+    );
+    assert_eq!(remove_strict(&symbol_keyed, "role"), map(vec![]));
+
+    let string_keyed = Expr::Map(vec![(text("role"), text("user"))]);
+    assert_eq!(
+        set_strict(&string_keyed, "role", text("admin")),
+        string_keyed
+    );
+    assert_eq!(remove_strict(&string_keyed, "role"), string_keyed);
 }
 
 #[test]

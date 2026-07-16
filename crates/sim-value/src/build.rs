@@ -29,9 +29,9 @@ pub fn int(value: i64) -> Expr {
     num("i64", &value.to_string())
 }
 
-/// An `i64`-domain number value from an unsigned integer.
+/// A `u64`-domain number value from an unsigned integer.
 pub fn uint(value: u64) -> Expr {
-    num("i64", &value.to_string())
+    num("u64", &value.to_string())
 }
 
 /// An `f64`-domain number value with a canonical literal.
