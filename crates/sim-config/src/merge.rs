@@ -1,9 +1,8 @@
 //! Layer merging and field-level provenance.
 
 use sim_kernel::{Expr, Symbol};
-use sim_value::access::field_any;
 
-use crate::{ConfigDir, ConfigSource, ConfigTable};
+use crate::{ConfigDir, ConfigSource, ConfigTable, config_field_name, same_config_field};
 
 /// One configuration layer and the source that produced it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -98,7 +97,7 @@ fn merge_table_expr(base: &mut Expr, overlay: &Expr) -> Vec<String> {
                 let key = key_label(overlay_key);
                 if let Some((_, base_value)) = base_entries
                     .iter_mut()
-                    .find(|(base_key, _)| base_key == overlay_key)
+                    .find(|(base_key, _)| same_config_field(base_key, overlay_key))
                 {
                     *base_value = merge_value(base_value, overlay_value);
                 } else {
@@ -154,7 +153,7 @@ fn id_keyed_items(items: &[Expr]) -> bool {
 }
 
 fn item_id(item: &Expr) -> Option<String> {
-    match field_any(item, "id") {
+    match config_field(item, "id") {
         Some(Expr::String(id)) => Some(id.clone()),
         Some(Expr::Symbol(id)) => Some(id.as_qualified_str()),
         _ => None,
@@ -169,18 +168,29 @@ fn top_level_keys(table: &Expr) -> Vec<String> {
 }
 
 fn key_label(key: &Expr) -> String {
-    match key {
-        Expr::Symbol(symbol) => symbol.as_qualified_str(),
-        Expr::String(text) => text.clone(),
-        other => format!("{other:?}"),
-    }
+    config_field_name(key)
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| format!("{key:?}"))
+}
+
+fn config_field<'a>(expr: &'a Expr, name: &str) -> Option<&'a Expr> {
+    let Expr::Map(entries) = expr else {
+        return None;
+    };
+    entries.iter().find_map(|(key, value)| {
+        config_field_name(key)
+            .is_some_and(|field| field == name)
+            .then_some(value)
+    })
 }
 
 #[cfg(test)]
 mod tests {
-    use sim_value::build::{entry, int, map, text};
+    use sim_value::access::field_any;
+    use sim_value::build::{entry, int, list, map, sym, text};
 
     use super::*;
+    use crate::ConfigView;
 
     fn lib() -> Symbol {
         Symbol::qualified("sim", "cookbook")
@@ -213,6 +223,128 @@ mod tests {
                 .trace
                 .iter()
                 .find(|trace| trace.key == "mode")
+                .unwrap()
+                .source,
+            ConfigSource::Explicit {
+                label: "work".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn equivalent_scalar_keys_replace_in_both_directions() {
+        let lower = ConfigDir::one(
+            lib(),
+            Expr::Map(vec![
+                (Expr::String("mode".to_owned()), text("built-in")),
+                (sym("keep"), int(1)),
+            ]),
+        )
+        .unwrap();
+        let upper = ConfigDir::one(lib(), map(vec![("mode", text("work"))])).unwrap();
+
+        let effective = merge_layers(&[
+            ConfigLayer::new(ConfigSource::BuiltIn { lib: lib() }, lower),
+            ConfigLayer::new(
+                ConfigSource::Explicit {
+                    label: "symbol-over-string".to_owned(),
+                },
+                upper,
+            ),
+        ]);
+        let table = effective.dir.table(&lib()).unwrap();
+        let view = ConfigView::new(table);
+
+        assert_eq!(view.string("mode"), Some("work"));
+        assert_eq!(view.i64("keep"), Some(1));
+        assert_eq!(table.entries().unwrap().len(), 2);
+        assert_eq!(
+            effective
+                .trace
+                .iter()
+                .find(|trace| trace.key == "mode")
+                .unwrap()
+                .source,
+            ConfigSource::Explicit {
+                label: "symbol-over-string".to_owned()
+            }
+        );
+
+        let lower = ConfigDir::one(lib(), map(vec![("mode", text("built-in"))])).unwrap();
+        let upper = ConfigDir::one(
+            lib(),
+            Expr::Map(vec![(Expr::String("mode".to_owned()), text("work"))]),
+        )
+        .unwrap();
+        let effective = merge_layers(&[
+            ConfigLayer::new(ConfigSource::BuiltIn { lib: lib() }, lower),
+            ConfigLayer::new(
+                ConfigSource::Explicit {
+                    label: "string-over-symbol".to_owned(),
+                },
+                upper,
+            ),
+        ]);
+
+        assert_eq!(
+            ConfigView::new(effective.dir.table(&lib()).unwrap()).string("mode"),
+            Some("work")
+        );
+        assert_eq!(
+            effective
+                .trace
+                .iter()
+                .find(|trace| trace.key == "mode")
+                .unwrap()
+                .source,
+            ConfigSource::Explicit {
+                label: "string-over-symbol".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn equivalent_nested_map_keys_merge_without_duplicates() {
+        let lower = ConfigDir::one(
+            lib(),
+            map(vec![(
+                "settings",
+                Expr::Map(vec![
+                    (sym("mode"), text("built-in")),
+                    (sym("keep"), text("lower")),
+                ]),
+            )]),
+        )
+        .unwrap();
+        let upper = ConfigDir::one(
+            lib(),
+            Expr::Map(vec![(
+                Expr::String("settings".to_owned()),
+                Expr::Map(vec![(Expr::String("mode".to_owned()), text("work"))]),
+            )]),
+        )
+        .unwrap();
+
+        let effective = merge_layers(&[
+            ConfigLayer::new(ConfigSource::BuiltIn { lib: lib() }, lower),
+            ConfigLayer::new(
+                ConfigSource::Explicit {
+                    label: "work".to_owned(),
+                },
+                upper,
+            ),
+        ]);
+        let view = ConfigView::new(effective.dir.table(&lib()).unwrap());
+        let settings = ConfigView::from_entries(view.table("settings").unwrap());
+
+        assert_eq!(settings.string("mode"), Some("work"));
+        assert_eq!(settings.string("keep"), Some("lower"));
+        assert_eq!(view.table("settings").unwrap().len(), 2);
+        assert_eq!(
+            effective
+                .trace
+                .iter()
+                .find(|trace| trace.key == "settings")
                 .unwrap()
                 .source,
             ConfigSource::Explicit {
@@ -264,5 +396,64 @@ mod tests {
         assert_eq!(field_any(&list[1], "source"), Some(&text("work")));
         assert_eq!(field_any(&list[2], "id"), Some(&text("music")));
         let _ = entry("checked", Expr::Bool(true));
+    }
+
+    #[test]
+    fn id_keyed_repeated_tables_use_config_field_identity() {
+        let lower = ConfigDir::one(
+            lib(),
+            Expr::Map(vec![(
+                Expr::String("loadable_lib".to_owned()),
+                list(vec![
+                    Expr::Map(vec![
+                        (Expr::String("id".to_owned()), text("shape")),
+                        (sym("source"), text("stable")),
+                    ]),
+                    map(vec![("id", text("numbers")), ("source", text("stable"))]),
+                ]),
+            )]),
+        )
+        .unwrap();
+        let upper = ConfigDir::one(
+            lib(),
+            map(vec![(
+                "loadable_lib",
+                list(vec![Expr::Map(vec![
+                    (sym("id"), text("shape")),
+                    (Expr::String("source".to_owned()), text("work")),
+                ])]),
+            )]),
+        )
+        .unwrap();
+
+        let effective = merge_layers(&[
+            ConfigLayer::new(ConfigSource::BuiltIn { lib: lib() }, lower),
+            ConfigLayer::new(
+                ConfigSource::Explicit {
+                    label: "work".to_owned(),
+                },
+                upper,
+            ),
+        ]);
+
+        let list = match ConfigView::new(effective.dir.table(&lib()).unwrap()).get("loadable_lib") {
+            Some(Expr::List(items)) => items,
+            other => panic!("expected merged list, got {other:?}"),
+        };
+        assert_eq!(list.len(), 2);
+        assert_eq!(config_field(&list[0], "id"), Some(&text("shape")));
+        assert_eq!(config_field(&list[0], "source"), Some(&text("work")));
+        assert_eq!(config_field(&list[1], "id"), Some(&text("numbers")));
+        assert_eq!(
+            effective
+                .trace
+                .iter()
+                .find(|trace| trace.key == "loadable_lib")
+                .unwrap()
+                .source,
+            ConfigSource::Explicit {
+                label: "work".to_owned()
+            }
+        );
     }
 }

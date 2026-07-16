@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use sim_config::{ConfigShape, ConfigTable};
+use sim_config::{ConfigShape, ConfigTable, config_field_name, same_config_field};
 use sim_kernel::{
     Cx, Expr, ExprKind, MatchScore, Result, Shape, ShapeDoc, ShapeMatch, Symbol, Value,
 };
@@ -220,8 +220,17 @@ fn check_table(
     let Expr::Map(entries) = expr else {
         return Err(format!("{context} expected map"));
     };
-    for (key, value) in entries {
-        let Some(name) = key_name(key) else {
+    for (index, (key, value)) in entries.iter().enumerate() {
+        if entries[..index]
+            .iter()
+            .any(|(prior_key, _)| same_config_field(prior_key, key))
+        {
+            return Err(format!(
+                "{context}: duplicate key {}",
+                config_field_name(key).unwrap_or("<opaque>")
+            ));
+        }
+        let Some(name) = config_field_name(key) else {
             return Err(format!("{context} key expected symbol or string"));
         };
         let Some(field) = fields.iter().find(|field| field.name == name) else {
@@ -232,7 +241,7 @@ fn check_table(
     for field in fields.iter().filter(|field| field.required) {
         if !entries
             .iter()
-            .any(|(key, _)| key_name(key).is_some_and(|name| name == field.name))
+            .any(|(key, _)| config_field_name(key).is_some_and(|name| name == field.name))
         {
             return Err(format!("{context}: missing required key {}", field.name));
         }
@@ -264,14 +273,6 @@ fn check_table_list(
         check_table(item, fields, &format!("{name}[{index}]"))?;
     }
     Ok(())
-}
-
-fn key_name(key: &Expr) -> Option<&str> {
-    match key {
-        Expr::Symbol(symbol) if symbol.namespace.is_none() => Some(symbol.name.as_ref()),
-        Expr::String(text) => Some(text),
-        _ => None,
-    }
 }
 
 fn string_list(items: impl IntoIterator<Item = impl Into<String>>) -> Expr {
@@ -310,6 +311,36 @@ mod tests {
                             ("source", text("symbol:codec/algol")),
                         ]),
                     ]),
+                ),
+            ]),
+        )
+        .unwrap();
+
+        let effective = shape.validate(&mut cx, &table).unwrap();
+
+        assert!(matches!(effective.table, Expr::Map(_)));
+    }
+
+    #[test]
+    fn cookbook_shape_accepts_string_keyed_config_fields() {
+        let mut cx = cx();
+        let shape = cookbook_config_shape();
+        let table = ConfigTable::new(
+            cookbook_lib_symbol(),
+            Expr::Map(vec![
+                (
+                    Expr::String("minimum_loaded".to_owned()),
+                    string_list(["codec/lisp"]),
+                ),
+                (
+                    Expr::String("loadable_lib".to_owned()),
+                    list(vec![Expr::Map(vec![
+                        (Expr::String("id".to_owned()), text("numbers/cas")),
+                        (
+                            Expr::String("source".to_owned()),
+                            text("symbol:numbers/cas"),
+                        ),
+                    ])]),
                 ),
             ]),
         )

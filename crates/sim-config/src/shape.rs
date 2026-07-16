@@ -234,6 +234,7 @@ mod tests {
     use sim_value::{access::field, build::map, build::text};
 
     use super::*;
+    use crate::{config_field_name, same_config_field};
 
     fn cx() -> Cx {
         Cx::new(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
@@ -276,6 +277,33 @@ mod tests {
             Some(&Expr::String("openai".to_owned()))
         );
         assert_eq!(field(&effective.table, "enabled"), Some(&Expr::Bool(true)));
+    }
+
+    #[test]
+    fn validate_binds_string_keyed_fields_over_symbol_defaults() {
+        let mut cx = cx();
+        let table = ConfigTable::new(
+            lib(),
+            Expr::Map(vec![(Expr::String("provider".to_owned()), text("openai"))]),
+        )
+        .unwrap();
+
+        let effective = config_shape().validate(&mut cx, &table).unwrap();
+        let Expr::Map(entries) = &effective.table else {
+            panic!("validated config table should stay a map");
+        };
+
+        assert_eq!(
+            field(&effective.table, "provider"),
+            Some(&Expr::String("openai".to_owned()))
+        );
+        assert_eq!(
+            entries
+                .iter()
+                .filter(|(key, _)| config_field_name(key) == Some("provider"))
+                .count(),
+            1
+        );
     }
 
     #[test]
@@ -401,9 +429,20 @@ mod tests {
                 return Ok(ShapeMatch::reject("config table expected map"));
             };
 
-            for (key, value) in entries {
-                let Some(key) = key_name(key) else {
-                    return Ok(ShapeMatch::reject("config table key expected symbol"));
+            for (index, (key, value)) in entries.iter().enumerate() {
+                if entries[..index]
+                    .iter()
+                    .any(|(prior_key, _)| same_config_field(prior_key, key))
+                {
+                    return Ok(ShapeMatch::reject(format!(
+                        "config table duplicate key {}",
+                        config_field_name(key).unwrap_or("<opaque>")
+                    )));
+                }
+                let Some(key) = config_field_name(key) else {
+                    return Ok(ShapeMatch::reject(
+                        "config table key expected symbol or string",
+                    ));
                 };
                 let Some(field) = self.field(key) else {
                     return Ok(ShapeMatch::reject(format!("shape-table: extra key {key}")));
@@ -419,7 +458,7 @@ mod tests {
             for field in self.fields.iter().filter(|field| field.required) {
                 if !entries
                     .iter()
-                    .any(|(key, _)| key_name(key).is_some_and(|key| key == field.name))
+                    .any(|(key, _)| config_field_name(key).is_some_and(|key| key == field.name))
                 {
                     return Ok(ShapeMatch::reject(format!(
                         "missing required config key {}",
@@ -433,14 +472,6 @@ mod tests {
 
         fn describe(&self, _cx: &mut Cx) -> Result<ShapeDoc> {
             Ok(ShapeDoc::new("closed config table"))
-        }
-    }
-
-    fn key_name(key: &Expr) -> Option<&str> {
-        match key {
-            Expr::Symbol(symbol) if symbol.namespace.is_none() => Some(symbol.name.as_ref()),
-            Expr::String(text) => Some(text),
-            _ => None,
         }
     }
 }

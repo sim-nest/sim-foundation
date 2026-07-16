@@ -34,6 +34,7 @@ use std::fmt;
 
 use sim_kernel::{Expr, Symbol, id::SymbolError};
 
+pub mod keys;
 pub mod merge;
 pub mod path;
 pub mod probe;
@@ -43,6 +44,7 @@ pub mod source;
 pub mod table;
 pub mod view;
 
+pub use keys::{config_field_name, same_config_field};
 pub use merge::{ConfigLayer, EffectiveConfig, MergeTrace, merge_layers};
 pub use path::{ConfigRoots, lib_config_path};
 pub use probe::{
@@ -96,6 +98,11 @@ pub enum ConfigError {
         /// The expected shape.
         expected: &'static str,
     },
+    /// A config table contained equivalent keys for one field.
+    DuplicateField {
+        /// The duplicate field name.
+        key: String,
+    },
 }
 
 impl From<SymbolError> for ConfigError {
@@ -124,6 +131,9 @@ impl fmt::Display for ConfigError {
             Self::MissingField { key } => write!(f, "config field `{key}` is missing"),
             Self::TypeMismatch { key, expected } => {
                 write!(f, "config field `{key}` is not {expected}")
+            }
+            Self::DuplicateField { key } => {
+                write!(f, "config field `{key}` is defined more than once")
             }
         }
     }
