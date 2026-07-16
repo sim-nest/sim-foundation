@@ -20,6 +20,29 @@ fn seated_cx() -> (Cx, GrantSeat) {
     Cx::new_seated(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
 }
 
+trait GrantOutcome {
+    fn expect_granted(self);
+}
+
+impl GrantOutcome for () {
+    fn expect_granted(self) {}
+}
+
+impl GrantOutcome for sim_kernel::Result<()> {
+    fn expect_granted(self) {
+        self.unwrap();
+    }
+}
+
+macro_rules! expect_granted {
+    ($grant:expr) => {{
+        #[allow(clippy::let_unit_value)]
+        let grant_result = $grant;
+        #[allow(clippy::unit_arg)]
+        grant_result.expect_granted();
+    }};
+}
+
 #[test]
 fn canonical_capability_names_are_stable() {
     assert_eq!(fs_read().as_str(), "fs/read");
@@ -33,14 +56,14 @@ fn canonical_capability_names_are_stable() {
 #[test]
 fn require_with_aliases_accepts_canonical_and_compatibility_names() {
     let (mut cx, seat) = seated_cx();
-    seat.grant(&mut cx, CapabilityName::new("stream.file.write"));
+    expect_granted!(seat.grant(&mut cx, CapabilityName::new("stream.file.write")));
     assert!(require_with_aliases(&cx, fs_write(), fs_write_aliases()).is_ok());
 
     let granted = granted_capability_or_alias(&cx, fs_write(), fs_write_aliases()).unwrap();
     assert_eq!(granted.as_str(), "stream.file.write");
 
     let (mut cx, seat) = seated_cx();
-    seat.grant(&mut cx, net_http());
+    expect_granted!(seat.grant(&mut cx, net_http()));
     assert!(require_with_aliases(&cx, net_http(), net_http_aliases()).is_ok());
 }
 
