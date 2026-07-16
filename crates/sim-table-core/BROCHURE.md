@@ -10,7 +10,7 @@ Many parts of SIM store and fetch data arranged as tables, and they need to agre
 
 - Unsafe or malformed table names are caught early instead of causing trouble later.
 - Local and remote table backends speak one request language, so they interoperate cleanly.
-- One tested definition replaces the near-duplicate checks that each backend used to carry.
+- One tested definition covers the shared checks each backend needs.
 
 ## Where it fits
 
