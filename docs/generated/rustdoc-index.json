@@ -13,7 +13,7 @@
       "group": "workspace",
       "manifest": "crates/sim-cookbook/Cargo.toml",
       "package": "sim-cookbook",
-      "summary": "Cookbook engine for SIM: runnable, crate-local tutorial recipes."
+      "summary": "Cookbook engine for SIM's crate-local tutorial recipes."
     },
     {
       "crate_name": "sim_lib_net_core",

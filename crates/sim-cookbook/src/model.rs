@@ -1,6 +1,6 @@
 //! Plain data model for the cookbook.
 //!
-//! A recipe is a tiny runnable lesson shipped by the crate it teaches. These
+//! A recipe is a tiny lesson shipped by the crate it teaches. These
 //! types carry one recipe's data (a [`RecipeCard`]) and the computed grouping
 //! of all loaded recipes into books and chapters (a [`CookbookView`]). They are
 //! deliberately free of kernel types: recipes flow through the existing

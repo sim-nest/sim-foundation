@@ -33,6 +33,7 @@ jobs:
       - run: cargo doc --workspace --no-deps
         env:
           RUSTDOCFLAGS: -D warnings
+      - run: cargo run -p xtask -- check-recipes
       - run: cargo run -p xtask -- simdoc --check
         env:
           SIMDOC_TOOLING_MANIFEST: ${{ github.workspace }}/sim-tooling/Cargo.toml

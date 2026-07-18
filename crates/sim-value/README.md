@@ -45,5 +45,6 @@ From the `sim-foundation` checkout:
 ```bash
 cargo test -p sim-value
 RUSTDOCFLAGS="-D warnings" cargo doc -p sim-value --no-deps
+cargo run -p xtask -- check-recipes
 cargo run -p xtask -- simdoc --check
 ```

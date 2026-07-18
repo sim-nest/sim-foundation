@@ -31,7 +31,8 @@ assert!(!is_legal_table_segment("a/b"));
 ## Examples, Docs, And Validation
 
 This crate is a protocol substrate, so examples live in rustdoc and unit tests.
-Backends that execute table operations own their own runnable recipes.
+It has no recipe directory because backends that execute table operations own
+the cookbook entries for those effects.
 
 - API docs: <https://docs.rs/sim-table-core>
 - Repository guide: <https://github.com/sim-nest/sim-foundation>
@@ -41,5 +42,6 @@ From the `sim-foundation` checkout:
 ```bash
 cargo test -p sim-table-core
 RUSTDOCFLAGS="-D warnings" cargo doc -p sim-table-core --no-deps
+cargo run -p xtask -- check-recipes
 cargo run -p xtask -- simdoc --check
 ```

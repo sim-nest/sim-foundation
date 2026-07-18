@@ -1,7 +1,7 @@
-//! Cookbook engine for SIM: runnable, crate-local tutorial recipes.
+//! Cookbook engine for SIM's crate-local tutorial recipes.
 //!
-//! A *recipe* is a tiny lesson -- a runnable setup (in Lisp or any registered
-//! codec) plus a purpose document -- that ships inside the crate it teaches.
+//! A *recipe* is a tiny lesson -- a setup file in a registered codec plus a
+//! purpose document -- that ships inside the crate it teaches.
 //! When a lib loads, it registers its recipes as Card records; the *cookbook*
 //! is then a projection over those cards, grouped into books and chapters and
 //! rendered by every surface (CLI, WebUI, browse, agent).

@@ -109,6 +109,7 @@ cargo test --workspace
 cargo test --workspace --all-features
 cargo clippy --workspace --all-targets -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+cargo run -p xtask -- check-recipes
 cargo run -p xtask -- simdoc --check
 cargo run -p xtask -- check-file-sizes
 ```
@@ -143,8 +144,15 @@ crate to build.
 
 ### Examples and recipes
 
-`sim-lib-net-core` and `sim-lib-surface-card` ship runnable recipes under their
-`recipes/` directories. `sim-cookbook` is the cookbook engine itself (manifest
-parsing, embedding, recipe stores, and projection), so it hosts no recipes of its
-own. The remaining crates' examples are their rustdoc doctests; no stub recipe
-directories are added.
+`sim-lib-net-core` and `sim-lib-surface-card` ship descriptor cookbook entries
+under their `recipes/` directories. They are projection material for surfaces to
+show, not sandbox-executed examples. `sim-cookbook` is the cookbook engine itself
+(manifest parsing, embedding, recipe stores, and projection), so it hosts no
+recipes of its own. The remaining crates teach their substrate contracts through
+rustdoc doctests and unit tests instead of empty recipe directories.
+
+`cargo run -p xtask -- check-recipes` enforces that contract. Publishable
+packages declare their recipe policy in `[package.metadata.sim-recipes]`;
+descriptor recipe manifests must carry the `sandbox-descriptor` tag, and
+rustdoc-only or engine crates must document why they have no `recipes/`
+directory.

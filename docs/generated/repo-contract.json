@@ -109,14 +109,14 @@
           "target": null
         }
       ],
-      "description": "Cookbook engine for SIM: runnable, crate-local tutorial recipes.",
+      "description": "Cookbook engine for SIM's crate-local tutorial recipes.",
       "features": [],
       "group": "workspace",
       "manifest": "crates/sim-cookbook/Cargo.toml",
       "name": "sim-cookbook",
       "publish": "true",
       "root": "crates/sim-cookbook",
-      "rustdoc_summary": "Cookbook engine for SIM: runnable, crate-local tutorial recipes.",
+      "rustdoc_summary": "Cookbook engine for SIM's crate-local tutorial recipes.",
       "target_kinds": [
         "lib"
       ],
@@ -372,10 +372,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "ec2a7eb757907f67e6aa9ed7cd826da644072a5f",
+    "git_commit": "45c8cf908779e82762dbf147cba17abd826f2f2e",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "ec2a7eb757907f67e6aa9ed7cd826da644072a5f",
+    "source_commit": "45c8cf908779e82762dbf147cba17abd826f2f2e",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -388,7 +388,7 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "a8a05c3c6cc8d734",
+    "workspace_hash": "f8a9ce7fd8b3c68f",
     "workspace_hash_algorithm": "fnv1a64",
     "workspace_hash_input_count": 104,
     "workspace_hash_inputs": [

@@ -165,7 +165,7 @@ fn resolve_recipe_rel_path(base: &Path, value: &str) -> PathBuf {
 ///
 /// Unknown top-level keys and unknown `[[table]]`s are IGNORED, not rejected
 /// (COOK8.00). A recipe may carry a rich descriptor vocabulary beyond the core
-/// runnable fields -- the `30-agents` `a30-*` descriptors add `recipe_number`,
+/// recipe fields -- the `30-agents` `a30-*` descriptors add `recipe_number`,
 /// `source_chapter`, `descriptor_shape`, `assert_*`, and more -- and every such
 /// recipe must still embed and aggregate into the complete cookbook catalog.
 /// Rejecting unknown keys blocked embedding those libs (the EMBED-ALL HAZARD),
@@ -465,7 +465,7 @@ result = "3"
     #[test]
     fn parses_rich_descriptor_keys() {
         // An `a30-*` descriptor carries a structured vocabulary beyond the core
-        // runnable fields. It must parse (and thus embed) unchanged; the extra
+        // recipe fields. It must parse (and thus embed) unchanged; the extra
         // keys are ignored, and the core fields still resolve.
         let rich = r#"
 id = "a30-009-agentic-workflow"

@@ -87,3 +87,20 @@ build time instead of widening the runtime contract.
 - `crates/sim-macros/tests/ui/pass/marker-surface`
 - `crates/sim-macros/tests/ui/smoke/consumer`
 
+## Docs And Validation
+
+The crate has no recipe directory because compile-fail and compile-pass fixtures
+are the meaningful examples for a proc-macro surface. Rustdoc and UI tests cover
+the public contract.
+
+- API docs: <https://docs.rs/sim-macros>
+- Repository guide: <https://github.com/sim-nest/sim-foundation>
+
+From the `sim-foundation` checkout:
+
+```bash
+cargo test -p sim-macros
+RUSTDOCFLAGS="-D warnings" cargo doc -p sim-macros --no-deps
+cargo run -p xtask -- check-recipes
+cargo run -p xtask -- simdoc --check
+```

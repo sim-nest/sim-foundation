@@ -15,7 +15,7 @@
       ]
     },
     {
-      "description": "Cookbook engine for SIM: runnable, crate-local tutorial recipes.",
+      "description": "Cookbook engine for SIM's crate-local tutorial recipes.",
       "generated_readme": false,
       "manifest": "crates/sim-cookbook/Cargo.toml",
       "name": "sim-cookbook",
