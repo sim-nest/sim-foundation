@@ -8,9 +8,9 @@
 //! identifiers. It deliberately contains **no** socket/TLS I/O and **no**
 //! application policy -- callers own transport and event mapping.
 //!
-//! The behavior here was extracted from `sim-lib-agent-runner-http` so that
-//! multiple runtime libs can share one tested implementation of the wire
-//! framing rather than each hand-rolling line accumulation and head parsing.
+//! Multiple runtime libs share these parsers for wire framing, line
+//! accumulation, and head parsing while keeping transport and event mapping in
+//! their own layers.
 //!
 //! # Example
 //!

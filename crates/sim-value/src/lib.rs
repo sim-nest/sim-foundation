@@ -1,8 +1,8 @@
 //! Ergonomic construction and access for kernel `Expr` data.
 //!
-//! The kernel `Expr` enum is bare data with no ergonomic surface, so dozens of
-//! libs independently re-grew `sym`/`number`/`field`/`set`/`expr_kind` and a
-//! `k`/`i` path-addressing scheme. This crate is the one home for that. It
+//! The kernel `Expr` enum is bare data with no ergonomic surface. This crate
+//! keeps construction, field access, kind labels, immutable updates, and
+//! `k`/`i` path-addressing helpers in one shared home. It
 //! depends only on `sim-kernel` and adds data ergonomics, not runtime behavior,
 //! so it does not touch the kernel boundary.
 //!

@@ -17,9 +17,9 @@ pub fn qsym(ns: &str, name: &str) -> Expr {
     Expr::Symbol(Symbol::qualified(ns, name))
 }
 
-/// A bare keyword `Symbol` (NOT wrapped in `Expr`). This is the one home for the
-/// `fn field(name) -> Symbol` / `Symbol::new(name)` wrappers that test and codec
-/// crates re-grew; use [`sym`] when an `Expr` is wanted.
+/// A bare keyword `Symbol` (NOT wrapped in `Expr`). This is the one home for
+/// common `fn field(name) -> Symbol` / `Symbol::new(name)` wrappers in test and
+/// codec crates; use [`sym`] when an `Expr` is wanted.
 pub fn keyword(name: &str) -> Symbol {
     Symbol::new(name)
 }

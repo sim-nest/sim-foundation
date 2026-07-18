@@ -16,7 +16,7 @@
     },
     {
       "description": "Cookbook engine for SIM: runnable, crate-local tutorial recipes.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-cookbook/Cargo.toml",
       "name": "sim-cookbook",
       "publish": "true",
@@ -28,7 +28,7 @@
     },
     {
       "description": "Reusable, side-effect-free HTTP/streaming parsing primitives.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-lib-net-core/Cargo.toml",
       "name": "sim-lib-net-core",
       "publish": "true",
@@ -41,7 +41,7 @@
     },
     {
       "description": "Shared, plain-data surface-card spine.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-lib-surface-card/Cargo.toml",
       "name": "sim-lib-surface-card",
       "publish": "true",
@@ -67,7 +67,7 @@
     },
     {
       "description": "Shared table substrate: path validation and the table operation protocol.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-table-core/Cargo.toml",
       "name": "sim-table-core",
       "publish": "true",
@@ -79,7 +79,7 @@
     },
     {
       "description": "Ergonomic construction and access for kernel Expr data.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-value/Cargo.toml",
       "name": "sim-value",
       "publish": "true",

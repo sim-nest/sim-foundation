@@ -16,7 +16,7 @@ pub enum ConfigSource {
     Probe {
         /// Probe implementation id.
         probe: Symbol,
-        /// Probe mode used to produce the layer.
+        /// Probe mode for producing the layer.
         mode: ProbeMode,
     },
     /// Per-library file from the central home config root.

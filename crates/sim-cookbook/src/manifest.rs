@@ -39,7 +39,7 @@ pub struct RecipeManifest {
     pub id: String,
     /// Human title.
     pub title: String,
-    /// Registered codec name used to decode the setup file.
+    /// Registered codec name for decoding the setup file.
     pub codec: String,
     /// Setup file name, relative to the recipe directory.
     pub setup: String,

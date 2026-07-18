@@ -49,7 +49,7 @@ pub struct RecipeCard {
     pub chapter_summary: String,
     /// Human recipe title.
     pub title: String,
-    /// Registered codec name used to decode `setup`.
+    /// Registered codec name for decoding `setup`.
     pub codec: String,
     /// Raw setup bytes, decoded on demand through `codec`.
     pub setup: Vec<u8>,

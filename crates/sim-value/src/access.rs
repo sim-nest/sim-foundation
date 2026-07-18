@@ -103,9 +103,8 @@ pub fn entry_required<'a>(
 }
 
 /// Build a [`Error::TypeMismatch`] whose `found` label names the actual `Expr`
-/// variant via [`expr_kind`](crate::kind::expr_kind). The one home for the
-/// `Err(Error::TypeMismatch { expected, found: expr_kind(other) })` tail that
-/// every typed slice reader across the constellation re-grew.
+/// variant via [`expr_kind`](crate::kind::expr_kind). This is the shared helper
+/// for typed slice readers that report the actual expression kind.
 fn type_mismatch(expected: &'static str, found: &Expr) -> Error {
     Error::TypeMismatch {
         expected,
@@ -116,9 +115,9 @@ fn type_mismatch(expected: &'static str, found: &Expr) -> Error {
 /// Look up a required *bare-symbol*-keyed field in an entry slice, with a
 /// context-labeled error when missing. The bare-key analog of [`entry_required`]
 /// (which also accepts `Expr::String` keys): the typed `entry_required_*`
-/// readers build on this so they are drop-in replacements for the bare-symbol
-/// `string_field`/`symbol_field`/`bool_field`/`list_field` forks that stream,
-/// music, fabric, and view crates each re-grew without loosening key matching.
+/// readers build on this so they are drop-in replacements for bare-symbol
+/// `string_field`/`symbol_field`/`bool_field`/`list_field` readers in stream,
+/// music, fabric, and view crates without loosening key matching.
 fn entry_required_bare<'a>(
     entries: &'a [(Expr, Expr)],
     name: &str,
@@ -273,8 +272,8 @@ pub fn required_map<'a>(map: &'a Expr, name: &str, context: &str) -> Result<&'a 
 }
 
 /// Borrow a map value's entries, or return a `TypeMismatch` error labelled with
-/// `expected`. This is the one home for the `map_fields(expr, "...")` helper
-/// that MCP, skill, and codec crates each re-grew.
+/// `expected`. This is the shared home for the `map_fields(expr, "...")` helper
+/// shape used by MCP, skill, and codec crates.
 pub fn map_entries<'a>(map: &'a Expr, expected: &'static str) -> Result<&'a [(Expr, Expr)]> {
     match map {
         Expr::Map(entries) => Ok(entries),
