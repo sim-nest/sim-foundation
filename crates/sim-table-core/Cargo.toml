@@ -15,7 +15,7 @@ reason = "This table substrate is taught through rustdoc examples and unit tests
 
 [dependencies]
 sim-kernel = { version = "0.1.0" }
-sim-value = { version = "0.1.0", path = "../sim-value" }
+sim-value = { version = "0.1.2", path = "../sim-value" }
 
 [lints]
 workspace = true

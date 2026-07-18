@@ -10,6 +10,7 @@
 - [ ] `cargo clippy --workspace --all-targets -- -D warnings` passes
 - [ ] `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps` passes
 - [ ] `cargo run -p xtask -- check-recipes` passes
+- [ ] `cargo run -p xtask -- check-package-floors` passes
 - [ ] `cargo run -p xtask -- simdoc --check` passes
 - [ ] `cargo run -p xtask -- check-file-sizes` passes
 - [ ] Tests added/updated for the behavior changed

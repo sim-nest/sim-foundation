@@ -110,6 +110,7 @@ cargo test --workspace --all-features
 cargo clippy --workspace --all-targets -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
 cargo run -p xtask -- check-recipes
+cargo run -p xtask -- check-package-floors
 cargo run -p xtask -- simdoc --check
 cargo run -p xtask -- check-file-sizes
 ```

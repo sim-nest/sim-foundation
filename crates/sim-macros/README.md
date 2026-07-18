@@ -102,5 +102,6 @@ From the `sim-foundation` checkout:
 cargo test -p sim-macros
 RUSTDOCFLAGS="-D warnings" cargo doc -p sim-macros --no-deps
 cargo run -p xtask -- check-recipes
+cargo run -p xtask -- check-package-floors
 cargo run -p xtask -- simdoc --check
 ```

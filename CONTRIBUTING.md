@@ -25,6 +25,7 @@ Every PR runs these gates in CI, and they must be green before merge:
 - `cargo clippy --workspace --all-targets -- -D warnings`
 - `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps`
 - `cargo run -p xtask -- check-recipes`
+- `cargo run -p xtask -- check-package-floors`
 - `cargo run -p xtask -- simdoc --check`
 - `cargo run -p xtask -- check-file-sizes`
 

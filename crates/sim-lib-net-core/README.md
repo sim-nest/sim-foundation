@@ -43,5 +43,6 @@ From the `sim-foundation` checkout:
 cargo test -p sim-lib-net-core
 RUSTDOCFLAGS="-D warnings" cargo doc -p sim-lib-net-core --no-deps
 cargo run -p xtask -- check-recipes
+cargo run -p xtask -- check-package-floors
 cargo run -p xtask -- simdoc --check
 ```

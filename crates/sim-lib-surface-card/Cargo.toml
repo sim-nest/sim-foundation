@@ -14,11 +14,11 @@ policy = "descriptor"
 reason = "The cookbook entries document descriptor shapes for projection and are marked sandbox-descriptor."
 
 [dependencies]
-sim-cookbook = { version = "0.1.0", path = "../sim-cookbook" }
+sim-cookbook = { version = "0.1.3", path = "../sim-cookbook" }
 sim-kernel = { version = "0.1.0" }
 
 [build-dependencies]
-sim-cookbook = { version = "0.1.0", path = "../sim-cookbook" }
+sim-cookbook = { version = "0.1.3", path = "../sim-cookbook" }
 
 [lints]
 workspace = true

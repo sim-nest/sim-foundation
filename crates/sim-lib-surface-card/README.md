@@ -43,5 +43,6 @@ From the `sim-foundation` checkout:
 cargo test -p sim-lib-surface-card
 RUSTDOCFLAGS="-D warnings" cargo doc -p sim-lib-surface-card --no-deps
 cargo run -p xtask -- check-recipes
+cargo run -p xtask -- check-package-floors
 cargo run -p xtask -- simdoc --check
 ```
