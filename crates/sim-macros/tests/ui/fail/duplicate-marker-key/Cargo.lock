@@ -61,6 +61,7 @@ dependencies = [
 name = "sim-codec"
 version = "0.1.4"
 dependencies = [
+ "sim-citizen",
  "sim-citizen-derive",
  "sim-cookbook",
  "sim-kernel",
