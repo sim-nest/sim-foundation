@@ -25,6 +25,7 @@ const UI_PATCHES: &[(&str, &str, &str)] = &[
     ("sim-value", "sim-foundation", "crates/sim-value"),
     ("sim-lib-core", "sim-runtime", "crates/sim-lib-core"),
     ("sim-macros", "sim-foundation", "crates/sim-macros"),
+    ("sim-run-loaders", "sim-run", "crates/sim-run-loaders"),
     ("sim-shape", "sim-shape", "."),
     ("sim-codec", "sim-codecs", "crates/sim-codec"),
     ("sim-codec-binary", "sim-codecs", "crates/sim-codec-binary"),
