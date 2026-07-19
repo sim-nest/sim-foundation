@@ -14,8 +14,8 @@ timeouts, and event meaning.
 - URL parsing for HTTP, HTTPS, WebSocket, and scheme-specific callers.
 - HTTP request-head construction and response-head parsing.
 - Body-mode classification for content length, chunked transfer, and EOF bodies.
-- Streaming line framing with partial-line buffering.
-- SSE and NDJSON decoders for incremental service responses.
+- Bounded streaming line framing with partial-line buffering.
+- Bounded SSE and NDJSON decoders for incremental service responses.
 - Build-time cookbook recipe embedding for the crate's network parsing lesson.
 
 ## Example
@@ -24,8 +24,8 @@ timeouts, and event meaning.
 use sim_lib_net_core::LineDecoder;
 
 let mut decoder = LineDecoder::new();
-assert_eq!(decoder.push(b"one\nt"), vec![b"one".to_vec()]);
-assert_eq!(decoder.push(b"wo\n"), vec![b"two".to_vec()]);
+assert_eq!(decoder.push_checked(b"one\nt").unwrap(), vec![b"one".to_vec()]);
+assert_eq!(decoder.push_checked(b"wo\n").unwrap(), vec![b"two".to_vec()]);
 ```
 
 ## Recipes, Docs, And Validation

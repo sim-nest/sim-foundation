@@ -1,7 +1,7 @@
 use crate::{
-    CapOutcome, HeadOutcome, HttpBodyMode, LineDecoder, NdjsonDecoder, NetError, SseDecoder,
-    body_mode, build_http_request_head, decode_chunked, parse_http_head, parse_url,
-    parse_url_for_scheme, parse_url_for_scheme_preserving_path, read_capped_line,
+    CapOutcome, DEFAULT_MAX_LINE_BYTES, HeadOutcome, HttpBodyMode, LineDecoder, NdjsonDecoder,
+    NetError, SseDecoder, body_mode, build_http_request_head, decode_chunked, parse_http_head,
+    parse_url, parse_url_for_scheme, parse_url_for_scheme_preserving_path, read_capped_line,
     read_head_until_double_crlf,
 };
 
@@ -172,21 +172,34 @@ fn rejects_invalid_head() {
 #[test]
 fn line_decoder_splits_partial_line_across_pushes() {
     let mut decoder = LineDecoder::new();
-    let first = decoder.push(b"hello\r\nwor");
+    let first = decoder.push_checked(b"hello\r\nwor").unwrap();
     assert_eq!(first, vec![b"hello".to_vec()]);
     assert!(decoder.has_buffered());
 
-    let second = decoder.push(b"ld\ntrailing");
+    let second = decoder.push_checked(b"ld\ntrailing").unwrap();
     assert_eq!(second, vec![b"world".to_vec()]);
 
-    assert_eq!(decoder.flush(), Some(b"trailing".to_vec()));
-    assert_eq!(decoder.flush(), None);
+    assert_eq!(decoder.flush_checked().unwrap(), Some(b"trailing".to_vec()));
+    assert_eq!(decoder.flush_checked().unwrap(), None);
+}
+
+#[test]
+fn line_decoder_rejects_oversize_unterminated_line() {
+    let mut decoder = LineDecoder::with_max_line_bytes(4);
+    assert_eq!(decoder.push_checked(b"abc").map(|lines| lines.len()), Ok(0));
+    assert_eq!(
+        decoder.push_checked(b"de"),
+        Err(NetError::LineTooLong { max: 4 })
+    );
+    assert_eq!(decoder.buffered(), b"abc");
 }
 
 #[test]
 fn sse_joins_multiple_data_lines() {
     let mut decoder = SseDecoder::new();
-    let events = decoder.push(b"event: message\ndata: line one\ndata: line two\n\n");
+    let events = decoder
+        .push(b"event: message\ndata: line one\ndata: line two\n\n")
+        .unwrap();
     assert_eq!(events.len(), 1);
     assert_eq!(events[0].event.as_deref(), Some("message"));
     assert_eq!(events[0].data, "line one\nline two");
@@ -196,11 +209,32 @@ fn sse_joins_multiple_data_lines() {
 fn sse_ignores_comments_and_dispatches_on_blank_line() {
     let mut decoder = SseDecoder::new();
     // Comment line then a record split across two pushes.
-    assert!(decoder.push(b": keep-alive\ndata: hi").is_empty());
-    let events = decoder.push(b"\n\n");
+    assert!(decoder.push(b": keep-alive\ndata: hi").unwrap().is_empty());
+    let events = decoder.push(b"\n\n").unwrap();
     assert_eq!(events.len(), 1);
     assert_eq!(events[0].event, None);
     assert_eq!(events[0].data, "hi");
+}
+
+#[test]
+fn sse_rejects_oversize_unterminated_line() {
+    let mut decoder = SseDecoder::with_max_line_bytes(8);
+    assert_eq!(
+        decoder.push(b"data: abc"),
+        Err(NetError::LineTooLong { max: 8 })
+    );
+}
+
+#[test]
+fn sse_rejects_accumulated_data_beyond_cap_before_dispatch() {
+    let mut decoder = SseDecoder::with_max_line_bytes(12);
+    assert!(decoder.push(b"data: abc\n").unwrap().is_empty());
+    assert!(decoder.push(b"data: def\n").unwrap().is_empty());
+    assert!(decoder.push(b"data: ghi\n").unwrap().is_empty());
+    assert_eq!(
+        decoder.push(b"data: jkl\n"),
+        Err(NetError::LineTooLong { max: 12 })
+    );
 }
 
 #[test]
@@ -221,20 +255,55 @@ fn ndjson_buffers_partial_final_line_until_flush() {
     let second = decoder.push(b"3}").unwrap();
     assert!(second.is_empty());
 
-    assert_eq!(decoder.flush(), Some(r#"{"c":3}"#.to_owned()));
-    assert_eq!(decoder.flush(), None);
+    assert_eq!(
+        decoder.flush_checked().unwrap(),
+        Some(r#"{"c":3}"#.to_owned())
+    );
+    assert_eq!(decoder.flush_checked().unwrap(), None);
 }
 
 #[test]
 fn ndjson_rejects_oversize_line() {
     let mut decoder = NdjsonDecoder::with_max_line_bytes(4);
     // Completed line over the limit fails closed.
-    assert_eq!(decoder.push(b"toolong\n"), Err(NetError::OversizeBody(4)));
+    assert_eq!(
+        decoder.push(b"toolong\n"),
+        Err(NetError::LineTooLong { max: 4 })
+    );
 
     // A buffered partial that grows past the limit also fails closed.
     let mut buffered = NdjsonDecoder::with_max_line_bytes(4);
     assert_eq!(buffered.push(b"abc").map(|r| r.len()), Ok(0));
-    assert_eq!(buffered.push(b"de"), Err(NetError::OversizeBody(4)));
+    assert_eq!(buffered.push(b"de"), Err(NetError::LineTooLong { max: 4 }));
+}
+
+#[test]
+fn streaming_decoders_are_bounded_by_default() {
+    let too_long = vec![b'x'; DEFAULT_MAX_LINE_BYTES + 1];
+
+    let mut line = LineDecoder::new();
+    assert_eq!(
+        line.push_checked(&too_long),
+        Err(NetError::LineTooLong {
+            max: DEFAULT_MAX_LINE_BYTES,
+        })
+    );
+
+    let mut sse = SseDecoder::new();
+    assert_eq!(
+        sse.push(&too_long),
+        Err(NetError::LineTooLong {
+            max: DEFAULT_MAX_LINE_BYTES,
+        })
+    );
+
+    let mut ndjson = NdjsonDecoder::new();
+    assert_eq!(
+        ndjson.push(&too_long),
+        Err(NetError::LineTooLong {
+            max: DEFAULT_MAX_LINE_BYTES,
+        })
+    );
 }
 
 #[test]

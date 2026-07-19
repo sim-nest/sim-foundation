@@ -33,7 +33,7 @@ pub fn response_head_demo() -> Result<ResponseHeadDemo, NetError> {
         .to_owned();
 
     let mut sse = SseDecoder::new();
-    let mut events = sse.push(b"event: ready\ndata: {\"ok\":true}\n\n");
+    let mut events = sse.push(b"event: ready\ndata: {\"ok\":true}\n\n")?;
     let event = events
         .pop()
         .expect("cookbook SSE fixture dispatches one event");

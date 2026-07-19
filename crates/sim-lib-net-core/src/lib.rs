@@ -21,8 +21,9 @@
 //! use sim_lib_net_core::LineDecoder;
 //!
 //! let mut decoder = LineDecoder::new();
-//! assert_eq!(decoder.push(b"a\nb"), vec![b"a".to_vec()]);
-//! assert_eq!(decoder.push(b"c\n"), vec![b"bc".to_vec()]);
+//! assert_eq!(decoder.push_checked(b"a\nb")?, vec![b"a".to_vec()]);
+//! assert_eq!(decoder.push_checked(b"c\n")?, vec![b"bc".to_vec()]);
+//! # Ok::<(), sim_lib_net_core::NetError>(())
 //! ```
 
 mod body;
@@ -41,7 +42,7 @@ pub use cookbook::{ResponseHeadDemo, response_head_demo};
 pub use error::NetError;
 pub use hex::hex_encode;
 pub use http::{HttpBodyMode, HttpHead, body_mode, build_http_request_head, parse_http_head};
-pub use line::LineDecoder;
+pub use line::{DEFAULT_MAX_LINE_BYTES, LineDecoder};
 pub use ndjson::NdjsonDecoder;
 pub use read::{CapOutcome, HeadOutcome, read_capped_line, read_head_until_double_crlf};
 pub use sse::{SseDecoder, SseEvent};
