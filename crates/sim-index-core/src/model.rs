@@ -162,10 +162,16 @@ pub struct DiscoveredSpecimen {
     pub subject: SubjectId,
     /// Specimen kind, such as `recipe` or `spec-test`.
     pub kind: String,
+    /// Stable source path that identifies the specimen in its owning repo.
+    pub path: String,
+    /// Optional language or surface exercised by the specimen.
+    pub language: Option<String>,
     /// True when the specimen can be executed by its owning repo.
     pub runnable: bool,
     /// True when validation confirms the specimen ran.
     pub checked: bool,
+    /// Optional harness that validates the specimen.
+    pub checked_by: Option<String>,
     /// Optional discovered documentation anchor for the specimen.
     pub doc_anchor: Option<AnchorId>,
 }

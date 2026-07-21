@@ -41,6 +41,13 @@ fn reject_non_ascii(doc: &IndexDoc) -> Result<(), IndexError> {
     for specimen in &doc.specimens {
         check_ascii("specimen.id", specimen.id.as_str())?;
         check_ascii("specimen.kind", &specimen.kind)?;
+        check_ascii("specimen.path", &specimen.path)?;
+        if let Some(language) = &specimen.language {
+            check_ascii("specimen.language", language)?;
+        }
+        if let Some(checked_by) = &specimen.checked_by {
+            check_ascii("specimen.checked_by", checked_by)?;
+        }
     }
     for draft in &doc.drafts {
         check_feature_text("draft", draft.id.as_str(), &draft.title, &draft.summary)?;

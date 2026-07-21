@@ -33,14 +33,21 @@ pub fn feature_card(cx: &mut Cx, feature: &FeatureRecord) -> Result<Value> {
 
 /// Projects a specimen row into an ordinary kernel `Card`.
 pub fn specimen_card(cx: &mut Cx, specimen: &DiscoveredSpecimen) -> Result<Value> {
-    let entries = vec![
+    let mut entries = vec![
         ("id", text(cx, specimen.id.as_str())?),
         ("kind", symbol(cx, "specimen")?),
         ("subject", text(cx, specimen.subject.as_str())?),
         ("specimen-kind", text(cx, &specimen.kind)?),
+        ("path", text(cx, &specimen.path)?),
         ("runnable", cx.factory().bool(specimen.runnable)?),
         ("checked", cx.factory().bool(specimen.checked)?),
     ];
+    if let Some(language) = &specimen.language {
+        entries.push(("language", text(cx, language)?));
+    }
+    if let Some(checked_by) = &specimen.checked_by {
+        entries.push(("checked-by", text(cx, checked_by)?));
+    }
     card_value(cx, "specimen", specimen.id.as_str(), entries)
 }
 

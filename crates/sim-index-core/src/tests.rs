@@ -44,8 +44,11 @@ fn specimen(id: &str, runnable: bool, checked: bool) -> DiscoveredSpecimen {
         id: SpecimenId::new(id),
         subject: SubjectId::new("crate/sim-run"),
         kind: "recipe".to_owned(),
+        path: "recipes/01-basics/repl/recipe.toml".to_owned(),
+        language: Some("cli-transcript".to_owned()),
         runnable,
         checked,
+        checked_by: Some("xtask check-recipes".to_owned()),
         doc_anchor: Some(AnchorId::new("doc/sim-run/repl")),
     }
 }
