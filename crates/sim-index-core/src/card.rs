@@ -87,8 +87,5 @@ fn list_text<'a>(cx: &mut Cx, values: impl Iterator<Item = &'a str>) -> Result<V
 }
 
 fn step_label(step: &RouteStep) -> &str {
-    match step {
-        RouteStep::Feature(id) => id.as_str(),
-        RouteStep::Specimen(id) => id.as_str(),
-    }
+    step.id()
 }

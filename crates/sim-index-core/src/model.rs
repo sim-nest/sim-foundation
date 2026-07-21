@@ -262,6 +262,8 @@ pub struct RouteRecord {
     pub id: RouteId,
     /// Human-facing title.
     pub title: String,
+    /// Reader audiences this route is intended for.
+    pub audiences: Vec<String>,
     /// Ordered route steps.
     pub steps: Vec<RouteStep>,
     /// Optional discovered documentation anchor for this route.
@@ -272,9 +274,44 @@ pub struct RouteRecord {
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum RouteStep {
     /// Step targets a feature.
-    Feature(FeatureId),
+    Feature {
+        /// Target feature id.
+        id: FeatureId,
+        /// Why this step belongs in the route.
+        why: String,
+    },
     /// Step targets a specimen.
-    Specimen(SpecimenId),
+    Specimen {
+        /// Target specimen id.
+        id: SpecimenId,
+        /// Why this step belongs in the route.
+        why: String,
+    },
+}
+
+impl RouteStep {
+    /// Returns the target id.
+    pub fn id(&self) -> &str {
+        match self {
+            Self::Feature { id, .. } => id.as_str(),
+            Self::Specimen { id, .. } => id.as_str(),
+        }
+    }
+
+    /// Returns the target kind label.
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Self::Feature { .. } => "feature",
+            Self::Specimen { .. } => "specimen",
+        }
+    }
+
+    /// Returns the step rationale.
+    pub fn why(&self) -> &str {
+        match self {
+            Self::Feature { why, .. } | Self::Specimen { why, .. } => why,
+        }
+    }
 }
 
 /// Directed relationship between two index records.

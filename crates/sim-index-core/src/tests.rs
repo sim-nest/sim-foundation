@@ -80,9 +80,16 @@ fn route() -> RouteRecord {
     RouteRecord {
         id: RouteId::new("route/use-repl"),
         title: "Use the REPL".to_owned(),
+        audiences: vec!["user".to_owned(), "code".to_owned()],
         steps: vec![
-            RouteStep::Feature(FeatureId::new("feature/sim-run/repl")),
-            RouteStep::Specimen(SpecimenId::new("recipe/sim-run/repl")),
+            RouteStep::Feature {
+                id: FeatureId::new("feature/sim-run/repl"),
+                why: "The REPL is the interactive entry point.".to_owned(),
+            },
+            RouteStep::Specimen {
+                id: SpecimenId::new("recipe/sim-run/repl"),
+                why: "Run the REPL recipe.".to_owned(),
+            },
         ],
         doc_anchor: Some(AnchorId::new("doc/sim-run/repl")),
     }
@@ -260,9 +267,10 @@ fn non_runnable_specimen_claims_fail() {
 #[test]
 fn dead_route_steps_fail() {
     let mut doc = valid_doc();
-    doc.routes[0].steps.push(RouteStep::Feature(FeatureId::new(
-        "feature/sim-run/missing",
-    )));
+    doc.routes[0].steps.push(RouteStep::Feature {
+        id: FeatureId::new("feature/sim-run/missing"),
+        why: "Missing feature.".to_owned(),
+    });
 
     assert!(matches!(
         check_error(&doc),

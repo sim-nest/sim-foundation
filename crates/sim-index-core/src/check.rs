@@ -545,15 +545,15 @@ fn reject_dead_route_steps(doc: &IndexDoc) -> Result<(), IndexError> {
         }
         for step in &route.steps {
             match step {
-                RouteStep::Feature(id) if features.contains(id.as_str()) => {}
-                RouteStep::Specimen(id) if specimens.contains(id.as_str()) => {}
-                RouteStep::Feature(id) => {
+                RouteStep::Feature { id, .. } if features.contains(id.as_str()) => {}
+                RouteStep::Specimen { id, .. } if specimens.contains(id.as_str()) => {}
+                RouteStep::Feature { id, .. } => {
                     return Err(IndexError::DeadRouteStep {
                         route: route.id.to_string(),
                         step: id.to_string(),
                     });
                 }
-                RouteStep::Specimen(id) => {
+                RouteStep::Specimen { id, .. } => {
                     return Err(IndexError::DeadRouteStep {
                         route: route.id.to_string(),
                         step: id.to_string(),
