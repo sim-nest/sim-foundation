@@ -15,6 +15,14 @@ fn subject() -> SubjectRecord {
     }
 }
 
+fn repo_subject() -> SubjectRecord {
+    SubjectRecord {
+        id: SubjectId::new("repo/sim-run"),
+        kind: "repo".to_owned(),
+        title: "sim-run".to_owned(),
+    }
+}
+
 fn anchor(id: &str) -> DiscoveredAnchor {
     DiscoveredAnchor {
         id: AnchorId::new(id),
@@ -82,18 +90,24 @@ fn valid_doc() -> IndexDoc {
         schema: "sim.index".to_owned(),
         generated_by: "sim-index-core-tests".to_owned(),
         visibility: Visibility::Public,
-        subjects: vec![subject()],
+        subjects: vec![repo_subject(), subject()],
         anchors: vec![anchor("export/sim-run/repl"), anchor("doc/sim-run/repl")],
         surfaces: vec![surface()],
         specimens: vec![specimen("recipe/sim-run/repl", true, true)],
         drafts: Vec::new(),
         features: vec![feature()],
         routes: vec![route()],
-        edges: vec![IndexEdge {
-            from: FeatureId::new("feature/sim-run/repl"),
-            predicate: "supports".to_owned(),
-            to: FeatureId::new("feature/sim-run/repl"),
-        }],
+        edges: vec![
+            IndexEdge::relates(
+                FeatureId::new("feature/sim-run/repl"),
+                "supports",
+                FeatureId::new("feature/sim-run/repl"),
+            ),
+            IndexEdge::contains(
+                SubjectId::new("repo/sim-run"),
+                SubjectId::new("crate/sim-run"),
+            ),
+        ],
     }
 }
 
@@ -104,7 +118,7 @@ fn check_error(doc: &IndexDoc) -> IndexError {
 #[test]
 fn valid_index_reports_counts() {
     let report = check_index_doc(&valid_doc()).expect("valid index");
-    assert_eq!(report.subjects, 1);
+    assert_eq!(report.subjects, 2);
     assert_eq!(report.features, 1);
     assert_eq!(report.specimens, 1);
     assert_eq!(report.routes, 1);

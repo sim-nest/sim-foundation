@@ -67,7 +67,9 @@ fn reject_non_ascii(doc: &IndexDoc) -> Result<(), IndexError> {
         check_ascii("route.title", &route.title)?;
     }
     for edge in &doc.edges {
-        check_ascii("edge.predicate", &edge.predicate)?;
+        check_ascii("edge.from", &edge.from)?;
+        check_ascii("edge.rel", &edge.rel)?;
+        check_ascii("edge.to", &edge.to)?;
     }
     Ok(())
 }
@@ -128,8 +130,8 @@ fn reject_invalid_ids(doc: &IndexDoc) -> Result<(), IndexError> {
         check_id("route", route.id.as_str())?;
     }
     for edge in &doc.edges {
-        check_id("feature", edge.from.as_str())?;
-        check_id("feature", edge.to.as_str())?;
+        check_id("edge", &edge.from)?;
+        check_id("edge", &edge.to)?;
     }
     Ok(())
 }
@@ -296,21 +298,52 @@ fn reject_unresolved_claims(doc: &IndexDoc) -> Result<(), IndexError> {
             feature.specimens.iter(),
         )?;
     }
+    let routes = ids(doc.routes.iter().map(|record| record.id.as_str()));
+    let known = subjects
+        .iter()
+        .chain(&anchors)
+        .chain(&surfaces)
+        .chain(&specimens)
+        .chain(&features)
+        .chain(&routes)
+        .copied()
+        .collect::<BTreeSet<_>>();
+
     for edge in &doc.edges {
-        require(
-            &features,
-            "edge",
-            &edge.predicate,
-            "feature",
-            edge.from.as_str(),
-        )?;
-        require(
-            &features,
-            "edge",
-            &edge.predicate,
-            "feature",
-            edge.to.as_str(),
-        )?;
+        match edge.rel.as_str() {
+            "contains" => {
+                require(&subjects, "edge", &edge.rel, "subject", &edge.from)?;
+                require(&subjects, "edge", &edge.rel, "subject", &edge.to)?;
+            }
+            "anchors" => {
+                require(&features, "edge", &edge.rel, "feature", &edge.from)?;
+                require(&anchors, "edge", &edge.rel, "anchor", &edge.to)?;
+            }
+            "surfaces" => {
+                require(&features, "edge", &edge.rel, "feature", &edge.from)?;
+                require(&surfaces, "edge", &edge.rel, "surface", &edge.to)?;
+            }
+            "demonstrates" => {
+                require(&features, "edge", &edge.rel, "feature", &edge.from)?;
+                require(&specimens, "edge", &edge.rel, "specimen", &edge.to)?;
+            }
+            "supports" | "presents" | "replaces" => {
+                require(&features, "edge", &edge.rel, "feature", &edge.from)?;
+                require(&features, "edge", &edge.rel, "feature", &edge.to)?;
+            }
+            "documents" => {
+                require(&known, "edge", &edge.rel, "index row", &edge.from)?;
+                require(&anchors, "edge", &edge.rel, "anchor", &edge.to)?;
+            }
+            "routes" => {
+                require(&routes, "edge", &edge.rel, "route", &edge.from)?;
+                require(&known, "edge", &edge.rel, "index row", &edge.to)?;
+            }
+            _ => {
+                require(&known, "edge", &edge.rel, "index row", &edge.from)?;
+                require(&known, "edge", &edge.rel, "index row", &edge.to)?;
+            }
+        }
     }
     Ok(())
 }

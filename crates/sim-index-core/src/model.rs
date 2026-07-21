@@ -271,13 +271,34 @@ pub enum RouteStep {
     Specimen(SpecimenId),
 }
 
-/// Directed relationship between two feature records.
+/// Directed relationship between two index records.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct IndexEdge {
-    /// Source feature id.
-    pub from: FeatureId,
-    /// Predicate label for the relationship.
-    pub predicate: String,
-    /// Target feature id.
-    pub to: FeatureId,
+    /// Source index id.
+    pub from: String,
+    /// Relationship label, such as `contains`, `supports`, or `demonstrates`.
+    pub rel: String,
+    /// Target index id.
+    pub to: String,
+}
+
+impl IndexEdge {
+    /// Builds an edge from raw endpoint ids and a relationship label.
+    pub fn new(from: impl Into<String>, rel: impl Into<String>, to: impl Into<String>) -> Self {
+        Self {
+            from: from.into(),
+            rel: rel.into(),
+            to: to.into(),
+        }
+    }
+
+    /// Builds a subject containment edge.
+    pub fn contains(from: SubjectId, to: SubjectId) -> Self {
+        Self::new(from.to_string(), "contains", to.to_string())
+    }
+
+    /// Builds a feature-to-feature relationship edge.
+    pub fn relates(from: FeatureId, rel: impl Into<String>, to: FeatureId) -> Self {
+        Self::new(from.to_string(), rel, to.to_string())
+    }
 }
