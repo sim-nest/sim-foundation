@@ -16,6 +16,13 @@
       "summary": "Cookbook engine for SIM's crate-local tutorial recipes."
     },
     {
+      "crate_name": "sim_index_core",
+      "group": "workspace",
+      "manifest": "crates/sim-index-core/Cargo.toml",
+      "package": "sim-index-core",
+      "summary": "Shared records and checks for the SIM Index."
+    },
+    {
       "crate_name": "sim_lib_net_core",
       "group": "workspace",
       "manifest": "crates/sim-lib-net-core/Cargo.toml",

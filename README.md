@@ -2,8 +2,9 @@
 
 Ergonomic, dependency-light building blocks for working with SIM's kernel data:
 build and read `Expr` values, merge table-shaped configuration, validate table
-paths, author libraries with proc-macros, and shape codec-neutral surfaces --
-without re-growing the same substrate in every library.
+paths, author libraries with proc-macros, shape codec-neutral surfaces, and
+check SIM Index graph records -- without re-growing the same substrate in every
+library.
 
 SIM is a small Rust protocol kernel plus a large set of loadable libraries (it
 is not a Lisp runtime); the kernel defines contracts and libraries provide
@@ -46,9 +47,10 @@ It provides ergonomic construction and access for the kernel `Expr` graph, the
 shared configuration table/Dir substrate, the shared table path and operation
 protocol, the proc-macro surface for authoring libraries, the crate-local
 cookbook engine, reusable HTTP/streaming parsing primitives, and the
-codec-neutral surface-card spine. These crates depend only on `sim-kernel` (and,
-where noted, on `sim-value`); they add data ergonomics and protocol shape, not
-runtime behavior, so they stay below the kernel boundary.
+codec-neutral surface-card spine, and the checked model for the SIM Index graph.
+These crates depend only on `sim-kernel` (and, where noted, on `sim-value`);
+they add data ergonomics and protocol shape, not runtime behavior, so they stay
+below the kernel boundary.
 
 ## Crates
 
@@ -75,6 +77,10 @@ runtime behavior, so they stay below the kernel boundary.
   recipes: manifest parsing and lint, compile-time embedding, recipe stores,
   projection/search/next behavior, and deterministic user overlays. Recipes
   register as Card records that every surface projects.
+- `sim-index-core` -- the SIM Index graph model: subjects, anchors, surfaces,
+  features, runnable specimens, grammar contracts, routes, canonical feature
+  keys, graph checks, and kernel Card projections. Depends only on
+  `sim-kernel`.
 - `sim-lib-net-core` -- reusable, side-effect-free HTTP/streaming parsing
   primitives: URL parsing, HTTP response-head parsing, body-mode classification,
   line framing, and SSE/NDJSON record decoders, with no socket/TLS I/O and no
@@ -90,9 +96,10 @@ These crates are foundation substrate, not runtime behavior. Each is a leaf or
 near-leaf in the dependency graph, depending only on `sim-kernel` and
 `sim-value`. They keep common code -- value ergonomics, configuration merging,
 table path validation, library-authoring macros, cookbook projection, wire
-framing, and surface naming -- in one tested home. Concrete runtime operations
-layer over these crates elsewhere in the constellation; the foundation layer
-adds data ergonomics and protocol shape and does not touch the kernel boundary.
+framing, surface naming, and checked index facts -- in one tested home. Concrete
+runtime operations layer over these crates elsewhere in the constellation; the
+foundation layer adds data ergonomics and protocol shape and does not touch the
+kernel boundary.
 
 ## Validation
 
