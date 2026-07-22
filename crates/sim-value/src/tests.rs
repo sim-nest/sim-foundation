@@ -1,5 +1,7 @@
 //! Tests for the value ergonomics.
 
+// conformance: value helpers project and validate table-shaped values.
+
 use sim_kernel::{CapabilityName, Error, Expr, NumberLiteral, Symbol};
 
 use crate::access::{

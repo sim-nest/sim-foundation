@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+// conformance: Table and Dir core expressions round-trip through shared helpers.
+
 use sim_kernel::{CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, NoopEvalPolicy, Symbol};
 
 use crate::capabilities::{

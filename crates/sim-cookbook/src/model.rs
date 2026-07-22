@@ -6,6 +6,8 @@
 //! deliberately free of kernel types: recipes flow through the existing
 //! Card/registry data surface, so the kernel gains no cookbook enum.
 
+// conformance: cookbook records carry recipe metadata for generated docs.
+
 /// Where a recipe came from.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RecipeSource {
