@@ -66,6 +66,9 @@ fn toml_string(path: &Path) -> String {
 fn add_ui_patch_args(command: &mut Command) {
     for (crate_name, repo_name, source_path) in UI_PATCHES {
         let path = local_patch_path(crate_name, repo_name, source_path);
+        if !path.join("Cargo.toml").exists() {
+            continue;
+        }
         command.arg("--config").arg(format!(
             "patch.crates-io.{crate_name}.path={}",
             toml_string(&path)
