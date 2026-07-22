@@ -228,17 +228,14 @@ mod tests {
     use std::sync::Arc;
 
     use sim_kernel::{
-        Cx, DefaultFactory, Expr, ExprKind, NoopEvalPolicy, Result, ShapeDoc, Value,
+        Cx, Expr, ExprKind, Result, ShapeDoc, Value,
         shape::{MatchScore, Shape},
+        testing::bare_cx as cx,
     };
     use sim_value::{access::field, build::map, build::text};
 
     use super::*;
     use crate::{config_field_name, same_config_field};
-
-    fn cx() -> Cx {
-        Cx::new(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
-    }
 
     fn lib() -> Symbol {
         Symbol::qualified("model", "defaults")
