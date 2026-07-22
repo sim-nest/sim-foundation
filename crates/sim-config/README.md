@@ -42,3 +42,21 @@ let effective = merge_layers(&[
 assert!(effective.dir.table(&lib).is_some());
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
+
+## Examples, Docs, And Validation
+
+Rustdoc examples cover layered merge and typed reads. The crate has no recipe
+directory because it stays at the configuration-substrate layer.
+
+- API docs: <https://docs.rs/sim-config>
+- Repository guide: <https://github.com/sim-nest/sim-foundation>
+
+From the `sim-foundation` checkout:
+
+```bash
+cargo test -p sim-config
+RUSTDOCFLAGS="-D warnings" cargo doc -p sim-config --no-deps
+cargo run -p xtask -- check-recipes
+cargo run -p xtask -- check-package-floors
+cargo run -p xtask -- simdoc --check
+```

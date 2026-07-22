@@ -1,10 +1,10 @@
 # sim-cookbook
 
-In one line: The engine behind SIM's built-in, runnable lessons that teach each library from the inside.
+In one line: The engine behind SIM's built-in lessons that teach each library from the inside.
 
 ## What it gives you
 
-Learning a system is easiest when the lessons live next to the thing they explain and actually run. This crate powers exactly that. A lesson -- a small runnable setup paired with a short note on its purpose -- ships inside the library it teaches. When that library loads, its lessons register themselves, and this engine gathers them into books and chapters that any SIM surface can show: the command line, the web view, the in-product help, or an assistant. It reads and checks each lesson collection, embeds them at build time, keeps a searchable store, works out what to read next, and lets a person layer their own notes on top in a steady, repeatable way. The result is one consistent library of hands-on examples drawn from across the whole system.
+Learning a system is easiest when the lessons live next to the thing they explain. This crate powers that library-owned teaching lane. A lesson -- a setup file paired with a short note on its purpose -- ships inside the library it teaches. When that library loads, its lessons register themselves, and this engine gathers them into books and chapters that any SIM surface can show: the command line, the web view, the in-product help, or an assistant. It reads and checks each lesson collection, embeds it at build time, keeps a searchable store, works out what to read next, and lets a person layer their own notes on top in a steady, repeatable way. The result is one consistent library of examples drawn from across the whole system.
 
 ## Why you will be glad
 

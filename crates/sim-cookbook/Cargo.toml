@@ -3,11 +3,15 @@ name = "sim-cookbook"
 version = "0.1.3"
 edition = "2024"
 license = "MPL-2.0"
-description = "Cookbook engine for SIM: runnable, crate-local tutorial recipes."
+description = "Cookbook engine for SIM's crate-local tutorial recipes."
 readme = "README.md"
 publish = true
 repository = "https://github.com/sim-nest/sim-foundation"
 homepage = "https://github.com/sim-nest/sim-foundation"
+
+[package.metadata.sim-recipes]
+policy = "engine"
+reason = "This crate implements the recipe engine and documents itself through rustdoc examples instead of a recipe directory."
 
 [dependencies]
 sim-config = { version = "0.1.1", path = "../sim-config" }

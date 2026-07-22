@@ -4,6 +4,8 @@
 //! the same path-segment validation predicate and an ad-hoc `table/<op>` call
 //! protocol on the wire. This crate is the one home for both:
 //!
+//! - [`capabilities`]: canonical fs/find/edit/exec/net capability names and
+//!   compatibility alias checks for host-effect call sites;
 //! - [`path`]: the legal-segment predicate ([`is_legal_table_segment`]) and a
 //!   small [`TablePath`] accumulator that validates as it grows;
 //! - [`op`]: the [`TableOp`] model plus [`encode_table_op`]/[`decode_table_op`],
@@ -28,6 +30,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod capabilities;
 pub mod citizen_fields;
 pub mod manifest;
 pub mod op;

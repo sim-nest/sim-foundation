@@ -9,6 +9,10 @@ publish = true
 repository = "https://github.com/sim-nest/sim-foundation"
 homepage = "https://github.com/sim-nest/sim-foundation"
 
+[package.metadata.sim-recipes]
+policy = "rustdoc"
+reason = "The proc-macro surface is taught through compile tests and rustdoc; no recipe directory is shipped."
+
 [lib]
 proc-macro = true
 

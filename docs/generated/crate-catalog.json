@@ -1,6 +1,6 @@
 {
   "generator": "xtask crate-catalog v1",
-  "package_count": 8,
+  "package_count": 9,
   "packages": [
     {
       "description": "Table and Dir substrate for layered SIM configuration.",
@@ -15,8 +15,8 @@
       ]
     },
     {
-      "description": "Cookbook engine for SIM: runnable, crate-local tutorial recipes.",
-      "generated_readme": true,
+      "description": "Cookbook engine for SIM's crate-local tutorial recipes.",
+      "generated_readme": false,
       "manifest": "crates/sim-cookbook/Cargo.toml",
       "name": "sim-cookbook",
       "publish": "true",
@@ -27,8 +27,20 @@
       ]
     },
     {
+      "description": "Core records, keys, checks, and card projections for the SIM Index graph.",
+      "generated_readme": false,
+      "manifest": "crates/sim-index-core/Cargo.toml",
+      "name": "sim-index-core",
+      "publish": "true",
+      "readme": "crates/sim-index-core/README.md",
+      "root": "crates/sim-index-core",
+      "target_kinds": [
+        "lib"
+      ]
+    },
+    {
       "description": "Reusable, side-effect-free HTTP/streaming parsing primitives.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-lib-net-core/Cargo.toml",
       "name": "sim-lib-net-core",
       "publish": "true",
@@ -41,7 +53,7 @@
     },
     {
       "description": "Shared, plain-data surface-card spine.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-lib-surface-card/Cargo.toml",
       "name": "sim-lib-surface-card",
       "publish": "true",
@@ -54,19 +66,20 @@
     },
     {
       "description": "Proc-macro surface for authored SIM libraries.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-macros/Cargo.toml",
       "name": "sim-macros",
       "publish": "true",
       "readme": "crates/sim-macros/README.md",
       "root": "crates/sim-macros",
       "target_kinds": [
-        "proc-macro"
+        "proc-macro",
+        "test"
       ]
     },
     {
       "description": "Shared table substrate: path validation and the table operation protocol.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-table-core/Cargo.toml",
       "name": "sim-table-core",
       "publish": "true",
@@ -78,7 +91,7 @@
     },
     {
       "description": "Ergonomic construction and access for kernel Expr data.",
-      "generated_readme": true,
+      "generated_readme": false,
       "manifest": "crates/sim-value/Cargo.toml",
       "name": "sim-value",
       "publish": "true",

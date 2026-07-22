@@ -9,9 +9,9 @@ When SIM talks to web services, the bytes arriving over the wire are messy: addr
 ## Why you will be glad
 
 - The awkward corners of web wire formats are parsed for you, correctly and consistently.
-- A single tested reader replaces the hand-rolled framing that scattered libraries once carried.
+- A single tested reader keeps framing behavior consistent across libraries.
 - Because it does no networking itself, it is easy to test and simple to reason about.
 
 ## Where it fits
 
-This is a small, self-contained leaf that SIM's network-facing libraries share. The pieces here were drawn out of one HTTP agent so that any lib talking to a web service reads the wire through the same trusted code rather than reinventing it. It stays strictly on parsing, leaving transport and interpretation to the layers that sit above it.
+This is a small, self-contained leaf that SIM's network-facing libraries share. Any lib talking to a web service reads the wire through the same trusted code, while transport and interpretation stay in the layers above it.

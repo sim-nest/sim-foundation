@@ -9,7 +9,7 @@
 //! This keeps recipes traveling inside the crate they teach: nothing reads the
 //! filesystem at runtime, so the recipes install with the lib.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::manifest::{self, DEFAULT_ORDER};
 use crate::model::{RecipeCard, RecipeSource};
@@ -19,8 +19,20 @@ use crate::model::{RecipeCard, RecipeSource};
 /// [`crate::generate_embed_code`]).
 pub type EmbeddedDir = &'static [(&'static str, &'static [u8])];
 
-fn find<'a>(dir: &'a [(&str, &'a [u8])], path: &str) -> Option<&'a [u8]> {
-    dir.iter().find(|(p, _)| *p == path).map(|(_, b)| *b)
+fn index_embedded<'a>(
+    dir: &'a [(&'a str, &'a [u8])],
+) -> Result<BTreeMap<&'a str, &'a [u8]>, String> {
+    let mut index = BTreeMap::new();
+    for (path, bytes) in dir {
+        if index.insert(*path, *bytes).is_some() {
+            return Err(format!("duplicate embedded path `{path}`"));
+        }
+    }
+    Ok(index)
+}
+
+fn find<'a>(dir: &'a BTreeMap<&'a str, &'a [u8]>, path: &str) -> Option<&'a [u8]> {
+    dir.get(path).copied()
 }
 
 fn bytes_to_str<'a>(bytes: &'a [u8], what: &str) -> Result<&'a str, String> {
@@ -46,7 +58,8 @@ fn humanize(name: &str) -> String {
 /// view applies ordering). Returns an error string on the first malformed
 /// manifest, missing file, or non-UTF-8 purpose document.
 pub fn recipes_from_embedded(dir: &[(&str, &[u8])]) -> Result<Vec<RecipeCard>, String> {
-    let book_bytes = find(dir, "book.toml").ok_or("missing book.toml")?;
+    let dir = index_embedded(dir)?;
+    let book_bytes = find(&dir, "book.toml").ok_or("missing book.toml")?;
     let book = manifest::parse_book(bytes_to_str(book_bytes, "book.toml")?)?;
 
     // Chapter order from the book's explicit `chapters` list: (idx+1)*100.
@@ -59,7 +72,7 @@ pub fn recipes_from_embedded(dir: &[(&str, &[u8])]) -> Result<Vec<RecipeCard>, S
 
     // Discover recipe dirs: any `<chapter>/<recipe-id>/recipe.toml`.
     let mut recipe_dirs: BTreeSet<(String, String)> = BTreeSet::new();
-    for (path, _) in dir {
+    for path in dir.keys() {
         let parts: Vec<&str> = path.split('/').collect();
         if parts.len() == 3 && parts[2] == "recipe.toml" {
             recipe_dirs.insert((parts[0].to_string(), parts[1].to_string()));
@@ -67,14 +80,18 @@ pub fn recipes_from_embedded(dir: &[(&str, &[u8])]) -> Result<Vec<RecipeCard>, S
     }
 
     let mut cards = Vec::new();
+    let mut seen_ids = BTreeSet::new();
     for (chapter, recipe_id) in recipe_dirs {
         let prefix = format!("{chapter}/{recipe_id}");
-        let recipe_bytes = find(dir, &format!("{prefix}/recipe.toml"))
+        let recipe_bytes = find(&dir, &format!("{prefix}/recipe.toml"))
             .ok_or_else(|| format!("{prefix}: missing recipe.toml"))?;
         let recipe = manifest::parse_recipe(bytes_to_str(recipe_bytes, &prefix)?)
             .map_err(|e| format!("{prefix}/recipe.toml: {e}"))?;
+        recipe
+            .validate_for_dir()
+            .map_err(|errs| format!("{prefix}/recipe.toml: {}", errs.join("; ")))?;
 
-        let chapter_manifest = match find(dir, &format!("{chapter}/chapter.toml")) {
+        let chapter_manifest = match find(&dir, &format!("{chapter}/chapter.toml")) {
             Some(bytes) => manifest::parse_chapter(bytes_to_str(bytes, "chapter.toml")?)
                 .map_err(|e| format!("{chapter}/chapter.toml: {e}"))?,
             None => manifest::ChapterManifest::default(),
@@ -87,10 +104,10 @@ pub fn recipes_from_embedded(dir: &[(&str, &[u8])]) -> Result<Vec<RecipeCard>, S
             .order
             .unwrap_or_else(|| chapter_order_of(&chapter));
 
-        let setup = find(dir, &format!("{prefix}/{}", recipe.setup))
+        let setup = find(&dir, &format!("{prefix}/{}", recipe.setup))
             .ok_or_else(|| format!("{prefix}: setup file `{}` not embedded", recipe.setup))?
             .to_vec();
-        let purpose_bytes = find(dir, &format!("{prefix}/{}", recipe.purpose))
+        let purpose_bytes = find(&dir, &format!("{prefix}/{}", recipe.purpose))
             .ok_or_else(|| format!("{prefix}: purpose file `{}` not embedded", recipe.purpose))?;
         let purpose = bytes_to_str(purpose_bytes, &format!("{prefix} purpose"))?.to_string();
 
@@ -100,8 +117,16 @@ pub fn recipes_from_embedded(dir: &[(&str, &[u8])]) -> Result<Vec<RecipeCard>, S
             recipe.requires.clone()
         };
 
+        let card_id = format!("{}/{}/{}", book.book, chapter, recipe.id);
+        if !seen_ids.insert(card_id.clone()) {
+            return Err(format!(
+                "{prefix}/recipe.toml: duplicate recipe id `{}` in chapter `{chapter}`",
+                recipe.id
+            ));
+        }
+
         cards.push(RecipeCard {
-            id: format!("{}/{}/{}", book.book, chapter, recipe_id),
+            id: card_id,
             book: book.book.clone(),
             chapter: chapter.clone(),
             chapter_title,
@@ -172,6 +197,21 @@ mod tests {
     }
 
     #[test]
+    fn embedded_cards_use_manifest_ids_consistently() {
+        let dir: Vec<(&str, &[u8])> = vec![
+            ("book.toml", b"book = \"wasm\"\ntitle = \"Wasm\"\n" as &[u8]),
+            (
+                "01-basics/browser-facade/recipe.toml",
+                b"id = \"frame-facade\"\ntitle = \"Frame facade\"\ncodec = \"lisp\"\nsetup = \"setup.siml\"\npurpose = \"purpose.md\"\n",
+            ),
+            ("01-basics/browser-facade/setup.siml", b"(quote frame-facade)"),
+            ("01-basics/browser-facade/purpose.md", b"Frame facade."),
+        ];
+        let cards = recipes_from_embedded(&dir).unwrap();
+        assert_eq!(cards[0].id, "wasm/01-basics/frame-facade");
+    }
+
+    #[test]
     fn missing_book_toml_errors() {
         let err = recipes_from_embedded(&[("x/y/recipe.toml", b"")]).unwrap_err();
         assert!(err.contains("missing book.toml"), "{err}");
@@ -192,6 +232,59 @@ mod tests {
             err.contains("setup file `setup.siml` not embedded"),
             "{err}"
         );
+    }
+
+    #[test]
+    fn missing_purpose_file_errors() {
+        let dir: Vec<(&str, &[u8])> = vec![
+            ("book.toml", b"book = \"b\"\ntitle = \"B\"\n"),
+            (
+                "c/r/recipe.toml",
+                b"id = \"r\"\ntitle = \"R\"\ncodec = \"lisp\"\nsetup = \"setup.siml\"\npurpose = \"purpose.md\"\n",
+            ),
+            ("c/r/setup.siml", b"(quote r)"),
+        ];
+        let err = recipes_from_embedded(&dir).unwrap_err();
+        assert!(
+            err.contains("purpose file `purpose.md` not embedded"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn unsafe_embedded_recipe_paths_fail_before_lookup() {
+        let dir: Vec<(&str, &[u8])> = vec![
+            ("book.toml", b"book = \"b\"\ntitle = \"B\"\n"),
+            (
+                "c/r/recipe.toml",
+                b"id = \"r\"\ntitle = \"R\"\ncodec = \"lisp\"\nsetup = \"../setup.siml\"\npurpose = \"purpose.md\"\n",
+            ),
+            ("c/r/setup.siml", b"(quote r)"),
+            ("c/r/purpose.md", b"Purpose."),
+        ];
+        let err = recipes_from_embedded(&dir).unwrap_err();
+        assert!(err.contains("`setup` must not contain `..`"), "{err}");
+    }
+
+    #[test]
+    fn duplicate_recipe_ids_fail_even_when_dirs_differ() {
+        let dir: Vec<(&str, &[u8])> = vec![
+            ("book.toml", b"book = \"b\"\ntitle = \"B\"\n" as &[u8]),
+            (
+                "c/one/recipe.toml",
+                b"id = \"dup\"\ntitle = \"One\"\ncodec = \"lisp\"\nsetup = \"setup.siml\"\npurpose = \"purpose.md\"\n",
+            ),
+            ("c/one/setup.siml", b"(quote one)"),
+            ("c/one/purpose.md", b"One."),
+            (
+                "c/two/recipe.toml",
+                b"id = \"dup\"\ntitle = \"Two\"\ncodec = \"lisp\"\nsetup = \"setup.siml\"\npurpose = \"purpose.md\"\n",
+            ),
+            ("c/two/setup.siml", b"(quote two)"),
+            ("c/two/purpose.md", b"Two."),
+        ];
+        let err = recipes_from_embedded(&dir).unwrap_err();
+        assert!(err.contains("duplicate recipe id `dup`"), "{err}");
     }
 
     #[test]

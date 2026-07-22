@@ -8,9 +8,9 @@
 //! identifiers. It deliberately contains **no** socket/TLS I/O and **no**
 //! application policy -- callers own transport and event mapping.
 //!
-//! The behavior here was extracted from `sim-lib-agent-runner-http` so that
-//! multiple runtime libs can share one tested implementation of the wire
-//! framing rather than each hand-rolling line accumulation and head parsing.
+//! Multiple runtime libs share these parsers for wire framing, line
+//! accumulation, and head parsing while keeping transport and event mapping in
+//! their own layers.
 //!
 //! # Example
 //!
@@ -21,11 +21,13 @@
 //! use sim_lib_net_core::LineDecoder;
 //!
 //! let mut decoder = LineDecoder::new();
-//! assert_eq!(decoder.push(b"a\nb"), vec![b"a".to_vec()]);
-//! assert_eq!(decoder.push(b"c\n"), vec![b"bc".to_vec()]);
+//! assert_eq!(decoder.push_checked(b"a\nb")?, vec![b"a".to_vec()]);
+//! assert_eq!(decoder.push_checked(b"c\n")?, vec![b"bc".to_vec()]);
+//! # Ok::<(), sim_lib_net_core::NetError>(())
 //! ```
 
 mod body;
+mod cookbook;
 mod error;
 mod hex;
 mod http;
@@ -36,10 +38,11 @@ mod sse;
 mod url;
 
 pub use body::decode_chunked;
+pub use cookbook::{ResponseHeadDemo, response_head_demo};
 pub use error::NetError;
 pub use hex::hex_encode;
-pub use http::{HttpBodyMode, HttpHead, body_mode, parse_http_head};
-pub use line::LineDecoder;
+pub use http::{HttpBodyMode, HttpHead, body_mode, build_http_request_head, parse_http_head};
+pub use line::{DEFAULT_MAX_LINE_BYTES, LineDecoder};
 pub use ndjson::NdjsonDecoder;
 pub use read::{CapOutcome, HeadOutcome, read_capped_line, read_head_until_double_crlf};
 pub use sse::{SseDecoder, SseEvent};

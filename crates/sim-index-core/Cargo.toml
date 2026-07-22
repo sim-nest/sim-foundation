@@ -1,0 +1,20 @@
+[package]
+name = "sim-index-core"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Core records, keys, checks, and card projections for the SIM Index graph."
+readme = "README.md"
+publish = true
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[package.metadata.sim-recipes]
+policy = "rustdoc"
+reason = "This index model is taught through rustdoc examples and unit tests; no recipe directory is shipped."
+
+[dependencies]
+sim-kernel = { version = "0.1.0" }
+
+[lints]
+workspace = true

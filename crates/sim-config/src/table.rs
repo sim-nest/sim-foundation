@@ -2,7 +2,7 @@
 
 use sim_kernel::{Expr, Symbol};
 
-use crate::{ConfigError, ConfigResult};
+use crate::{ConfigError, ConfigResult, config_field_name, same_config_field};
 
 /// One library's configuration table.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -19,7 +19,11 @@ impl ConfigTable {
         if !matches!(table, Expr::Map(_)) {
             return Err(ConfigError::NonTableExpr);
         }
-        Ok(Self { lib, table })
+        reject_duplicate_fields(&table)?;
+        Ok(Self {
+            lib: canonical_lib_symbol(&lib)?,
+            table,
+        })
     }
 
     /// Borrows this table's map entries.
@@ -81,10 +85,16 @@ impl ConfigDir {
             if !matches!(value, Expr::Map(_)) {
                 return Err(ConfigError::NonTableConfig { lib });
             }
-            entries.push(ConfigTable {
-                lib,
-                table: value.clone(),
-            });
+            let table = ConfigTable::new(lib, value.clone())?;
+            if entries
+                .iter()
+                .any(|prior: &ConfigTable| prior.lib == table.lib)
+            {
+                return Err(ConfigError::DuplicateLibId {
+                    lib: table.lib.clone(),
+                });
+            }
+            entries.push(table);
         }
         Ok(Self { entries })
     }
@@ -120,12 +130,47 @@ pub fn lib_symbol_from_str(id: &str) -> ConfigResult<Symbol> {
     }
 }
 
+fn canonical_lib_symbol(symbol: &Symbol) -> ConfigResult<Symbol> {
+    lib_symbol_from_str(&symbol.as_qualified_str())
+}
+
 fn symbol_key(key: &Expr) -> ConfigResult<Symbol> {
     match key {
-        Expr::Symbol(symbol) => Ok(symbol.clone()),
+        Expr::Symbol(symbol) => canonical_lib_symbol(symbol),
         Expr::String(text) => lib_symbol_from_str(text),
         other => Err(ConfigError::UnsupportedDirKey { key: other.clone() }),
     }
+}
+
+fn reject_duplicate_fields(expr: &Expr) -> ConfigResult<()> {
+    match expr {
+        Expr::Map(entries) => {
+            for (index, (key, value)) in entries.iter().enumerate() {
+                if entries[..index]
+                    .iter()
+                    .any(|(prior_key, _)| same_config_field(prior_key, key))
+                {
+                    return Err(ConfigError::DuplicateField {
+                        key: config_field_label(key),
+                    });
+                }
+                reject_duplicate_fields(value)?;
+            }
+        }
+        Expr::List(items) => {
+            for item in items {
+                reject_duplicate_fields(item)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+fn config_field_label(key: &Expr) -> String {
+    config_field_name(key)
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| format!("{key:?}"))
 }
 
 #[cfg(test)]
@@ -154,6 +199,35 @@ mod tests {
     }
 
     #[test]
+    fn dir_expr_canonicalizes_single_symbol_slash_spelling() {
+        let expr = Expr::Map(vec![(
+            Expr::Symbol(Symbol::new("sim/cookbook")),
+            map(vec![("minimum_loaded", Expr::List(vec![]))]),
+        )]);
+
+        let dir = ConfigDir::from_dir_expr(&expr).unwrap();
+
+        assert_eq!(dir.entries[0].lib, Symbol::qualified("sim", "cookbook"));
+    }
+
+    #[test]
+    fn config_dir_one_emits_canonical_symbol_key() {
+        let dir = ConfigDir::one(
+            Symbol::new("sim/cookbook"),
+            map(vec![("minimum_loaded", Expr::List(vec![]))]),
+        )
+        .unwrap();
+
+        assert_eq!(
+            dir.to_expr(),
+            Expr::Map(vec![(
+                Expr::Symbol(Symbol::qualified("sim", "cookbook")),
+                map(vec![("minimum_loaded", Expr::List(vec![]))]),
+            )])
+        );
+    }
+
+    #[test]
     fn dir_expr_rejects_non_table_entries() {
         let expr = Expr::Map(vec![(Expr::String("sim/cookbook".to_owned()), Expr::Nil)]);
 
@@ -163,6 +237,92 @@ mod tests {
             error,
             ConfigError::NonTableConfig {
                 lib: Symbol::qualified("sim", "cookbook")
+            }
+        );
+    }
+
+    #[test]
+    fn dir_expr_rejects_empty_library_ids() {
+        let expr = Expr::Map(vec![(Expr::String(String::new()), map(vec![]))]);
+
+        let error = ConfigDir::from_dir_expr(&expr).unwrap_err();
+
+        assert_eq!(error, ConfigError::InvalidLibId { id: String::new() });
+    }
+
+    #[test]
+    fn dir_expr_rejects_repeated_slashes() {
+        let expr = Expr::Map(vec![(
+            Expr::String("sim//cookbook".to_owned()),
+            map(vec![("minimum_loaded", Expr::List(vec![]))]),
+        )]);
+
+        let error = ConfigDir::from_dir_expr(&expr).unwrap_err();
+
+        assert_eq!(
+            error,
+            ConfigError::InvalidLibId {
+                id: "sim//cookbook".to_owned(),
+            }
+        );
+    }
+
+    #[test]
+    fn dir_expr_rejects_duplicate_equivalent_library_ids() {
+        let expr = Expr::Map(vec![
+            (
+                Expr::String("sim/cookbook".to_owned()),
+                map(vec![("minimum_loaded", Expr::List(vec![]))]),
+            ),
+            (
+                Expr::Symbol(Symbol::new("sim/cookbook")),
+                map(vec![("minimum_loaded", Expr::List(vec![]))]),
+            ),
+        ]);
+
+        let error = ConfigDir::from_dir_expr(&expr).unwrap_err();
+
+        assert_eq!(
+            error,
+            ConfigError::DuplicateLibId {
+                lib: Symbol::qualified("sim", "cookbook"),
+            }
+        );
+    }
+
+    #[test]
+    fn table_rejects_duplicate_equivalent_field_keys() {
+        let table = Expr::Map(vec![
+            (Expr::Symbol(Symbol::new("mode")), text("built-in")),
+            (Expr::String("mode".to_owned()), text("work")),
+        ]);
+
+        let error = ConfigTable::new(Symbol::qualified("sim", "cookbook"), table).unwrap_err();
+
+        assert_eq!(
+            error,
+            ConfigError::DuplicateField {
+                key: "mode".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn table_rejects_duplicate_equivalent_nested_field_keys() {
+        let table = Expr::Map(vec![(
+            Expr::Symbol(Symbol::new("settings")),
+            Expr::Map(vec![
+                (Expr::Symbol(Symbol::new("mode")), text("built-in")),
+                (Expr::String("mode".to_owned()), text("work")),
+            ]),
+        )]);
+
+        let error = ConfigTable::new(Symbol::qualified("sim", "cookbook"), table).unwrap_err();
+
+        assert_eq!(
+            error,
+            ConfigError::DuplicateField {
+                key: "mode".to_owned()
             }
         );
     }

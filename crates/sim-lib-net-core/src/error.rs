@@ -32,6 +32,11 @@ pub enum NetError {
     InvalidChunkDelimiter,
     /// A length-prefixed or buffered payload exceeded the caller's size limit.
     OversizeBody(usize),
+    /// A newline-delimited line exceeded the configured line size limit.
+    LineTooLong {
+        /// Maximum accepted line length in bytes.
+        max: usize,
+    },
 }
 
 impl core::fmt::Display for NetError {
@@ -49,6 +54,9 @@ impl core::fmt::Display for NetError {
             Self::InvalidChunkDelimiter => write!(formatter, "invalid chunked body delimiter"),
             Self::OversizeBody(limit) => {
                 write!(formatter, "payload exceeded size limit of {limit} bytes")
+            }
+            Self::LineTooLong { max } => {
+                write!(formatter, "line exceeded size limit of {max} bytes")
             }
         }
     }

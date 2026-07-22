@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use sim_config::{ConfigShape, ConfigTable};
+use sim_config::{ConfigShape, ConfigTable, config_field_name, same_config_field};
 use sim_kernel::{
     Cx, Expr, ExprKind, MatchScore, Result, Shape, ShapeDoc, ShapeMatch, Symbol, Value,
 };
@@ -25,9 +25,9 @@ pub fn model_defaults_lib_symbol() -> Symbol {
 
 /// Shape-backed contract for the `sim/cookbook` config table.
 ///
-/// The table carries `minimum_loaded` as a string list plus repeated
-/// `loadable_lib` rows. Each row has an `id` shown by the cookbook and a
-/// host-owned `source` key resolved later by the runtime host.
+/// The table carries `minimum_loaded`, `hide`, and `order` string lists plus
+/// repeated `loadable_lib` rows. Each row has an `id` shown by the cookbook and
+/// a host-owned `source` key resolved later by the runtime host.
 pub fn cookbook_config_shape() -> ConfigShape {
     let lib = cookbook_lib_symbol();
     ConfigShape::new(
@@ -36,6 +36,8 @@ pub fn cookbook_config_shape() -> ConfigShape {
             Symbol::qualified("config-shape", "sim/cookbook"),
             vec![
                 FieldSpec::optional("minimum_loaded", FieldShape::StringList),
+                FieldSpec::optional("hide", FieldShape::StringList),
+                FieldSpec::optional("order", FieldShape::StringList),
                 FieldSpec::optional(
                     "loadable_lib",
                     FieldShape::TableList(vec![
@@ -220,8 +222,17 @@ fn check_table(
     let Expr::Map(entries) = expr else {
         return Err(format!("{context} expected map"));
     };
-    for (key, value) in entries {
-        let Some(name) = key_name(key) else {
+    for (index, (key, value)) in entries.iter().enumerate() {
+        if entries[..index]
+            .iter()
+            .any(|(prior_key, _)| same_config_field(prior_key, key))
+        {
+            return Err(format!(
+                "{context}: duplicate key {}",
+                config_field_name(key).unwrap_or("<opaque>")
+            ));
+        }
+        let Some(name) = config_field_name(key) else {
             return Err(format!("{context} key expected symbol or string"));
         };
         let Some(field) = fields.iter().find(|field| field.name == name) else {
@@ -232,7 +243,7 @@ fn check_table(
     for field in fields.iter().filter(|field| field.required) {
         if !entries
             .iter()
-            .any(|(key, _)| key_name(key).is_some_and(|name| name == field.name))
+            .any(|(key, _)| config_field_name(key).is_some_and(|name| name == field.name))
         {
             return Err(format!("{context}: missing required key {}", field.name));
         }
@@ -266,14 +277,6 @@ fn check_table_list(
     Ok(())
 }
 
-fn key_name(key: &Expr) -> Option<&str> {
-    match key {
-        Expr::Symbol(symbol) if symbol.namespace.is_none() => Some(symbol.name.as_ref()),
-        Expr::String(text) => Some(text),
-        _ => None,
-    }
-}
-
 fn string_list(items: impl IntoIterator<Item = impl Into<String>>) -> Expr {
     list(items.into_iter().map(text).collect())
 }
@@ -291,13 +294,17 @@ mod tests {
     }
 
     #[test]
-    fn cookbook_shape_accepts_minimum_loaded_and_loadable_rows() {
+    fn cookbook_shape_accepts_provider_fields_together() {
+        use sim_config::ConfigView;
+
         let mut cx = cx();
         let shape = cookbook_config_shape();
         let table = ConfigTable::new(
             cookbook_lib_symbol(),
             map(vec![
                 ("minimum_loaded", string_list(["codec/lisp"])),
+                ("hide", string_list(["demo/hidden"])),
+                ("order", string_list(["numbers/cas", "codec/algol"])),
                 (
                     "loadable_lib",
                     list(vec![
@@ -310,6 +317,43 @@ mod tests {
                             ("source", text("symbol:codec/algol")),
                         ]),
                     ]),
+                ),
+            ]),
+        )
+        .unwrap();
+
+        let effective = shape.validate(&mut cx, &table).unwrap();
+        let view = ConfigView::new(&effective);
+
+        assert!(matches!(effective.table, Expr::Map(_)));
+        assert_eq!(view.string_array("minimum_loaded").unwrap(), ["codec/lisp"]);
+        assert_eq!(view.string_array("hide").unwrap(), ["demo/hidden"]);
+        assert_eq!(
+            view.string_array("order").unwrap(),
+            ["numbers/cas", "codec/algol"]
+        );
+    }
+
+    #[test]
+    fn cookbook_shape_accepts_string_keyed_config_fields() {
+        let mut cx = cx();
+        let shape = cookbook_config_shape();
+        let table = ConfigTable::new(
+            cookbook_lib_symbol(),
+            Expr::Map(vec![
+                (
+                    Expr::String("minimum_loaded".to_owned()),
+                    string_list(["codec/lisp"]),
+                ),
+                (
+                    Expr::String("loadable_lib".to_owned()),
+                    list(vec![Expr::Map(vec![
+                        (Expr::String("id".to_owned()), text("numbers/cas")),
+                        (
+                            Expr::String("source".to_owned()),
+                            text("symbol:numbers/cas"),
+                        ),
+                    ])]),
                 ),
             ]),
         )

@@ -1,9 +1,9 @@
 //! Typed read view over a config table.
 
 use sim_kernel::Expr;
-use sim_value::access::{as_i64, as_str, entry_field_any};
+use sim_value::access::{as_i64, as_str};
 
-use crate::{ConfigError, ConfigResult, ConfigTable};
+use crate::{ConfigError, ConfigResult, ConfigTable, config_field_name};
 
 /// Borrowed typed accessors over one config table.
 #[derive(Clone, Copy, Debug)]
@@ -27,7 +27,11 @@ impl<'a> ConfigView<'a> {
 
     /// Returns the raw expression for `key`.
     pub fn get(&self, key: &str) -> Option<&'a Expr> {
-        entry_field_any(self.entries, key)
+        self.entries.iter().find_map(|(field_key, value)| {
+            config_field_name(field_key)
+                .is_some_and(|field| field == key)
+                .then_some(value)
+        })
     }
 
     /// Reads an optional string field.
@@ -182,6 +186,22 @@ mod tests {
                 expected: "a string"
             }
         );
+    }
+
+    #[test]
+    fn view_reads_string_keyed_config_fields() {
+        let table = ConfigTable::new(
+            Symbol::qualified("model", "defaults"),
+            Expr::Map(vec![
+                (Expr::String("provider".to_owned()), text("modeled")),
+                (Expr::String("limit".to_owned()), int(3)),
+            ]),
+        )
+        .unwrap();
+        let view = ConfigView::new(&table);
+
+        assert_eq!(view.required_string("provider").unwrap(), "modeled");
+        assert_eq!(view.required_i64("limit").unwrap(), 3);
     }
 
     #[test]

@@ -7,9 +7,16 @@
 //!
 //! - [`TableOp::Delete`] encodes to `table/del` (not `table/delete`);
 //! - [`TableOp::IsDir`] encodes to `table/dir?` (not `table/isdir`).
+//!
+//! Table entry ops (`get`, `set`, `has`, `del`) act on symbol-keyed table
+//! entries and therefore preserve the full [`Symbol`] surface. Dir ops
+//! (`mkdir`, `opendir`, `rmdir`, `dir?`) name child directories and therefore
+//! accept only one safe, unqualified table-path segment.
 
 use sim_kernel::{Expr, Symbol};
 use sim_value::build::qsym;
+
+use crate::path::is_legal_table_segment;
 
 /// A single table operation, independent of any transport.
 #[derive(Clone, Debug, PartialEq)]
@@ -100,6 +107,17 @@ fn one_key(op: &str, args: &[Expr]) -> Result<Symbol, TableOpError> {
     }
 }
 
+/// Pull the sole [`Symbol`] argument from `args` and require that it names one
+/// safe, unqualified directory segment.
+fn one_dir_segment(op: &str, args: &[Expr]) -> Result<Symbol, TableOpError> {
+    let key = one_key(op, args)?;
+    if key.namespace.is_none() && is_legal_table_segment(key.name.as_ref()) {
+        Ok(key)
+    } else {
+        Err(TableOpError::BadArg(op.to_owned()))
+    }
+}
+
 /// Require that `args` is empty for a nullary op named `op`.
 fn no_args(op: &str, args: &[Expr]) -> Result<(), TableOpError> {
     if args.is_empty() {
@@ -146,10 +164,10 @@ pub fn decode_table_op(expr: &Expr) -> Result<TableOp, TableOpError> {
             no_args(name, args)?;
             TableOp::Clear
         }
-        "mkdir" => TableOp::Mkdir(one_key(name, args)?),
-        "opendir" => TableOp::Opendir(one_key(name, args)?),
-        "rmdir" => TableOp::Rmdir(one_key(name, args)?),
-        "dir?" => TableOp::IsDir(one_key(name, args)?),
+        "mkdir" => TableOp::Mkdir(one_dir_segment(name, args)?),
+        "opendir" => TableOp::Opendir(one_dir_segment(name, args)?),
+        "rmdir" => TableOp::Rmdir(one_dir_segment(name, args)?),
+        "dir?" => TableOp::IsDir(one_dir_segment(name, args)?),
         other => return Err(TableOpError::UnknownOp(other.to_owned())),
     };
     Ok(op)

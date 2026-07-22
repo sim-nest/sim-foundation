@@ -1,5 +1,13 @@
-use sim_kernel::{Expr, Symbol};
+use std::sync::Arc;
 
+// conformance: Table and Dir core expressions round-trip through shared helpers.
+
+use sim_kernel::{CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, NoopEvalPolicy, Symbol};
+
+use crate::capabilities::{
+    edit, exec, find, fs_read, fs_read_aliases, fs_write, fs_write_aliases,
+    granted_capability_or_alias, net_http, net_http_aliases, require_with_aliases,
+};
 use crate::citizen_fields::{path_segments, table_op_expr};
 use crate::op::{TableOp, TableOpError, decode_table_op, encode_table_op};
 use crate::path::{TablePath, TablePathError, is_legal_table_segment};
@@ -8,6 +16,68 @@ use crate::path::{TablePath, TablePathError, is_legal_table_segment};
 fn legal_segment_accepts_normal_name() {
     assert!(is_legal_table_segment("alpha"));
     assert!(is_legal_table_segment("a.b"));
+}
+
+fn seated_cx() -> (Cx, GrantSeat) {
+    Cx::new_seated(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
+}
+
+trait GrantOutcome {
+    fn expect_granted(self);
+}
+
+impl GrantOutcome for () {
+    fn expect_granted(self) {}
+}
+
+impl GrantOutcome for sim_kernel::Result<()> {
+    fn expect_granted(self) {
+        self.unwrap();
+    }
+}
+
+macro_rules! expect_granted {
+    ($grant:expr) => {{
+        #[allow(clippy::let_unit_value)]
+        let grant_result = $grant;
+        #[allow(clippy::unit_arg)]
+        grant_result.expect_granted();
+    }};
+}
+
+#[test]
+fn canonical_capability_names_are_stable() {
+    assert_eq!(fs_read().as_str(), "fs/read");
+    assert_eq!(fs_write().as_str(), "fs/write");
+    assert_eq!(find().as_str(), "find");
+    assert_eq!(edit().as_str(), "edit");
+    assert_eq!(exec().as_str(), "exec");
+    assert_eq!(net_http().as_str(), "net/http");
+}
+
+#[test]
+fn require_with_aliases_accepts_canonical_and_compatibility_names() {
+    let (mut cx, seat) = seated_cx();
+    expect_granted!(seat.grant(&mut cx, CapabilityName::new("stream.file.write")));
+    assert!(require_with_aliases(&cx, fs_write(), fs_write_aliases()).is_ok());
+
+    let granted = granted_capability_or_alias(&cx, fs_write(), fs_write_aliases()).unwrap();
+    assert_eq!(granted.as_str(), "stream.file.write");
+
+    let (mut cx, seat) = seated_cx();
+    expect_granted!(seat.grant(&mut cx, net_http()));
+    assert!(require_with_aliases(&cx, net_http(), net_http_aliases()).is_ok());
+}
+
+#[test]
+fn require_with_aliases_denies_with_canonical_name() {
+    let (cx, _) = seated_cx();
+    let err = require_with_aliases(&cx, fs_read(), fs_read_aliases()).unwrap_err();
+    assert!(matches!(
+        err,
+        sim_kernel::Error::CapabilityDenied { capability }
+            if capability == fs_read()
+    ));
 }
 
 #[test]
@@ -43,6 +113,10 @@ fn key() -> Symbol {
     Symbol::new("k")
 }
 
+fn qualified_key() -> Symbol {
+    Symbol::qualified("cfg", "root")
+}
+
 fn all_ops() -> Vec<TableOp> {
     vec![
         TableOp::Get(key()),
@@ -66,6 +140,21 @@ fn every_op_round_trips() {
         let encoded = encode_table_op(&op);
         let decoded = decode_table_op(&encoded).unwrap();
         assert_eq!(decoded, op, "round trip failed for {op:?}");
+    }
+}
+
+#[test]
+fn keyed_ops_preserve_qualified_symbols() {
+    let key = qualified_key();
+    for op in [
+        TableOp::Get(key.clone()),
+        TableOp::Set(key.clone(), Expr::String("v".to_owned())),
+        TableOp::Has(key.clone()),
+        TableOp::Delete(key.clone()),
+    ] {
+        let encoded = encode_table_op(&op);
+        let decoded = decode_table_op(&encoded).unwrap();
+        assert_eq!(decoded, op, "qualified key changed for {op:?}");
     }
 }
 
@@ -112,6 +201,32 @@ fn decode_rejects_unknown_op() {
         decode_table_op(&expr),
         Err(TableOpError::UnknownOp("frobnicate".to_owned()))
     );
+}
+
+#[test]
+fn dir_ops_reject_illegal_segments() {
+    for (label, key) in [
+        ("empty", Symbol::new("")),
+        ("dot", Symbol::new(".")),
+        ("dotdot", Symbol::new("..")),
+        ("slash", Symbol::new("a/b")),
+        ("backslash", Symbol::new("a\\b")),
+        ("qualified", qualified_key()),
+    ] {
+        for (op_name, op) in [
+            ("mkdir", TableOp::Mkdir(key.clone())),
+            ("opendir", TableOp::Opendir(key.clone())),
+            ("rmdir", TableOp::Rmdir(key.clone())),
+            ("dir?", TableOp::IsDir(key.clone())),
+        ] {
+            let encoded = encode_table_op(&op);
+            assert_eq!(
+                decode_table_op(&encoded),
+                Err(TableOpError::BadArg(op_name.to_owned())),
+                "{op_name} accepted {label} dir segment"
+            );
+        }
+    }
 }
 
 #[test]

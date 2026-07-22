@@ -17,9 +17,9 @@ pub fn qsym(ns: &str, name: &str) -> Expr {
     Expr::Symbol(Symbol::qualified(ns, name))
 }
 
-/// A bare keyword `Symbol` (NOT wrapped in `Expr`). This is the one home for the
-/// `fn field(name) -> Symbol` / `Symbol::new(name)` wrappers that test and codec
-/// crates re-grew; use [`sym`] when an `Expr` is wanted.
+/// A bare keyword `Symbol` (NOT wrapped in `Expr`). This is the one home for
+/// common `fn field(name) -> Symbol` / `Symbol::new(name)` wrappers in test and
+/// codec crates; use [`sym`] when an `Expr` is wanted.
 pub fn keyword(name: &str) -> Symbol {
     Symbol::new(name)
 }
@@ -29,9 +29,9 @@ pub fn int(value: i64) -> Expr {
     num("i64", &value.to_string())
 }
 
-/// An `i64`-domain number value from an unsigned integer.
+/// A `u64`-domain number value from an unsigned integer.
 pub fn uint(value: u64) -> Expr {
-    num("i64", &value.to_string())
+    num("u64", &value.to_string())
 }
 
 /// An `f64`-domain number value with a canonical literal.

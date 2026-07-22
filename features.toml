@@ -1,0 +1,159 @@
+schema = "sim.features"
+
+[enforcement.audience]
+framework = "strict"
+code = "strict"
+
+[enforcement.specimen]
+user = "strict"
+framework = "strict"
+code = "advisory"
+
+[enforcement.route]
+major_entrypoints = "advisory"
+frameworks = "advisory"
+
+[[feature]]
+id = "feature/sim-foundation/value-helpers"
+title = "Value helper framework"
+summary = "Provide shared value conversion and table-field helpers for reusable runtime libraries."
+owner = "crate/sim-value"
+audiences = ["code", "framework"]
+guidance = "Use this row when decoding or projecting runtime values inside a framework crate."
+claims_anchors = [
+  "anchor/crate/sim-value",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-value/src/tests",
+]
+
+[[feature]]
+id = "feature/sim-foundation/table-dir-core"
+title = "Table and Dir core"
+summary = "Define shared table and directory contracts used by storage, index, and host-facing libraries."
+owner = "crate/sim-table-core"
+audiences = ["code", "framework"]
+guidance = "Use this row when implementing get, set, keys, entries, delete, or directory behavior."
+claims_anchors = [
+  "anchor/crate/sim-config",
+  "anchor/crate/sim-table-core",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-table-core/src/tests",
+]
+
+[[feature]]
+id = "feature/sim-foundation/index-graph-core"
+title = "Index graph core"
+summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."
+owner = "crate/sim-index-core"
+audiences = ["code"]
+guidance = "Use this row when a caller needs to build, validate, or project the SIM Index graph."
+claims_anchors = [
+  "anchor/crate/sim-index-core",
+]
+
+[[feature]]
+id = "feature/sim-foundation/host-primitives"
+title = "Host primitive foundation"
+summary = "Provide shared network and surface-card helper crates for host-facing runtime libraries."
+owner = "crate/sim-lib-net-core"
+audiences = ["code", "framework"]
+guidance = "Use this row when a reusable host primitive needs shared network or surface-card support."
+claims_anchors = [
+  "anchor/crate/sim-lib-net-core",
+  "anchor/crate/sim-lib-surface-card",
+]
+claims_specimens = [
+  "recipe/sim-foundation/crates/sim-lib-net-core/01-basics/response-head",
+]
+
+[[feature]]
+id = "feature/sim-foundation/cookbook"
+title = "Cookbook recipe framework"
+summary = "Describe reusable recipe metadata and generated cookbook records consumed by public docs and tooling."
+owner = "crate/sim-cookbook"
+audiences = ["code", "framework"]
+guidance = "Use this row when a crate needs recipe metadata to appear in generated docs."
+claims_anchors = [
+  "anchor/crate/sim-cookbook",
+  "anchor/export/sim-cookbook/codec/lisp",
+  "anchor/export/sim-cookbook/model/defaults",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-cookbook/src/model",
+]
+
+[[feature]]
+id = "feature/sim-foundation/library-macros"
+title = "Library macro surface"
+summary = "Generate checked Rust declarations for authored SIM libraries and codec markers."
+owner = "crate/sim-macros"
+audiences = ["code"]
+guidance = "Use this row when adding a Rust macro surface for library manifests, exports, or marker metadata."
+claims_anchors = [
+  "anchor/crate/sim-macros",
+]
+
+[[feature]]
+id = "feature/sim-foundation/contract-emitter"
+title = "Foundation contract emitter"
+summary = "Emit generated repository contract and index fragments for foundation crates."
+owner = "crate/xtask"
+audiences = ["code"]
+guidance = "Use this row when refreshing generated contract evidence for foundation crates."
+claims_anchors = [
+  "anchor/crate/xtask",
+]
+supports = [
+  "feature/sim-foundation/index-graph-core",
+]
+
+[[route]]
+id = "route/add-value-helper"
+task = "Add a value helper"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/value-helpers", why = "The value row owns shared runtime value conversion helpers." },
+]
+
+[[route]]
+id = "route/add-table-dir-core"
+task = "Add a Table or Dir core contract"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/table-dir-core", why = "The table core row owns shared Table and Dir contracts." },
+]
+
+[[route]]
+id = "route/add-index-graph-record"
+task = "Add an index graph record"
+audiences = ["code"]
+steps = [
+  { feature = "feature/sim-foundation/index-graph-core", why = "The index core row owns graph ids, records, edges, and validation." },
+]
+
+[[route]]
+id = "route/add-host-primitive"
+task = "Add a host primitive"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/host-primitives", why = "Host primitives start from shared network and surface-card helpers." },
+]
+
+[[route]]
+id = "route/add-cookbook-recipe"
+task = "Add a cookbook recipe"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/cookbook", why = "The cookbook row owns reusable recipe metadata." },
+]
+
+[[route]]
+id = "route/add-library-macro"
+task = "Add a library macro"
+audiences = ["code"]
+steps = [
+  { feature = "feature/sim-foundation/library-macros", why = "The macro row owns checked Rust declarations for SIM libraries." },
+  { feature = "feature/sim-foundation/contract-emitter", why = "The emitter row keeps generated contract evidence current." },
+]

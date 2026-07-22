@@ -9,6 +9,10 @@ publish = true
 repository = "https://github.com/sim-nest/sim-foundation"
 homepage = "https://github.com/sim-nest/sim-foundation"
 
+[package.metadata.sim-recipes]
+policy = "rustdoc"
+reason = "This value substrate is taught through rustdoc examples and unit tests; no recipe directory is shipped."
+
 [dependencies]
 sim-kernel = { version = "0.1.0" }
 

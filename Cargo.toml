@@ -4,6 +4,7 @@ resolver = "3"
 members = [
   "crates/sim-config",
   "crates/sim-cookbook",
+  "crates/sim-index-core",
   "crates/sim-lib-net-core",
   "crates/sim-lib-surface-card",
   "crates/sim-macros",

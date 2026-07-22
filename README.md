@@ -2,8 +2,9 @@
 
 Ergonomic, dependency-light building blocks for working with SIM's kernel data:
 build and read `Expr` values, merge table-shaped configuration, validate table
-paths, author libraries with proc-macros, and shape codec-neutral surfaces --
-without re-growing the same substrate in every library.
+paths, author libraries with proc-macros, shape codec-neutral surfaces, and
+check SIM Index graph records -- without re-growing the same substrate in every
+library.
 
 SIM is a small Rust protocol kernel plus a large set of loadable libraries (it
 is not a Lisp runtime); the kernel defines contracts and libraries provide
@@ -46,9 +47,10 @@ It provides ergonomic construction and access for the kernel `Expr` graph, the
 shared configuration table/Dir substrate, the shared table path and operation
 protocol, the proc-macro surface for authoring libraries, the crate-local
 cookbook engine, reusable HTTP/streaming parsing primitives, and the
-codec-neutral surface-card spine. These crates depend only on `sim-kernel` (and,
-where noted, on `sim-value`); they add data ergonomics and protocol shape, not
-runtime behavior, so they stay below the kernel boundary.
+codec-neutral surface-card spine, and the checked model for the SIM Index graph.
+These crates depend only on `sim-kernel` (and, where noted, on `sim-value`);
+they add data ergonomics and protocol shape, not runtime behavior, so they stay
+below the kernel boundary.
 
 ## Crates
 
@@ -75,6 +77,10 @@ runtime behavior, so they stay below the kernel boundary.
   recipes: manifest parsing and lint, compile-time embedding, recipe stores,
   projection/search/next behavior, and deterministic user overlays. Recipes
   register as Card records that every surface projects.
+- `sim-index-core` -- the SIM Index graph model: subjects, anchors, surfaces,
+  features, runnable specimens, grammar contracts, routes, canonical feature
+  keys, graph checks, and kernel Card projections. Depends only on
+  `sim-kernel`.
 - `sim-lib-net-core` -- reusable, side-effect-free HTTP/streaming parsing
   primitives: URL parsing, HTTP response-head parsing, body-mode classification,
   line framing, and SSE/NDJSON record decoders, with no socket/TLS I/O and no
@@ -90,17 +96,30 @@ These crates are foundation substrate, not runtime behavior. Each is a leaf or
 near-leaf in the dependency graph, depending only on `sim-kernel` and
 `sim-value`. They keep common code -- value ergonomics, configuration merging,
 table path validation, library-authoring macros, cookbook projection, wire
-framing, and surface naming -- in one tested home. Concrete runtime operations
-layer over these crates elsewhere in the constellation; the foundation layer
-adds data ergonomics and protocol shape and does not touch the kernel boundary.
+framing, surface naming, and checked index facts -- in one tested home. Concrete
+runtime operations layer over these crates elsewhere in the constellation; the
+foundation layer adds data ergonomics and protocol shape and does not touch the
+kernel boundary.
 
 ## Validation
 
-These commands run in the constellation workspace; only `sim-kernel` builds from a lone clone today (see `DEVELOPING.md` in `sim-sdk`). A single-repo build lands with the first crates.io publish.
+This repo validates from a single clone against the SIM crates published on
+crates.io. CI installs the channel named by `rust-toolchain.toml` instead of a
+floating stable toolchain. The generated-doc check delegates to the shared
+`sim-tooling` encoder; CI checks out `sim-nest/sim-tooling` and sets
+`SIMDOC_TOOLING_MANIFEST`, while local runs can use either a sibling
+`sim-tooling` checkout or the same environment variable.
 
 ```bash
-cargo fmt --check && cargo test --workspace && cargo clippy --workspace -- -D warnings && cargo doc --workspace --no-deps
+cargo fmt --all --check
+cargo test --workspace
+cargo test --workspace --all-features
+cargo clippy --workspace --all-targets -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+cargo run -p xtask -- check-recipes
+cargo run -p xtask -- check-package-floors
 cargo run -p xtask -- simdoc --check
+cargo run -p xtask -- check-file-sizes
 ```
 
 ## Documentation Lanes
@@ -133,8 +152,15 @@ crate to build.
 
 ### Examples and recipes
 
-`sim-lib-net-core` and `sim-lib-surface-card` ship runnable recipes under their
-`recipes/` directories. `sim-cookbook` is the cookbook engine itself (manifest
-parsing, embedding, recipe stores, and projection), so it hosts no recipes of its
-own. The remaining crates' examples are their rustdoc doctests; no stub recipe
-directories are added.
+`sim-lib-net-core` and `sim-lib-surface-card` ship descriptor cookbook entries
+under their `recipes/` directories. They are projection material for surfaces to
+show, not sandbox-executed examples. `sim-cookbook` is the cookbook engine itself
+(manifest parsing, embedding, recipe stores, and projection), so it hosts no
+recipes of its own. The remaining crates teach their substrate contracts through
+rustdoc doctests and unit tests instead of empty recipe directories.
+
+`cargo run -p xtask -- check-recipes` enforces that contract. Publishable
+packages declare their recipe policy in `[package.metadata.sim-recipes]`;
+descriptor recipe manifests must carry the `sandbox-descriptor` tag, and
+rustdoc-only or engine crates must document why they have no `recipes/`
+directory.

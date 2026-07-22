@@ -1,10 +1,12 @@
 //! Plain data model for the cookbook.
 //!
-//! A recipe is a tiny runnable lesson shipped by the crate it teaches. These
+//! A recipe is a tiny lesson shipped by the crate it teaches. These
 //! types carry one recipe's data (a [`RecipeCard`]) and the computed grouping
 //! of all loaded recipes into books and chapters (a [`CookbookView`]). They are
 //! deliberately free of kernel types: recipes flow through the existing
 //! Card/registry data surface, so the kernel gains no cookbook enum.
+
+// conformance: cookbook records carry recipe metadata for generated docs.
 
 /// Where a recipe came from.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -49,7 +51,7 @@ pub struct RecipeCard {
     pub chapter_summary: String,
     /// Human recipe title.
     pub title: String,
-    /// Registered codec name used to decode `setup`.
+    /// Registered codec name for decoding `setup`.
     pub codec: String,
     /// Raw setup bytes, decoded on demand through `codec`.
     pub setup: Vec<u8>,
@@ -80,6 +82,21 @@ pub struct RecipeCard {
 pub struct CookbookView {
     /// Books sorted by `book_order`, then book id.
     pub books: Vec<BookView>,
+}
+
+/// One loadable lib entry in the top-level cookbook tree.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LibView {
+    /// Cookbook-facing lib id, such as `numbers/i64`.
+    pub id: String,
+    /// Human lib title.
+    pub title: String,
+    /// Whether the lib is loaded in the projected recipe store.
+    pub loaded: bool,
+    /// Grouped recipe chapters for loaded libs.
+    pub groups: Vec<ChapterView>,
+    /// Lifecycle load recipes for unloaded libs.
+    pub recipes: Vec<RecipeCard>,
 }
 
 /// One book (all recipes from one crate) in a [`CookbookView`].
@@ -227,6 +244,37 @@ mod tests {
         };
         assert_eq!(view.books[0].chapters[0].recipes[0], card);
         assert_eq!(view.books[0].id, "numbers-f64");
+    }
+
+    #[test]
+    fn lib_view_carries_loaded_state_and_either_groups_or_recipes() {
+        let card = sample_card();
+        let loaded = LibView {
+            id: card.book.clone(),
+            title: card.book_title.clone(),
+            loaded: true,
+            groups: vec![ChapterView {
+                name: card.chapter.clone(),
+                title: card.chapter_title.clone(),
+                summary: String::new(),
+                recipes: vec![card.clone()],
+            }],
+            recipes: Vec::new(),
+        };
+        let unloaded = LibView {
+            id: "numbers-i64".to_string(),
+            title: "Numbers (i64)".to_string(),
+            loaded: false,
+            groups: Vec::new(),
+            recipes: vec![card.clone()],
+        };
+
+        assert!(loaded.loaded);
+        assert!(loaded.recipes.is_empty());
+        assert_eq!(loaded.groups[0].recipes[0], card);
+        assert!(!unloaded.loaded);
+        assert!(unloaded.groups.is_empty());
+        assert_eq!(unloaded.recipes.len(), 1);
     }
 
     #[test]
