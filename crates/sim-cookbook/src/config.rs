@@ -283,15 +283,9 @@ fn string_list(items: impl IntoIterator<Item = impl Into<String>>) -> Expr {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
-    use sim_kernel::{Cx, DefaultFactory, NoopEvalPolicy};
+    use sim_kernel::testing::bare_cx as cx;
 
     use super::*;
-
-    fn cx() -> Cx {
-        Cx::new(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
-    }
 
     #[test]
     fn cookbook_shape_accepts_provider_fields_together() {

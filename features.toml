@@ -16,10 +16,10 @@ frameworks = "advisory"
 [[feature]]
 id = "feature/sim-foundation/value-helpers"
 title = "Value helper framework"
-summary = "Provide shared value conversion and table-field helpers for reusable runtime libraries."
+summary = "Provide shared value conversion, expression builder, expression field reader, map field reader, and field access helpers for reusable runtime libraries."
 owner = "crate/sim-value"
 audiences = ["code", "framework"]
-guidance = "Use this row when decoding or projecting runtime values inside a framework crate."
+guidance = "Use this row when decoding or projecting runtime values, reusing expression field readers, reading fields from maps, or building reusable expression helper code inside a framework crate."
 claims_anchors = [
   "anchor/crate/sim-value",
 ]
@@ -111,10 +111,10 @@ supports = [
 
 [[route]]
 id = "route/add-value-helper"
-task = "Add a value helper"
+task = "Add or reuse a value helper, expression field reader, or map field access helper"
 audiences = ["code", "framework"]
 steps = [
-  { feature = "feature/sim-foundation/value-helpers", why = "The value row owns shared runtime value conversion helpers." },
+  { feature = "feature/sim-foundation/value-helpers", why = "The value row owns shared runtime value conversion, expression builder, expression field reader, map field reader, and field access helpers." },
 ]
 
 [[route]]

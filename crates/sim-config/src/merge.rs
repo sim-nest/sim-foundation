@@ -153,7 +153,7 @@ fn id_keyed_items(items: &[Expr]) -> bool {
 }
 
 fn item_id(item: &Expr) -> Option<String> {
-    match config_field(item, "id") {
+    match sim_value::access::field_any(item, "id") {
         Some(Expr::String(id)) => Some(id.clone()),
         Some(Expr::Symbol(id)) => Some(id.as_qualified_str()),
         _ => None,
@@ -171,17 +171,6 @@ fn key_label(key: &Expr) -> String {
     config_field_name(key)
         .map(ToOwned::to_owned)
         .unwrap_or_else(|| format!("{key:?}"))
-}
-
-fn config_field<'a>(expr: &'a Expr, name: &str) -> Option<&'a Expr> {
-    let Expr::Map(entries) = expr else {
-        return None;
-    };
-    entries.iter().find_map(|(key, value)| {
-        config_field_name(key)
-            .is_some_and(|field| field == name)
-            .then_some(value)
-    })
 }
 
 #[cfg(test)]
@@ -441,9 +430,9 @@ mod tests {
             other => panic!("expected merged list, got {other:?}"),
         };
         assert_eq!(list.len(), 2);
-        assert_eq!(config_field(&list[0], "id"), Some(&text("shape")));
-        assert_eq!(config_field(&list[0], "source"), Some(&text("work")));
-        assert_eq!(config_field(&list[1], "id"), Some(&text("numbers")));
+        assert_eq!(field_any(&list[0], "id"), Some(&text("shape")));
+        assert_eq!(field_any(&list[0], "source"), Some(&text("work")));
+        assert_eq!(field_any(&list[1], "id"), Some(&text("numbers")));
         assert_eq!(
             effective
                 .trace
