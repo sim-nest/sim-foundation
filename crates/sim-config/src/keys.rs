@@ -26,3 +26,27 @@ pub fn same_config_field(left: &Expr, right: &Expr) -> bool {
         _ => left == right,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use sim_kernel::Symbol;
+
+    use super::*;
+
+    #[test]
+    fn config_field_name_is_key_identity_not_map_lookup() {
+        assert_eq!(
+            config_field_name(&Expr::Symbol(Symbol::new("mode"))),
+            Some("mode")
+        );
+        assert_eq!(
+            config_field_name(&Expr::String("mode".into())),
+            Some("mode")
+        );
+        assert_eq!(
+            config_field_name(&Expr::Symbol(Symbol::qualified("config", "mode"))),
+            None
+        );
+        assert_eq!(config_field_name(&Expr::Bool(true)), None);
+    }
+}
