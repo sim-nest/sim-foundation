@@ -1,6 +1,6 @@
 {
   "generator": "xtask crate-catalog v1",
-  "package_count": 8,
+  "package_count": 9,
   "packages": [
     {
       "description": "Table and Dir substrate for layered SIM configuration.",
@@ -22,6 +22,18 @@
       "publish": "true",
       "readme": "crates/sim-cookbook/README.md",
       "root": "crates/sim-cookbook",
+      "target_kinds": [
+        "lib"
+      ]
+    },
+    {
+      "description": "Core records, keys, checks, and card projections for the SIM Index graph.",
+      "generated_readme": false,
+      "manifest": "crates/sim-index-core/Cargo.toml",
+      "name": "sim-index-core",
+      "publish": "true",
+      "readme": "crates/sim-index-core/README.md",
+      "root": "crates/sim-index-core",
       "target_kinds": [
         "lib"
       ]
