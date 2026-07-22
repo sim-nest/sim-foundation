@@ -2,6 +2,7 @@ schema = "sim.features"
 
 [enforcement.audience]
 framework = "strict"
+code = "strict"
 
 [enforcement.route]
 major_entrypoints = "advisory"
@@ -26,7 +27,19 @@ owner = "crate/sim-table-core"
 audiences = ["code", "framework"]
 guidance = "Use this row when implementing get, set, keys, entries, delete, or directory behavior."
 claims_anchors = [
+  "anchor/crate/sim-config",
   "anchor/crate/sim-table-core",
+]
+
+[[feature]]
+id = "feature/sim-foundation/index-graph-core"
+title = "Index graph core"
+summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."
+owner = "crate/sim-index-core"
+audiences = ["code"]
+guidance = "Use this row when a caller needs to build, validate, or project the SIM Index graph."
+claims_anchors = [
+  "anchor/crate/sim-index-core",
 ]
 
 [[feature]]
@@ -50,6 +63,33 @@ audiences = ["code", "framework"]
 guidance = "Use this row when a crate needs recipe metadata to appear in generated docs."
 claims_anchors = [
   "anchor/crate/sim-cookbook",
+  "anchor/export/sim-cookbook/codec/lisp",
+  "anchor/export/sim-cookbook/model/defaults",
+]
+
+[[feature]]
+id = "feature/sim-foundation/library-macros"
+title = "Library macro surface"
+summary = "Generate checked Rust declarations for authored SIM libraries and codec markers."
+owner = "crate/sim-macros"
+audiences = ["code"]
+guidance = "Use this row when adding a Rust macro surface for library manifests, exports, or marker metadata."
+claims_anchors = [
+  "anchor/crate/sim-macros",
+]
+
+[[feature]]
+id = "feature/sim-foundation/contract-emitter"
+title = "Foundation contract emitter"
+summary = "Emit generated repository contract and index fragments for foundation crates."
+owner = "crate/xtask"
+audiences = ["code"]
+guidance = "Use this row when refreshing generated contract evidence for foundation crates."
+claims_anchors = [
+  "anchor/crate/xtask",
+]
+supports = [
+  "feature/sim-foundation/index-graph-core",
 ]
 
 [[route]]
@@ -69,6 +109,14 @@ steps = [
 ]
 
 [[route]]
+id = "route/add-index-graph-record"
+task = "Add an index graph record"
+audiences = ["code"]
+steps = [
+  { feature = "feature/sim-foundation/index-graph-core", why = "The index core row owns graph ids, records, edges, and validation." },
+]
+
+[[route]]
 id = "route/add-host-primitive"
 task = "Add a host primitive"
 audiences = ["code", "framework"]
@@ -82,4 +130,13 @@ task = "Add a cookbook recipe"
 audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/cookbook", why = "The cookbook row owns reusable recipe metadata." },
+]
+
+[[route]]
+id = "route/add-library-macro"
+task = "Add a library macro"
+audiences = ["code"]
+steps = [
+  { feature = "feature/sim-foundation/library-macros", why = "The macro row owns checked Rust declarations for SIM libraries." },
+  { feature = "feature/sim-foundation/contract-emitter", why = "The emitter row keeps generated contract evidence current." },
 ]
