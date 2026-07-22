@@ -17,7 +17,7 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 
 | Feature | Subject | Specimens | Summary |
 | --- | --- | ---: | --- |
-| `feature/sim-foundation/value-helpers` | `crate/sim-value` | 1 | Provide shared value conversion and table-field helpers for reusable runtime libraries. |
+| `feature/sim-foundation/value-helpers` | `crate/sim-value` | 1 | Provide shared value conversion, expression builder, expression field reader, map field reader, and field access helpers for reusable runtime libraries. |
 | `feature/sim-foundation/table-dir-core` | `crate/sim-table-core` | 1 | Define shared table and directory contracts used by storage, index, and host-facing libraries. |
 | `feature/sim-foundation/index-graph-core` | `crate/sim-index-core` | 0 | Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs. |
 | `feature/sim-foundation/host-primitives` | `crate/sim-lib-net-core` | 1 | Provide shared network and surface-card helper crates for host-facing runtime libraries. |
