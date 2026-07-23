@@ -43,6 +43,24 @@ claims_specimens = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/table-path-references"
+title = "Table path references"
+summary = "Parse, normalize, resolve, and format bounded absolute and relative Table/Dir path references."
+owner = "crate/sim-table-core"
+audiences = ["code", "framework"]
+guidance = "Use this row when a library accepts textual Table/Dir locations, needs escaped segment formatting, or resolves relative references against a canonical TablePath."
+claims_anchors = [
+  "anchor/crate/sim-table-core",
+  "anchor/rustdoc/sim-table-core/table-path",
+  "anchor/rustdoc/sim-table-core/table-path-ref",
+  "anchor/rustdoc/sim-table-core/table-path-ref-error",
+  "anchor/rustdoc/sim-table-core/table-path-ref-part",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-table-core/src/tests",
+]
+
+[[feature]]
 id = "feature/sim-foundation/index-graph-core"
 title = "Index graph core"
 summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."
@@ -123,6 +141,7 @@ task = "Add a Table or Dir core contract"
 audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/table-dir-core", why = "The table core row owns shared Table and Dir contracts." },
+  { feature = "feature/sim-foundation/table-path-references", why = "The path reference row owns escaped absolute and relative Table/Dir path parsing, normalization, and resolution." },
 ]
 
 [[route]]

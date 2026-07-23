@@ -1,13 +1,15 @@
-//! Shared table substrate: path validation and the table operation protocol.
+//! Shared table substrate: path validation, path-reference resolution, and the
+//! table operation protocol.
 //!
-//! Table backends (`sim-table-db`, `sim-table-remote`, ...) independently grew
-//! the same path-segment validation predicate and an ad-hoc `table/<op>` call
-//! protocol on the wire. This crate is the one home for both:
+//! Table backends (`sim-table-db`, `sim-table-remote`, ...) share one
+//! path-segment predicate, one absolute/relative reference syntax, and one
+//! `table/<op>` call protocol on the wire. This crate is the home for all three:
 //!
 //! - [`capabilities`]: canonical fs/find/edit/exec/net capability names and
 //!   compatibility alias checks for host-effect call sites;
 //! - [`path`]: the legal-segment predicate ([`is_legal_table_segment`]) and a
-//!   small [`TablePath`] accumulator that validates as it grows;
+//!   small [`TablePath`] accumulator that validates as it grows, plus
+//!   [`TablePathRef`] for escaped absolute and relative references;
 //! - [`op`]: the [`TableOp`] model plus [`encode_table_op`]/[`decode_table_op`],
 //!   which round-trip through the kernel `Expr` graph using the exact wire
 //!   spellings that `sim-table-remote` already speaks.
@@ -38,7 +40,10 @@ pub mod path;
 
 pub use manifest::backend_manifest;
 pub use op::{TableOp, TableOpError, decode_table_op, encode_table_op};
-pub use path::{TablePath, TablePathError, is_legal_table_segment};
+pub use path::{
+    MAX_TABLE_PATH_SEGMENTS, MAX_TABLE_PATH_TEXT_BYTES, TablePath, TablePathError, TablePathRef,
+    TablePathRefError, TablePathRefPart, is_legal_table_segment,
+};
 
 #[cfg(test)]
 mod tests;

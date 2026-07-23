@@ -1,9 +1,10 @@
 # sim-table-core
 
 `sim-table-core` is the shared table substrate for SIM libraries. It defines the
-legal table path segment predicate, a validating path accumulator, canonical
-host-effect capability names and aliases, and the table operation model used by
-local and remote table backends.
+legal table path segment predicate, a validating canonical path accumulator,
+absolute and relative path-reference parsing, canonical host-effect capability
+names and aliases, and the table operation model used by local and remote table
+backends.
 
 The crate owns protocol shape, not storage behavior. It performs no file-system,
 database, network, or process effects; concrete backends implement those effects
@@ -11,7 +12,8 @@ above this layer.
 
 ## What it provides
 
-- `is_legal_table_segment` and `TablePath` for safe table locations.
+- `is_legal_table_segment`, `TablePath`, and `TablePathRef` for safe table
+  locations and bounded reference resolution.
 - `TableOp` plus `encode_table_op` and `decode_table_op` for the wire shape of
   read, write, list, delete, and directory operations.
 - Canonical capability helpers for file, find, edit, exec, and HTTP access.

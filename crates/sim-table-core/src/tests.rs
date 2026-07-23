@@ -10,7 +10,10 @@ use crate::capabilities::{
 };
 use crate::citizen_fields::{path_segments, table_op_expr};
 use crate::op::{TableOp, TableOpError, decode_table_op, encode_table_op};
-use crate::path::{TablePath, TablePathError, is_legal_table_segment};
+use crate::path::{
+    MAX_TABLE_PATH_SEGMENTS, MAX_TABLE_PATH_TEXT_BYTES, TablePath, TablePathError, TablePathRef,
+    TablePathRefError, TablePathRefPart, is_legal_table_segment,
+};
 
 #[test]
 fn legal_segment_accepts_normal_name() {
@@ -107,6 +110,178 @@ fn table_path_joins_with_slash() {
     path.push("c").unwrap();
     assert_eq!(path.segments(), ["a", "b", "c"]);
     assert_eq!(path.join(), "a/b/c");
+}
+
+#[test]
+fn table_path_formats_as_absolute_reference() {
+    let path =
+        TablePath::from_segments(["alpha", "with space", "percent%sign", "dots..."]).unwrap();
+
+    assert_eq!(
+        path.to_absolute_reference(),
+        "/alpha/with%20space/percent%25sign/dots..."
+    );
+    assert_eq!(path.to_string(), path.to_absolute_reference());
+    assert_eq!(TablePath::parse_absolute(&path.to_string()).unwrap(), path);
+}
+
+#[test]
+fn table_path_reference_resolves_and_normalizes_relative_parts() {
+    let base = TablePath::from_segments(["project", "estimate", "draft"]).unwrap();
+    let reference = TablePathRef::parse("../final/./cost").unwrap();
+
+    let resolved = base.resolve(&reference).unwrap();
+
+    assert_eq!(
+        resolved.segments(),
+        ["project", "estimate", "final", "cost"]
+    );
+    assert_eq!(
+        resolved.to_absolute_reference(),
+        "/project/estimate/final/cost"
+    );
+}
+
+#[test]
+fn absolute_table_path_reference_ignores_base() {
+    let base = TablePath::from_segments(["project", "estimate"]).unwrap();
+    let reference = TablePathRef::parse("/shared/rates").unwrap();
+
+    assert_eq!(
+        base.resolve(&reference).unwrap(),
+        TablePath::from_segments(["shared", "rates"]).unwrap()
+    );
+}
+
+#[test]
+fn table_path_reference_detects_root_escape() {
+    let base = TablePath::from_segments(["project"]).unwrap();
+
+    assert_eq!(
+        base.resolve(&TablePathRef::parse("../../cost").unwrap()),
+        Err(TablePathRefError::RootEscape)
+    );
+    assert_eq!(
+        TablePath::parse_absolute("/../cost"),
+        Err(TablePathRefError::RootEscape)
+    );
+}
+
+#[test]
+fn table_path_reference_rejects_empty_and_ambiguous_segments() {
+    assert_eq!(
+        TablePathRef::parse(""),
+        Err(TablePathRefError::EmptyReference)
+    );
+    assert_eq!(
+        TablePathRef::parse("alpha//beta"),
+        Err(TablePathRefError::EmptySegment)
+    );
+    assert_eq!(
+        TablePathRef::parse("/alpha/"),
+        Err(TablePathRefError::EmptySegment)
+    );
+    assert_eq!(
+        TablePathRef::parse("alpha\\beta"),
+        Err(TablePathRefError::AmbiguousSeparator('\\'))
+    );
+    assert_eq!(
+        TablePathRef::parse("alpha%2Fbeta"),
+        Err(TablePathRefError::IllegalSegment("alpha/beta".to_owned()))
+    );
+}
+
+#[test]
+fn table_path_reference_rejects_bad_escapes() {
+    assert_eq!(
+        TablePathRef::parse("/alpha/%"),
+        Err(TablePathRefError::BadEscape { index: 0 })
+    );
+    assert_eq!(
+        TablePathRef::parse("/alpha/%GG"),
+        Err(TablePathRefError::BadEscape { index: 0 })
+    );
+    assert_eq!(
+        TablePathRef::parse("/alpha/%FF"),
+        Err(TablePathRefError::InvalidUtf8Escape)
+    );
+}
+
+#[test]
+fn table_path_reference_limits_are_enforced() {
+    let too_many = std::iter::repeat_n("a", MAX_TABLE_PATH_SEGMENTS + 1)
+        .collect::<Vec<_>>()
+        .join("/");
+    assert_eq!(
+        TablePathRef::parse(&too_many),
+        Err(TablePathRefError::TooManySegments {
+            limit: MAX_TABLE_PATH_SEGMENTS
+        })
+    );
+
+    let too_long = "a".repeat(MAX_TABLE_PATH_TEXT_BYTES + 1);
+    assert_eq!(
+        TablePathRef::parse(&too_long),
+        Err(TablePathRefError::ReferenceTooLong {
+            limit: MAX_TABLE_PATH_TEXT_BYTES
+        })
+    );
+}
+
+#[test]
+fn path_parse_format_roundtrip_property_matrix() {
+    let samples = [
+        "alpha",
+        "A-Z_09",
+        "with space",
+        "percent%sign",
+        "dots...",
+        "colon:semicolon",
+        "plus+comma,",
+    ];
+
+    for first in samples {
+        for second in samples {
+            let path = TablePath::from_segments([first, second]).unwrap();
+            let formatted = path.to_absolute_reference();
+            let parsed = TablePath::parse_absolute(&formatted).unwrap();
+            assert_eq!(parsed, path, "absolute path did not round-trip");
+            assert_eq!(parsed.to_absolute_reference(), formatted);
+        }
+    }
+}
+
+#[test]
+fn reference_parse_format_roundtrip_property_matrix() {
+    let samples = [
+        TablePathRef::new(false, vec![TablePathRefPart::Current]).unwrap(),
+        TablePathRef::new(false, vec![TablePathRefPart::Parent]).unwrap(),
+        TablePathRef::new(
+            false,
+            vec![
+                TablePathRefPart::Parent,
+                TablePathRefPart::Segment("with space".to_owned()),
+                TablePathRefPart::Current,
+                TablePathRefPart::Segment("percent%sign".to_owned()),
+            ],
+        )
+        .unwrap(),
+        TablePathRef::new(
+            true,
+            vec![
+                TablePathRefPart::Segment("root".to_owned()),
+                TablePathRefPart::Segment("plus+comma,".to_owned()),
+            ],
+        )
+        .unwrap(),
+        TablePathRef::current(),
+    ];
+
+    for reference in samples {
+        let formatted = reference.to_reference_string();
+        let parsed = TablePathRef::parse(&formatted).unwrap();
+        assert_eq!(parsed, reference, "reference did not round-trip");
+    }
 }
 
 fn key() -> Symbol {
