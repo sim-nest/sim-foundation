@@ -15,7 +15,7 @@ reason = "This configuration substrate is taught through rustdoc examples and un
 
 [dependencies]
 sim-kernel = { version = "0.1.0" }
-sim-table-core = { version = "0.1.1", path = "../sim-table-core" }
+sim-table-core = { version = "0.1.2", path = "../sim-table-core" }
 sim-value = { version = "0.1.2", path = "../sim-value" }
 
 [lints]
