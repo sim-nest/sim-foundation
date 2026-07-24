@@ -48,7 +48,7 @@
       "group": "workspace",
       "manifest": "crates/sim-table-core/Cargo.toml",
       "package": "sim-table-core",
-      "summary": "Shared table substrate: path validation and the table operation protocol."
+      "summary": "Shared table substrate: path validation, path-reference resolution, and the table operation protocol."
     },
     {
       "crate_name": "sim_value",

@@ -60,9 +60,10 @@ below the kernel boundary.
   `expr_kind` variant classifier, and a `Path` value-addressing primitive.
   Depends only on `sim-kernel`.
 - `sim-table-core` -- the shared table substrate: legal-segment path validation
-  (`is_legal_table_segment` and the validating `TablePath` accumulator) and the
-  `TableOp` protocol, whose `encode_table_op`/`decode_table_op` round-trip
-  through the kernel `Expr` graph in the wire spellings table backends speak.
+  (`is_legal_table_segment` and the validating `TablePath` accumulator),
+  escaped absolute and relative `TablePathRef` resolution, and the `TableOp`
+  protocol, whose `encode_table_op`/`decode_table_op` round-trip through the
+  kernel `Expr` graph in the wire spellings table backends speak.
   Depends only on `sim-kernel` and `sim-value`.
 - `sim-config` -- the shared configuration substrate: `ConfigTable` and
   `ConfigDir` over kernel `Expr::Map`, layered merge/provenance rules,
@@ -95,7 +96,7 @@ below the kernel boundary.
 These crates are foundation substrate, not runtime behavior. Each is a leaf or
 near-leaf in the dependency graph, depending only on `sim-kernel` and
 `sim-value`. They keep common code -- value ergonomics, configuration merging,
-table path validation, library-authoring macros, cookbook projection, wire
+table path-reference handling, library-authoring macros, cookbook projection, wire
 framing, surface naming, and checked index facts -- in one tested home. Concrete
 runtime operations layer over these crates elsewhere in the constellation; the
 foundation layer adds data ergonomics and protocol shape and does not touch the

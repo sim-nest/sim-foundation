@@ -78,7 +78,7 @@
       ]
     },
     {
-      "description": "Shared table substrate: path validation and the table operation protocol.",
+      "description": "Shared table substrate: path references and the table operation protocol.",
       "generated_readme": false,
       "manifest": "crates/sim-table-core/Cargo.toml",
       "name": "sim-table-core",
