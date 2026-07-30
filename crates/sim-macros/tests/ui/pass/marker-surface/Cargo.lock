@@ -130,7 +130,7 @@ dependencies = [
 
 [[package]]
 name = "sim-nest"
-version = "0.1.26"
+version = "0.1.27"
 dependencies = [
  "sim-codec",
  "sim-codec-binary",
@@ -144,7 +144,7 @@ dependencies = [
 
 [[package]]
 name = "sim-run-loaders"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "sim-codec-binary",
  "sim-kernel",
