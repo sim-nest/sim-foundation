@@ -1,6 +1,6 @@
 [package]
 name = "sim-lib-net-core"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 license = "MPL-2.0"
 description = "Reusable, side-effect-free HTTP/streaming parsing primitives."
@@ -14,10 +14,10 @@ policy = "descriptor"
 reason = "The cookbook entries document descriptor shapes for projection and are marked sandbox-descriptor."
 
 [dependencies]
-sim-cookbook = { version = "0.1.4", path = "../sim-cookbook" }
+sim-cookbook = { version = "0.1.5", path = "../sim-cookbook" }
 
 [build-dependencies]
-sim-cookbook = { version = "0.1.4", path = "../sim-cookbook" }
+sim-cookbook = { version = "0.1.5", path = "../sim-cookbook" }
 
 [lib]
 path = "src/lib.rs"
