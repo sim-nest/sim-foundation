@@ -22,7 +22,20 @@ fn fixture_dir(name: &str) -> PathBuf {
 const UI_PATCHES: &[(&str, &str, &str)] = &[
     ("sim-nest", "sim-sdk", "."),
     ("sim-kernel", "sim-kernel", "."),
+    ("sim-citizen", "sim-citizen", "crates/sim-citizen"),
+    (
+        "sim-citizen-derive",
+        "sim-citizen",
+        "crates/sim-citizen-derive",
+    ),
+    ("sim-config", "sim-foundation", "crates/sim-config"),
+    ("sim-cookbook", "sim-foundation", "crates/sim-cookbook"),
     ("sim-value", "sim-foundation", "crates/sim-value"),
+    (
+        "sim-lib-net-core",
+        "sim-foundation",
+        "crates/sim-lib-net-core",
+    ),
     ("sim-lib-core", "sim-runtime", "crates/sim-lib-core"),
     ("sim-macros", "sim-foundation", "crates/sim-macros"),
     ("sim-run-loaders", "sim-run", "crates/sim-run-loaders"),
