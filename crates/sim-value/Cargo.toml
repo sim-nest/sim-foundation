@@ -1,6 +1,6 @@
 [package]
 name = "sim-value"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2024"
 license = "MPL-2.0"
 description = "Ergonomic construction and access for kernel Expr data."
@@ -14,7 +14,7 @@ policy = "rustdoc"
 reason = "This value substrate is taught through rustdoc examples and unit tests; no recipe directory is shipped."
 
 [dependencies]
-sim-kernel = { version = "0.1.0" }
+sim-kernel = { version = "0.2.0" }
 
 [lints]
 workspace = true
