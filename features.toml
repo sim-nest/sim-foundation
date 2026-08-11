@@ -39,7 +39,7 @@ claims_anchors = [
   "anchor/crate/sim-table-core",
 ]
 claims_specimens = [
-  "spec-test/sim-foundation/crates/sim-table-core/src/tests",
+  "spec-test/sim-foundation/crates/sim-table-core/tests/path_references",
 ]
 
 [[feature]]
@@ -50,7 +50,6 @@ owner = "crate/sim-table-core"
 audiences = ["code", "framework"]
 guidance = "Use this row when a library accepts textual Table/Dir locations, needs escaped segment formatting, or resolves relative references against a canonical TablePath."
 claims_anchors = [
-  "anchor/crate/sim-table-core",
   "anchor/rustdoc/sim-table-core/table-path",
   "anchor/rustdoc/sim-table-core/table-path-ref",
   "anchor/rustdoc/sim-table-core/table-path-ref-error",

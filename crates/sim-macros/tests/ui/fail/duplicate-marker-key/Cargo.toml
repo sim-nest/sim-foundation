@@ -9,4 +9,4 @@ publish = false
 members = []
 
 [dependencies]
-sim = { package = "sim-nest", version = "0.1.0", default-features = false, features = ["core", "shape", "proc-macros"] }
+sim = { package = "sim-nest", version = "0.2.0", default-features = false, features = ["core", "shape", "proc-macros"] }
