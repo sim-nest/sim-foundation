@@ -175,6 +175,30 @@ fn resolve_recipe_rel_path(base: &Path, value: &str) -> PathBuf {
 /// place for structural recipe linting.
 pub fn parse_recipe(text: &str) -> Result<RecipeManifest, String> {
     let doc = toml_lite::parse(text)?;
+    parse_recipe_doc(&doc, None)
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct RecipeDefaults<'a> {
+    pub(crate) id: &'a str,
+    pub(crate) codec: &'a str,
+    pub(crate) setup: &'a str,
+}
+
+fn required_str_or(doc: &TomlDoc, key: &str, fallback: Option<&str>) -> Result<String, String> {
+    match doc.get(key) {
+        Some(_) => required_str(doc, key),
+        None => fallback
+            .filter(|value| !value.is_empty())
+            .map(str::to_string)
+            .ok_or_else(|| format!("missing required key `{key}`")),
+    }
+}
+
+pub(crate) fn parse_recipe_doc(
+    doc: &TomlDoc,
+    defaults: Option<RecipeDefaults<'_>>,
+) -> Result<RecipeManifest, String> {
     let mut expect = Vec::new();
     for table in doc.tables_named("expect") {
         let form = table
@@ -201,14 +225,14 @@ pub fn parse_recipe(text: &str) -> Result<RecipeManifest, String> {
         });
     }
     Ok(RecipeManifest {
-        id: required_str(&doc, "id")?,
-        title: required_str(&doc, "title")?,
-        codec: required_str(&doc, "codec")?,
-        setup: required_str(&doc, "setup")?,
-        purpose: required_str(&doc, "purpose")?,
-        order: optional_order(&doc)?,
-        tags: optional_strings(&doc, "tags")?,
-        requires: optional_strings(&doc, "requires")?,
+        id: required_str_or(doc, "id", defaults.map(|value| value.id))?,
+        title: required_str(doc, "title")?,
+        codec: required_str_or(doc, "codec", defaults.map(|value| value.codec))?,
+        setup: required_str_or(doc, "setup", defaults.map(|value| value.setup))?,
+        purpose: required_str(doc, "purpose")?,
+        order: optional_order(doc)?,
+        tags: optional_strings(doc, "tags")?,
+        requires: optional_strings(doc, "requires")?,
         expect,
     })
 }

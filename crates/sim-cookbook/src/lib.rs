@@ -19,6 +19,7 @@ pub mod config;
 mod digest;
 mod embed;
 mod embed_codegen;
+mod legacy;
 mod manifest;
 mod model;
 mod overlay;

@@ -1,6 +1,6 @@
 [package]
 name = "sim-cookbook"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 license = "MPL-2.0"
 description = "Cookbook engine for SIM's crate-local tutorial recipes."
