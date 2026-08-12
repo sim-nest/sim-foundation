@@ -86,7 +86,8 @@
       "readme": "crates/sim-table-core/README.md",
       "root": "crates/sim-table-core",
       "target_kinds": [
-        "lib"
+        "lib",
+        "test"
       ]
     },
     {
