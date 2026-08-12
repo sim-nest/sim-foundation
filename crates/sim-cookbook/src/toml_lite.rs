@@ -3,7 +3,7 @@
 //! Supported, and nothing else:
 //! - full-line comments (`# ...`) and trailing comments outside strings,
 //! - top-level `key = value` where value is a quoted string, an integer, a
-//!   bool, or a single-line array of quoted strings,
+//!   bool, or an array of quoted strings (on one or several lines),
 //! - `[[expect]]` array-of-tables, each holding `key = value` lines.
 //!
 //! Anything the parser does not understand is a hard error with a line number,
@@ -18,7 +18,7 @@ pub enum TomlValue {
     Int(i64),
     /// A boolean.
     Bool(bool),
-    /// A single-line array of strings.
+    /// An array of strings.
     Array(Vec<String>),
 }
 
@@ -123,8 +123,9 @@ pub fn parse(text: &str) -> Result<TomlDoc, String> {
     let mut doc = TomlDoc::default();
     // None = top level; Some(idx) = inside `tables[idx]`.
     let mut table: Option<usize> = None;
+    let mut lines = text.lines().enumerate();
 
-    for (i, raw) in text.lines().enumerate() {
+    while let Some((i, raw)) = lines.next() {
         let line_no = i + 1;
         let line = strip_trailing_comment(raw).trim();
         if line.is_empty() {
@@ -138,13 +139,56 @@ pub fn parse(text: &str) -> Result<TomlDoc, String> {
         if line.starts_with('[') {
             return Err(format!("line {line_no}: unsupported table header `{line}`"));
         }
-        let (key, value) = parse_assignment(line).map_err(|e| format!("line {line_no}: {e}"))?;
+        let mut assignment = line.to_string();
+        if assignment_starts_array(&assignment) && !array_is_complete(&assignment) {
+            for (_, continuation) in lines.by_ref() {
+                assignment.push('\n');
+                assignment.push_str(strip_trailing_comment(continuation).trim());
+                if array_is_complete(&assignment) {
+                    break;
+                }
+            }
+        }
+        let (key, value) =
+            parse_assignment(&assignment).map_err(|e| format!("line {line_no}: {e}"))?;
         match table {
             None => doc.top.push((key, value)),
             Some(idx) => doc.tables[idx].1.push((key, value)),
         }
     }
     Ok(doc)
+}
+
+fn assignment_starts_array(line: &str) -> bool {
+    line.split_once('=')
+        .is_some_and(|(_, value)| value.trim_start().starts_with('['))
+}
+
+/// Whether the array value in an assignment has a closing bracket outside a
+/// quoted string. The subset has no nested arrays, but brackets inside strings
+/// are valid data and must not terminate the value.
+fn array_is_complete(line: &str) -> bool {
+    let Some((_, value)) = line.split_once('=') else {
+        return false;
+    };
+    let mut in_string = false;
+    let mut escaped = false;
+    for c in value.chars() {
+        if in_string {
+            if escaped {
+                escaped = false;
+            } else if c == '\\' {
+                escaped = true;
+            } else if c == '"' {
+                in_string = false;
+            }
+        } else if c == '"' {
+            in_string = true;
+        } else if c == ']' {
+            return true;
+        }
+    }
+    false
 }
 
 fn parse_assignment(line: &str) -> Result<(String, TomlValue), String> {
@@ -285,6 +329,26 @@ mod tests {
         assert_eq!(doc.get("flag").unwrap(), &TomlValue::Bool(true));
         assert_eq!(doc.get("tags").unwrap().as_array().unwrap(), &["a", "b"]);
         assert!(doc.get("empty").unwrap().as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn parses_multiline_string_arrays_with_comments_and_trailing_comma() {
+        let doc = parse(
+            r#"
+            chapters = [
+              "01-basics",
+              "02-techniques", # retained ordering
+              "bracket-]--inside-string",
+            ]
+            title = "Book"
+            "#,
+        )
+        .unwrap();
+        assert_eq!(
+            doc.get("chapters").unwrap().as_array().unwrap(),
+            ["01-basics", "02-techniques", "bracket-]--inside-string"]
+        );
+        assert_eq!(doc.get("title").unwrap().as_str().unwrap(), "Book");
     }
 
     #[test]

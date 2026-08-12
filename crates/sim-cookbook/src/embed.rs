@@ -39,6 +39,14 @@ fn bytes_to_str<'a>(bytes: &'a [u8], what: &str) -> Result<&'a str, String> {
     std::str::from_utf8(bytes).map_err(|_| format!("{what} is not valid UTF-8"))
 }
 
+fn conventional_setups<'a>(dir: &'a BTreeMap<&str, &[u8]>, prefix: &str) -> Vec<&'a str> {
+    let recipe_prefix = format!("{prefix}/");
+    dir.keys()
+        .filter_map(|path| path.strip_prefix(&recipe_prefix))
+        .filter(|path| !path.contains('/') && path.starts_with("setup."))
+        .collect()
+}
+
 /// Turn `name` (a chapter directory like `01-basics`) into a human title by
 /// dropping a leading numeric-and-dash prefix and capitalizing.
 fn humanize(name: &str) -> String {
@@ -85,8 +93,13 @@ pub fn recipes_from_embedded(dir: &[(&str, &[u8])]) -> Result<Vec<RecipeCard>, S
         let prefix = format!("{chapter}/{recipe_id}");
         let recipe_bytes = find(&dir, &format!("{prefix}/recipe.toml"))
             .ok_or_else(|| format!("{prefix}: missing recipe.toml"))?;
-        let recipe = manifest::parse_recipe(bytes_to_str(recipe_bytes, &prefix)?)
-            .map_err(|e| format!("{prefix}/recipe.toml: {e}"))?;
+        let setups = conventional_setups(&dir, &prefix);
+        let recipe = crate::legacy::parse_embedded_recipe(
+            bytes_to_str(recipe_bytes, &prefix)?,
+            &recipe_id,
+            &setups,
+        )
+        .map_err(|e| format!("{prefix}/recipe.toml: {e}"))?;
         recipe
             .validate_for_dir()
             .map_err(|errs| format!("{prefix}/recipe.toml: {}", errs.join("; ")))?;
@@ -166,6 +179,7 @@ mod tests {
                 b"id = \"add\"\ntitle = \"Add\"\ncodec = \"lisp\"\nsetup = \"setup.siml\"\npurpose = \"purpose.md\"\norder = 100\n[[expect]]\nform = 0\nresult = \"3\"\n",
             ),
             ("01-basics/add/setup.siml", b"(+ 1 2)"),
+            ("01-basics/add/setup.rs", b"// auxiliary setup source"),
             ("01-basics/add/purpose.md", b"Add two numbers."),
             (
                 "02-rounding/round/recipe.toml",
@@ -194,6 +208,60 @@ mod tests {
         let round = cards.iter().find(|c| c.id.ends_with("/round")).unwrap();
         assert_eq!(round.chapter_order, 200); // second in book.chapters
         assert_eq!(round.order, DEFAULT_ORDER); // omitted -> default
+    }
+
+    #[test]
+    fn loads_the_legacy_schema_shipped_by_published_cookbooks() {
+        let dir: Vec<(&str, &[u8])> = vec![
+            (
+                "book.toml",
+                b"book = \"pitch-serial\"\ntitle = \"Pitch Serial\"\nchapters = [\n  \"01-basics\",\n  \"02-partitions\",\n]\n" as &[u8],
+            ),
+            (
+                "02-partitions/partition-mosaic/recipe.toml",
+                b"title = \"Analyze partitions\"\ncategory = \"Rust\"\ntags = [\"pitch\", \"serial\"]\nrequires = [\"pitch-serial\", \"pitch-core\"]\npurpose = \"purpose.md\"\n",
+            ),
+            (
+                "02-partitions/partition-mosaic/setup.rs",
+                b"pub fn partition_mosaic() {}",
+            ),
+            (
+                "02-partitions/partition-mosaic/purpose.md",
+                b"Analyze a row partition.",
+            ),
+        ];
+        let cards = recipes_from_embedded(&dir).unwrap();
+        assert_eq!(cards.len(), 1);
+        assert_eq!(cards[0].id, "pitch-serial/02-partitions/partition-mosaic");
+        assert_eq!(cards[0].codec, "rust");
+        assert_eq!(cards[0].setup, b"pub fn partition_mosaic() {}");
+        assert_eq!(cards[0].chapter_order, 200);
+    }
+
+    #[test]
+    fn legacy_defaults_do_not_weaken_authoring_validation() {
+        let legacy = "title = \"Legacy\"\ncategory = \"Rust\"\npurpose = \"purpose.md\"\n";
+        let error = manifest::parse_recipe(legacy).unwrap_err();
+        assert!(error.contains("missing required key `id`"), "{error}");
+    }
+
+    #[test]
+    fn legacy_manifest_rejects_ambiguous_conventional_setups() {
+        let dir: Vec<(&str, &[u8])> = vec![
+            ("book.toml", b"book = \"b\"\ntitle = \"B\"\n" as &[u8]),
+            (
+                "c/r/recipe.toml",
+                b"title = \"Legacy\"\ncategory = \"Rust\"\npurpose = \"purpose.md\"\n",
+            ),
+            ("c/r/setup.rs", b"fn main() {}"),
+            ("c/r/setup.siml", b"(quote legacy)"),
+            ("c/r/purpose.md", b"Legacy."),
+        ];
+        let error = recipes_from_embedded(&dir).unwrap_err();
+        assert!(
+            error.contains("ambiguous conventional setup files"),
+            "{error}"
+        );
     }
 
     #[test]

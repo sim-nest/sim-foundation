@@ -113,7 +113,7 @@ dependencies = [
 
 [[package]]
 name = "sim-codec"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "sim-citizen",
  "sim-citizen-derive",
@@ -125,7 +125,7 @@ dependencies = [
 
 [[package]]
 name = "sim-codec-binary"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "sim-codec",
  "sim-cookbook",
@@ -135,7 +135,7 @@ dependencies = [
 
 [[package]]
 name = "sim-config"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "sim-kernel",
  "sim-table-core",
@@ -144,7 +144,7 @@ dependencies = [
 
 [[package]]
 name = "sim-cookbook"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "sim-config",
  "sim-kernel",
@@ -160,7 +160,7 @@ dependencies = [
 
 [[package]]
 name = "sim-lib-core"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "sim-codec",
  "sim-cookbook",
@@ -171,14 +171,14 @@ dependencies = [
 
 [[package]]
 name = "sim-lib-net-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "sim-cookbook",
 ]
 
 [[package]]
 name = "sim-macros"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -194,7 +194,7 @@ dependencies = [
 
 [[package]]
 name = "sim-nest"
-version = "0.1.27"
+version = "0.2.0"
 dependencies = [
  "sim-codec",
  "sim-codec-binary",
@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "sim-run-loaders"
-version = "0.1.5"
+version = "0.2.0"
 dependencies = [
  "sim-codec-binary",
  "sim-kernel",
@@ -218,7 +218,7 @@ dependencies = [
 
 [[package]]
 name = "sim-shape"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "sim-citizen",
  "sim-citizen-derive",
@@ -227,7 +227,7 @@ dependencies = [
 
 [[package]]
 name = "sim-table-core"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "sim-kernel",
  "sim-value",
