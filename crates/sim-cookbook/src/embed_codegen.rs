@@ -46,6 +46,7 @@ pub fn generate_embed_code(recipes_root: &Path) -> io::Result<String> {
         collect(recipes_root, recipes_root, &mut files)?;
     }
     files.sort();
+    validate_embedded_tree(recipes_root, &files)?;
     let mut out = String::from("&[\n");
     for (rel, abs) in &files {
         // `{:?}` emits a valid, escaped Rust string literal for each path.
@@ -57,6 +58,37 @@ pub fn generate_embed_code(recipes_root: &Path) -> io::Result<String> {
     }
     out.push_str("]\n");
     Ok(out)
+}
+
+/// Parse the exact bytes that will be embedded before emitting Rust source.
+///
+/// Deferring this validation until a loadable library is installed turns an
+/// authored manifest defect into a runtime boot failure. Build-time embedding
+/// is the first boundary that has both the complete tree and the canonical
+/// cookbook parser, so it must reject malformed books, chapters, recipes, and
+/// missing referenced files there.
+fn validate_embedded_tree(recipes_root: &Path, files: &[(String, PathBuf)]) -> io::Result<()> {
+    if files.is_empty() {
+        return Ok(());
+    }
+    let owned = files
+        .iter()
+        .map(|(relative, path)| std::fs::read(path).map(|bytes| (relative.as_str(), bytes)))
+        .collect::<io::Result<Vec<_>>>()?;
+    let embedded = owned
+        .iter()
+        .map(|(relative, bytes)| (*relative, bytes.as_slice()))
+        .collect::<Vec<_>>();
+    crate::recipes_from_embedded(&embedded).map_err(|error| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!(
+                "invalid cookbook tree at {}: {error}",
+                recipes_root.display()
+            ),
+        )
+    })?;
+    Ok(())
 }
 
 fn collect(base: &Path, dir: &Path, out: &mut Vec<(String, PathBuf)>) -> io::Result<()> {
@@ -96,8 +128,18 @@ mod tests {
         let root = std::env::temp_dir().join(format!("sim-cb-embed-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(root.join("01-basics/add")).unwrap();
-        std::fs::write(root.join("book.toml"), b"book = \"x\"\n").unwrap();
-        std::fs::write(root.join("01-basics/add/recipe.toml"), b"id=\"a\"\n").unwrap();
+        std::fs::write(
+            root.join("book.toml"),
+            b"book = \"x\"\ntitle = \"X\"\nchapters = [\"01-basics\"]\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("01-basics/add/recipe.toml"),
+            b"id = \"a\"\ntitle = \"A\"\ncodec = \"lisp\"\nsetup = \"setup.siml\"\npurpose = \"purpose.md\"\n",
+        )
+        .unwrap();
+        std::fs::write(root.join("01-basics/add/setup.siml"), b"(+ 1 2)\n").unwrap();
+        std::fs::write(root.join("01-basics/add/purpose.md"), b"Add values.\n").unwrap();
         let code = generate_embed_code(&root).unwrap();
         assert!(code.contains("\"01-basics/add/recipe.toml\""), "{code}");
         assert!(code.contains("\"book.toml\""), "{code}");
@@ -107,6 +149,23 @@ mod tests {
         let recipe_at = code.find("recipe.toml").unwrap();
         let book_at = code.find("book.toml").unwrap();
         assert!(recipe_at < book_at, "expected sorted order, got:\n{code}");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn rejects_a_tree_that_would_fail_when_the_library_is_loaded() {
+        let root =
+            std::env::temp_dir().join(format!("sim-cb-embed-invalid-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(root.join("book.toml"), b"title = \"Missing id\"\n").unwrap();
+
+        let error = generate_embed_code(&root).unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert!(
+            error.to_string().contains("missing required key `book`"),
+            "{error}"
+        );
         let _ = std::fs::remove_dir_all(&root);
     }
 }
