@@ -135,7 +135,7 @@ dependencies = [
 
 [[package]]
 name = "sim-config"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "sim-kernel",
  "sim-table-core",
@@ -178,7 +178,7 @@ dependencies = [
 
 [[package]]
 name = "sim-macros"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -227,7 +227,7 @@ dependencies = [
 
 [[package]]
 name = "sim-table-core"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "sim-kernel",
  "sim-value",
