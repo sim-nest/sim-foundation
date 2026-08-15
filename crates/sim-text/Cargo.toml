@@ -1,0 +1,17 @@
+[package]
+name = "sim-text"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Neutral exact text values and explicit Unicode projections for SIM."
+readme = "README.md"
+publish = true
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[package.metadata.sim-recipes]
+policy = "rustdoc"
+reason = "The crate is documentation-only scaffolding until its characterized value moves in the next phase."
+
+[lints]
+workspace = true
