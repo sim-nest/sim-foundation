@@ -37,6 +37,9 @@ guidance = "Reuse this row for JavaScript/JVM strings or binary formats that may
 claims_anchors = [
   "anchor/crate/sim-text",
 ]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-text/tests/neutral_utf16_conformance",
+]
 
 [[feature]]
 id = "feature/sim-foundation/table-dir-core"
@@ -143,6 +146,14 @@ task = "Add or reuse a value helper, expression field reader, or map field acces
 audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/value-helpers", why = "The value row owns shared runtime value conversion, expression builder, expression field reader, map field reader, and field access helpers." },
+]
+
+[[route]]
+id = "route/use-exact-utf16-text"
+task = "Preserve, inspect, encode, or round-trip exact UTF-16 code units"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/exact-code-unit-text", why = "The neutral sim-text owner preserves paired and lone surrogate code units without depending on a guest-language string or pattern type." },
 ]
 
 [[route]]

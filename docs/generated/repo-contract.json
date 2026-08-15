@@ -364,7 +364,8 @@
       "root": "crates/sim-text",
       "rustdoc_summary": "Exact UTF-16 code-unit text with explicit scalar projections.",
       "target_kinds": [
-        "lib"
+        "lib",
+        "test"
       ],
       "targets": [
         {
@@ -376,6 +377,16 @@
           ],
           "name": "sim_text",
           "src": "crates/sim-text/src/lib.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "test"
+          ],
+          "name": "neutral_utf16_conformance",
+          "src": "crates/sim-text/tests/neutral_utf16_conformance.rs"
         }
       ]
     },
@@ -439,10 +450,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "941465f0e99fcec42334beda8cd532e89ca98ca1",
+    "git_commit": "653ac6b006fdd188b44c379357d9f8e547a11e64",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "941465f0e99fcec42334beda8cd532e89ca98ca1",
+    "source_commit": "653ac6b006fdd188b44c379357d9f8e547a11e64",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -455,9 +466,9 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "ba7e89f03a0f59a3",
+    "workspace_hash": "dc18342ec9190dfd",
     "workspace_hash_algorithm": "fnv1a64",
-    "workspace_hash_input_count": 122,
+    "workspace_hash_input_count": 123,
     "workspace_hash_inputs": [
       "Cargo.toml",
       "crates/sim-config/Cargo.toml",
@@ -570,6 +581,7 @@
       "crates/sim-text/src/lib.rs",
       "crates/sim-text/src/projection.rs",
       "crates/sim-text/src/tests.rs",
+      "crates/sim-text/tests/neutral_utf16_conformance.rs",
       "crates/sim-value/Cargo.toml",
       "crates/sim-value/src/access.rs",
       "crates/sim-value/src/build.rs",
