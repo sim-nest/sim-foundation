@@ -42,13 +42,14 @@
       "sim-lib-surface-card",
       "sim-macros",
       "sim-table-core",
+      "sim-text",
       "sim-value",
       "xtask"
     ]
   },
   "non_citizen_exemption_count": 0,
   "non_citizen_exemptions": [],
-  "package_count": 9,
+  "package_count": 10,
   "packages": [
     {
       "crate_name": "sim_config",
@@ -352,6 +353,33 @@
       ]
     },
     {
+      "crate_name": "sim_text",
+      "dependencies": [],
+      "description": "Neutral exact text values and explicit Unicode projections for SIM.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-text/Cargo.toml",
+      "name": "sim-text",
+      "publish": "true",
+      "root": "crates/sim-text",
+      "rustdoc_summary": "Exact UTF-16 code-unit text with explicit scalar projections.",
+      "target_kinds": [
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_text",
+          "src": "crates/sim-text/src/lib.rs"
+        }
+      ]
+    },
+    {
       "crate_name": "sim_value",
       "dependencies": [],
       "description": "Ergonomic construction and access for kernel Expr data.",
@@ -411,10 +439,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "8189e5a8c41e7d182eec100985138bc8b14632a8",
+    "git_commit": "5595915ddb7aeec792c9479c195430063993a994",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "8189e5a8c41e7d182eec100985138bc8b14632a8",
+    "source_commit": "5595915ddb7aeec792c9479c195430063993a994",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -427,9 +455,9 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "45f0102ee0dee5ce",
+    "workspace_hash": "3e28f73dd5ab886e",
     "workspace_hash_algorithm": "fnv1a64",
-    "workspace_hash_input_count": 117,
+    "workspace_hash_input_count": 120,
     "workspace_hash_inputs": [
       "Cargo.toml",
       "crates/sim-config/Cargo.toml",
@@ -465,6 +493,7 @@
       "crates/sim-index-core/src/lib.rs",
       "crates/sim-index-core/src/model.rs",
       "crates/sim-index-core/src/shape.rs",
+      "crates/sim-index-core/src/source_check.rs",
       "crates/sim-index-core/src/tests.rs",
       "crates/sim-lib-net-core/Cargo.toml",
       "crates/sim-lib-net-core/build.rs",
@@ -537,6 +566,8 @@
       "crates/sim-table-core/src/path.rs",
       "crates/sim-table-core/src/tests.rs",
       "crates/sim-table-core/tests/path_references.rs",
+      "crates/sim-text/Cargo.toml",
+      "crates/sim-text/src/lib.rs",
       "crates/sim-value/Cargo.toml",
       "crates/sim-value/src/access.rs",
       "crates/sim-value/src/build.rs",

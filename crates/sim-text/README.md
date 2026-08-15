@@ -4,10 +4,11 @@
 not restricted to Unicode scalar strings. It will own the shared UTF-16
 code-unit value used by JavaScript, codecs, and the future JVM implementation.
 
-This first checkpoint deliberately contains no behavior. The existing
-`JavascriptCodeUnitString` implementation and its characterized fixtures remain
-the only implementation until they are moved here. `sim-value` remains focused
-on construction and access ergonomics for kernel `Expr` values.
+`CodeUnitString` owns the neutral implementation: borrowed raw-unit access,
+code-unit indexing and slicing, surrogate-pair-aware iteration, and checked
+conversion to scalar Unicode. It preserves lone surrogates and NUL exactly.
+`sim-value` remains focused on construction and access ergonomics for kernel
+`Expr` values.
 
 ## Reuse and dependency ledger
 
@@ -34,8 +35,9 @@ edge or dependency cycle.
 
 From the `sim-foundation` checkout:
 
-The crate has no recipe directory while it is behavior-free; crate-level
-rustdoc is the documentation lane for this scaffolding checkpoint.
+The representation is a small foundation primitive. Rustdoc and the moved law
+fixtures are its documentation and executable specimen lanes; it has no recipe
+directory because higher-level consumers own the runnable integration stories.
 
 ```bash
 cargo test -p sim-text

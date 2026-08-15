@@ -39,6 +39,11 @@
     {
       "features": [],
       "group": "workspace",
+      "package": "sim-text"
+    },
+    {
+      "features": [],
+      "group": "workspace",
       "package": "sim-value"
     },
     {

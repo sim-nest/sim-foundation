@@ -11,7 +11,7 @@ homepage = "https://github.com/sim-nest/sim-foundation"
 
 [package.metadata.sim-recipes]
 policy = "rustdoc"
-reason = "The crate is documentation-only scaffolding until its characterized value moves in the next phase."
+reason = "The exact text value is completely documented and exercised through crate-level rustdoc and law fixtures."
 
 [lints]
 workspace = true
