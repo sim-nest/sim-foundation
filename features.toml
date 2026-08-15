@@ -28,6 +28,17 @@ claims_specimens = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/exact-code-unit-text"
+title = "Exact code-unit text"
+summary = "Preserve UTF-16 code units through runtime values, tagged expressions, read construction, Shape matching, and browse without conflating them with scalar Unicode text."
+owner = "crate/sim-text"
+audiences = ["code", "framework"]
+guidance = "Reuse this row for JavaScript/JVM strings or binary formats that may contain lone surrogates. Use the checked scalar projection for text-only codecs so invalid input is refused at its code-unit offset."
+claims_anchors = [
+  "anchor/crate/sim-text",
+]
+
+[[feature]]
 id = "feature/sim-foundation/table-dir-core"
 title = "Table and Dir core"
 summary = "Define shared table and directory contracts used by storage, index, and host-facing libraries."

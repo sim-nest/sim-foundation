@@ -18,6 +18,7 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 | Feature | Subject | Specimens | Summary |
 | --- | --- | ---: | --- |
 | `feature/sim-foundation/value-helpers` | `crate/sim-value` | 1 | Provide shared value conversion, expression builder, expression field reader, map field reader, and field access helpers for reusable runtime libraries. |
+| `feature/sim-foundation/exact-code-unit-text` | `crate/sim-text` | 0 | Preserve UTF-16 code units through runtime values, tagged expressions, read construction, Shape matching, and browse without conflating them with scalar Unicode text. |
 | `feature/sim-foundation/table-dir-core` | `crate/sim-table-core` | 1 | Define shared table and directory contracts used by storage, index, and host-facing libraries. |
 | `feature/sim-foundation/table-path-references` | `crate/sim-table-core` | 1 | Parse, normalize, resolve, and format bounded absolute and relative Table/Dir path references. |
 | `feature/sim-foundation/index-graph-core` | `crate/sim-index-core` | 0 | Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs. |

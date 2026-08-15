@@ -13,5 +13,8 @@ homepage = "https://github.com/sim-nest/sim-foundation"
 policy = "rustdoc"
 reason = "The exact text value is completely documented and exercised through crate-level rustdoc and law fixtures."
 
+[dependencies]
+sim-kernel = { version = "0.2.0" }
+
 [lints]
 workspace = true
