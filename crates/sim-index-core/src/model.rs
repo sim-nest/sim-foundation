@@ -78,6 +78,10 @@ pub struct IndexDoc {
     pub subjects: Vec<SubjectRecord>,
     /// Discovered source anchors.
     pub anchors: Vec<DiscoveredAnchor>,
+    /// Bounded public declaration facts attached to discovered anchors.
+    pub declarations: Vec<DeclarationFact>,
+    /// Protocol implementation relations attached to discovered anchors.
+    pub protocol_relations: Vec<ProtocolRelation>,
     /// Discovered invoke/read/write/view surfaces.
     pub surfaces: Vec<DiscoveredSurface>,
     /// Discovered runnable examples and conformance tests.
@@ -101,6 +105,8 @@ impl IndexDoc {
             visibility: Visibility::Public,
             subjects: Vec::new(),
             anchors: Vec::new(),
+            declarations: Vec::new(),
+            protocol_relations: Vec::new(),
             surfaces: Vec::new(),
             specimens: Vec::new(),
             drafts: Vec::new(),
@@ -140,6 +146,128 @@ pub struct DiscoveredAnchor {
     pub subject: SubjectId,
     /// Anchor kind, such as `export`, `cli-verb`, or `doc`.
     pub kind: String,
+}
+
+/// A bounded public declaration fact attached to an existing source anchor.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct DeclarationFact {
+    /// Existing anchor that owns this declaration identity.
+    pub anchor: AnchorId,
+    /// Public source role of the declaration.
+    pub role: DeclarationRole,
+    /// Canonical module path relative to the crate root.
+    pub module_path: String,
+    /// Normalized generic declaration syntax.
+    pub generics: String,
+    /// Normalized public fields, variants, or alias target.
+    pub members: Vec<String>,
+    /// Stable repository-relative source location.
+    pub location: SourceLocation,
+    /// Bound applied to normalized syntax in this fact.
+    pub syntax_bound: SyntaxBound,
+}
+
+/// Public source role represented by a declaration fact.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum DeclarationRole {
+    /// Public constant.
+    Const,
+    /// Public enum.
+    Enum,
+    /// Public function.
+    Function,
+    /// Public module.
+    Module,
+    /// Public re-export.
+    ReExport,
+    /// Public static.
+    Static,
+    /// Public struct.
+    Struct,
+    /// Public trait.
+    Trait,
+    /// Public type alias.
+    TypeAlias,
+}
+
+impl DeclarationRole {
+    /// Returns the stable discovery label for this source role.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Const => "const",
+            Self::Enum => "enum",
+            Self::Function => "function",
+            Self::Module => "module",
+            Self::ReExport => "re-export",
+            Self::Static => "static",
+            Self::Struct => "struct",
+            Self::Trait => "trait",
+            Self::TypeAlias => "type-alias",
+        }
+    }
+}
+
+/// Stable source location for a discovered declaration.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct SourceLocation {
+    /// Repository-relative source file.
+    pub file: String,
+    /// Zero-based declaration ordinal in the scanner traversal.
+    pub declaration: usize,
+}
+
+/// Applied bound and truncation state for normalized declaration syntax.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct SyntaxBound {
+    /// Maximum combined byte length of generics and members.
+    pub max_bytes: usize,
+    /// True when normalized syntax exceeded the bound and was omitted.
+    pub truncated: bool,
+}
+
+/// A protocol implementation relation attached to an existing source anchor.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct ProtocolRelation {
+    /// Existing anchor for the implementation reviewed by a human.
+    pub anchor: AnchorId,
+    /// Normalized implementing type spelling.
+    pub implementor: String,
+    /// Trait spelling found at the implementation site.
+    pub source_spelling: String,
+    /// Bounded normalized implementation-body fingerprint.
+    pub body_fingerprint: String,
+    /// Bound applied to the implementation-body fingerprint.
+    pub body_bound: SyntaxBound,
+    /// Honest lexical resolution result for the protocol.
+    pub resolution: ProtocolResolution,
+}
+
+/// Resolution state for a protocol implementation relation.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum ProtocolResolution {
+    /// The protocol path resolved uniquely.
+    Resolved {
+        /// Canonical resolved protocol path.
+        protocol: String,
+    },
+    /// Resolution was not unique or required unavailable metadata.
+    Unresolved {
+        /// Stable reason resolution could not be completed.
+        reason: UnresolvedReason,
+        /// Sorted unique candidates, when ambiguity produced candidates.
+        candidates: Vec<String>,
+    },
+}
+
+/// Stable reason a protocol relation remains unresolved.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum UnresolvedReason {
+    /// Glob imports made the name ambiguous.
+    AmbiguousGlobImport,
+    /// More than one explicit candidate remained.
+    AmbiguousName,
+    /// Resolving the name requires external metadata.
+    ExternalMetadataAbsent,
 }
 
 /// A discovered surface by which a subject is addressed.

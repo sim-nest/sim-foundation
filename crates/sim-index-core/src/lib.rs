@@ -32,14 +32,17 @@ pub mod draft;
 pub mod key;
 pub mod model;
 pub mod shape;
+mod source_check;
 
-pub use card::{feature_card, route_card, specimen_card};
+pub use card::{declaration_card, feature_card, protocol_relation_card, route_card, specimen_card};
 pub use check::{IndexError, IndexReport, check_index_doc};
 pub use key::{CanonicalFeatureKey, canonical_feature_key};
 pub use model::{
-    AnchorId, DiscoveredAnchor, DiscoveredSpecimen, DiscoveredSurface, FeatureDraft, FeatureId,
-    FeatureRecord, GrammarContract, IndexDoc, IndexEdge, RouteId, RouteRecord, RouteStep,
-    SpecimenId, SubjectId, SubjectRecord, SurfaceId, Visibility,
+    AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
+    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
+    IndexEdge, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
+    SourceLocation, SpecimenId, SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason,
+    Visibility,
 };
 
 #[cfg(test)]

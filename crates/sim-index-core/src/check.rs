@@ -11,6 +11,8 @@ pub fn check_index_doc(doc: &IndexDoc) -> Result<IndexReport, IndexError> {
     reject_non_ascii(doc)?;
     reject_invalid_ids(doc)?;
     reject_duplicate_ids(doc)?;
+    crate::source_check::reject_invalid_source_facts(doc)?;
+    crate::source_check::reject_unstable_source_fact_order(doc)?;
     reject_authored_literals(doc)?;
     reject_unresolved_claims(doc)?;
     reject_duplicate_claims(doc)?;
@@ -33,6 +35,29 @@ fn reject_non_ascii(doc: &IndexDoc) -> Result<(), IndexError> {
     for anchor in &doc.anchors {
         check_ascii("anchor.id", anchor.id.as_str())?;
         check_ascii("anchor.kind", &anchor.kind)?;
+    }
+    for fact in &doc.declarations {
+        check_ascii("declaration.module_path", &fact.module_path)?;
+        check_ascii("declaration.generics", &fact.generics)?;
+        check_ascii("declaration.file", &fact.location.file)?;
+        for member in &fact.members {
+            check_ascii("declaration.member", member)?;
+        }
+    }
+    for relation in &doc.protocol_relations {
+        check_ascii("protocol.implementor", &relation.implementor)?;
+        check_ascii("protocol.source_spelling", &relation.source_spelling)?;
+        check_ascii("protocol.body_fingerprint", &relation.body_fingerprint)?;
+        match &relation.resolution {
+            crate::ProtocolResolution::Resolved { protocol } => {
+                check_ascii("protocol.resolved", protocol)?
+            }
+            crate::ProtocolResolution::Unresolved { candidates, .. } => {
+                for candidate in candidates {
+                    check_ascii("protocol.candidate", candidate)?;
+                }
+            }
+        }
     }
     for surface in &doc.surfaces {
         check_ascii("surface.id", surface.id.as_str())?;

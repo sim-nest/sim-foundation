@@ -4,7 +4,39 @@ use std::sync::Arc;
 
 use sim_kernel::{Cx, Ref, Result, Symbol, Value, card::Card};
 
-use crate::{DiscoveredSpecimen, FeatureRecord, RouteRecord, RouteStep};
+use crate::{
+    DeclarationFact, DiscoveredSpecimen, FeatureRecord, ProtocolRelation, ProtocolResolution,
+    RouteRecord, RouteStep,
+};
+
+/// Projects compact declaration-role evidence without copying source signatures.
+pub fn declaration_card(cx: &mut Cx, declaration: &DeclarationFact) -> Result<Value> {
+    let entries = vec![
+        ("anchor", text(cx, declaration.anchor.as_str())?),
+        ("kind", symbol(cx, "declaration")?),
+        ("source-role", symbol(cx, declaration.role.as_str())?),
+        ("module-path", text(cx, &declaration.module_path)?),
+    ];
+    card_value(cx, "declaration", declaration.anchor.as_str(), entries)
+}
+
+/// Projects compact protocol-role and resolution evidence.
+pub fn protocol_relation_card(cx: &mut Cx, relation: &ProtocolRelation) -> Result<Value> {
+    let (state, protocol) = match &relation.resolution {
+        ProtocolResolution::Resolved { protocol } => ("resolved", Some(protocol.as_str())),
+        ProtocolResolution::Unresolved { .. } => ("unresolved", None),
+    };
+    let mut entries = vec![
+        ("anchor", text(cx, relation.anchor.as_str())?),
+        ("kind", symbol(cx, "protocol-relation")?),
+        ("source-role", symbol(cx, "implementor")?),
+        ("resolution", symbol(cx, state)?),
+    ];
+    if let Some(protocol) = protocol {
+        entries.push(("protocol", text(cx, protocol)?));
+    }
+    card_value(cx, "protocol-relation", relation.anchor.as_str(), entries)
+}
 
 /// Projects a feature row into an ordinary kernel `Card`.
 pub fn feature_card(cx: &mut Cx, feature: &FeatureRecord) -> Result<Value> {

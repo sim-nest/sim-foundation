@@ -1,10 +1,12 @@
 use sim_kernel::{Value, card::Card, testing::bare_cx};
 
 use crate::{
-    AnchorId, DiscoveredAnchor, DiscoveredSpecimen, DiscoveredSurface, FeatureDraft, FeatureId,
-    FeatureRecord, GrammarContract, IndexDoc, IndexEdge, IndexError, RouteId, RouteRecord,
-    RouteStep, SpecimenId, SubjectId, SubjectRecord, SurfaceId, Visibility, check_index_doc,
-    draft::materialize_draft, feature_card, key::canonical_feature_key, route_card, specimen_card,
+    AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
+    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
+    IndexEdge, IndexError, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
+    SourceLocation, SpecimenId, SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason,
+    Visibility, check_index_doc, declaration_card, draft::materialize_draft, feature_card,
+    key::canonical_feature_key, protocol_relation_card, route_card, specimen_card,
 };
 
 fn subject() -> SubjectRecord {
@@ -102,6 +104,8 @@ fn valid_doc() -> IndexDoc {
         visibility: Visibility::Public,
         subjects: vec![repo_subject(), subject()],
         anchors: vec![anchor("export/sim-run/repl"), anchor("doc/sim-run/repl")],
+        declarations: Vec::new(),
+        protocol_relations: Vec::new(),
         surfaces: vec![surface()],
         specimens: vec![specimen("recipe/sim-run/repl", true, true)],
         drafts: Vec::new(),
@@ -121,6 +125,38 @@ fn valid_doc() -> IndexDoc {
     }
 }
 
+fn declaration(path: &str) -> DeclarationFact {
+    DeclarationFact {
+        anchor: AnchorId::new("export/sim-run/repl"),
+        role: DeclarationRole::Struct,
+        module_path: path.to_owned(),
+        generics: "<T>".to_owned(),
+        members: vec!["value:T".to_owned()],
+        location: SourceLocation {
+            file: "src/lib.rs".to_owned(),
+            declaration: 0,
+        },
+        syntax_bound: SyntaxBound {
+            max_bytes: 64,
+            truncated: false,
+        },
+    }
+}
+
+fn protocol(resolution: ProtocolResolution) -> ProtocolRelation {
+    ProtocolRelation {
+        anchor: AnchorId::new("export/sim-run/repl"),
+        implementor: "Repl".to_owned(),
+        source_spelling: "Function".to_owned(),
+        body_fingerprint: "call(&self)".to_owned(),
+        body_bound: SyntaxBound {
+            max_bytes: 64,
+            truncated: false,
+        },
+        resolution,
+    }
+}
+
 fn check_error(doc: &IndexDoc) -> IndexError {
     check_index_doc(doc).expect_err("document should fail validation")
 }
@@ -132,6 +168,124 @@ fn valid_index_reports_counts() {
     assert_eq!(report.features, 1);
     assert_eq!(report.specimens, 1);
     assert_eq!(report.routes, 1);
+}
+
+#[test]
+fn old_graphs_and_cards_are_unchanged_without_source_facts() {
+    let doc = valid_doc();
+    assert!(doc.declarations.is_empty() && doc.protocol_relations.is_empty());
+    check_index_doc(&doc).expect("old graph remains valid");
+    let mut cx = bare_cx();
+    let value = feature_card(&mut cx, &doc.features[0]).expect("feature card");
+    assert!(
+        !card(&value)
+            .entries()
+            .iter()
+            .any(|(name, _)| name.as_qualified_str() == "source-role")
+    );
+}
+
+#[test]
+fn source_fact_validation_fails_closed() {
+    let mut doc = valid_doc();
+    doc.declarations = vec![declaration("repl"), declaration("repl")];
+    assert!(matches!(
+        check_error(&doc),
+        IndexError::DuplicateSourceFact { .. }
+    ));
+
+    let mut doc = valid_doc();
+    let mut fact = declaration("repl");
+    fact.anchor = AnchorId::new("anchor/rustdoc/missing");
+    doc.declarations.push(fact);
+    assert!(
+        matches!(check_error(&doc), IndexError::UnresolvedClaim { owner, .. } if owner.starts_with("declaration:"))
+    );
+
+    let mut doc = valid_doc();
+    let mut fact = declaration("repl");
+    fact.syntax_bound.max_bytes = 1;
+    doc.declarations.push(fact);
+    assert!(matches!(
+        check_error(&doc),
+        IndexError::InvalidSourceBound { .. }
+    ));
+
+    let mut doc = valid_doc();
+    doc.declarations = vec![declaration("z"), declaration("a")];
+    assert!(matches!(
+        check_error(&doc),
+        IndexError::UnstableOrdering {
+            kind: "declaration"
+        }
+    ));
+}
+
+#[test]
+fn protocol_resolution_validation_fails_closed() {
+    let resolved = ProtocolResolution::Resolved {
+        protocol: "sim_kernel::Function".to_owned(),
+    };
+    let mut doc = valid_doc();
+    doc.protocol_relations = vec![protocol(resolved.clone()), protocol(resolved)];
+    assert!(matches!(
+        check_error(&doc),
+        IndexError::DuplicateProtocolRelation { .. }
+    ));
+
+    let mut doc = valid_doc();
+    doc.protocol_relations = vec![
+        protocol(ProtocolResolution::Resolved {
+            protocol: "sim_kernel::Function".to_owned(),
+        }),
+        protocol(ProtocolResolution::Unresolved {
+            reason: UnresolvedReason::ExternalMetadataAbsent,
+            candidates: vec![],
+        }),
+    ];
+    assert!(matches!(
+        check_error(&doc),
+        IndexError::ConflictingProtocolResolution { .. }
+    ));
+
+    let mut doc = valid_doc();
+    doc.protocol_relations
+        .push(protocol(ProtocolResolution::Unresolved {
+            reason: UnresolvedReason::AmbiguousName,
+            candidates: vec!["z::Function".to_owned(), "a::Function".to_owned()],
+        }));
+    assert!(matches!(
+        check_error(&doc),
+        IndexError::InvalidProtocolResolution { .. }
+    ));
+
+    let mut doc = valid_doc();
+    let mut relation = protocol(ProtocolResolution::Resolved {
+        protocol: "sim_kernel::Function".to_owned(),
+    });
+    relation.body_bound.max_bytes = 1;
+    doc.protocol_relations.push(relation);
+    assert!(matches!(
+        check_error(&doc),
+        IndexError::InvalidSourceBound { .. }
+    ));
+}
+
+#[test]
+fn source_cards_publish_compact_roles_without_signatures() {
+    let fact = declaration("repl");
+    let relation = protocol(ProtocolResolution::Resolved {
+        protocol: "sim_kernel::Function".to_owned(),
+    });
+    let mut cx = bare_cx();
+    let fact_value = declaration_card(&mut cx, &fact).expect("declaration card");
+    let relation_value = protocol_relation_card(&mut cx, &relation).expect("protocol card");
+    assert_card_entry(&fact_value, "source-role", "struct", &mut cx);
+    assert_card_entry(&relation_value, "resolution", "resolved", &mut cx);
+    assert!(!card(&fact_value).entries().iter().any(|(name, _)| {
+        let name = name.as_qualified_str();
+        name == "generics" || name == "members"
+    }));
 }
 
 #[test]
