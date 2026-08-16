@@ -1,6 +1,6 @@
 [package]
 name = "sim-index-core"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 license = "MPL-2.0"
 description = "Core records, keys, checks, and card projections for the SIM Index graph."

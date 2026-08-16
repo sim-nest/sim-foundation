@@ -11,5 +11,6 @@
 | `sim-lib-surface-card` | `workspace` | 0 | 0 |
 | `sim-macros` | `workspace` | 0 | 0 |
 | `sim-table-core` | `workspace` | 0 | 0 |
+| `sim-text` | `workspace` | 0 | 0 |
 | `sim-value` | `workspace` | 0 | 0 |
 | `xtask` | `workspace` | 0 | 0 |

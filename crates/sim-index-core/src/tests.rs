@@ -5,8 +5,8 @@ use crate::{
     DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
     IndexEdge, IndexError, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
     SourceLocation, SpecimenId, SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason,
-    Visibility, check_index_doc, declaration_card, draft::materialize_draft, feature_card,
-    key::canonical_feature_key, protocol_relation_card, route_card, specimen_card,
+    Visibility, check_index_doc, check_index_fragment, declaration_card, draft::materialize_draft,
+    feature_card, key::canonical_feature_key, protocol_relation_card, route_card, specimen_card,
 };
 
 fn subject() -> SubjectRecord {
@@ -168,6 +168,26 @@ fn valid_index_reports_counts() {
     assert_eq!(report.features, 1);
     assert_eq!(report.specimens, 1);
     assert_eq!(report.routes, 1);
+}
+
+#[test]
+fn fragment_check_defers_cross_repository_relationships_until_merge() {
+    let mut doc = valid_doc();
+    doc.edges.push(IndexEdge::relates(
+        FeatureId::new("feature/sim-run/repl"),
+        "presents",
+        FeatureId::new("feature/sim-runtime/read-eval"),
+    ));
+    doc.routes[0].steps.push(RouteStep::Specimen {
+        id: SpecimenId::new("spec-test/sim-sdk/tests/read_eval"),
+        why: "The SDK proves the public facade.".to_owned(),
+    });
+
+    check_index_fragment(&doc).expect("fragment defers external endpoints");
+    assert!(matches!(
+        check_index_doc(&doc),
+        Err(IndexError::UnresolvedClaim { .. })
+    ));
 }
 
 #[test]

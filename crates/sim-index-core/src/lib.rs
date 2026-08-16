@@ -35,7 +35,7 @@ pub mod shape;
 mod source_check;
 
 pub use card::{declaration_card, feature_card, protocol_relation_card, route_card, specimen_card};
-pub use check::{IndexError, IndexReport, check_index_doc};
+pub use check::{IndexError, IndexReport, check_index_doc, check_index_fragment};
 pub use key::{CanonicalFeatureKey, canonical_feature_key};
 pub use model::{
     AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
