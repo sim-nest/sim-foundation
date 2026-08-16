@@ -33,7 +33,7 @@ title = "Exact code-unit text"
 summary = "Preserve UTF-16 code units through runtime values, tagged expressions, read construction, Shape matching, and browse without conflating them with scalar Unicode text."
 owner = "crate/sim-text"
 audiences = ["code", "framework"]
-guidance = "Reuse this row for JavaScript/JVM strings or binary formats that may contain lone surrogates. Use the checked scalar projection for text-only codecs so invalid input is refused at its code-unit offset."
+guidance = "Reuse this row for JavaScript/JVM strings or binary formats that may contain lone surrogates. Use the checked scalar projection for text-only codecs so invalid input is refused at its code-unit offset. The runtime text-ownership policy rejects public raw Vec<u16> string records and from_utf16_lossy crossings; numeric buffers and codec-local work arrays require an explicit declared context."
 claims_anchors = [
   "anchor/crate/sim-text",
 ]
