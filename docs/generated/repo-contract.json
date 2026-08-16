@@ -450,10 +450,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "744e3a287c832b27f2fe8894d93dcc8195633e46",
+    "git_commit": "d729f9a7af74dbaa4b77f8984e063cc19bbe7f73",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "744e3a287c832b27f2fe8894d93dcc8195633e46",
+    "source_commit": "d729f9a7af74dbaa4b77f8984e063cc19bbe7f73",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -466,9 +466,9 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "ad5854076322cad1",
+    "workspace_hash": "e47dbc2b965db556",
     "workspace_hash_algorithm": "fnv1a64",
-    "workspace_hash_input_count": 123,
+    "workspace_hash_input_count": 124,
     "workspace_hash_inputs": [
       "Cargo.toml",
       "crates/sim-config/Cargo.toml",
@@ -578,6 +578,7 @@
       "crates/sim-table-core/src/tests.rs",
       "crates/sim-table-core/tests/path_references.rs",
       "crates/sim-text/Cargo.toml",
+      "crates/sim-text/src/exact.rs",
       "crates/sim-text/src/lib.rs",
       "crates/sim-text/src/projection.rs",
       "crates/sim-text/src/tests.rs",
