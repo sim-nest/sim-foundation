@@ -14,7 +14,7 @@ policy = "rustdoc"
 reason = "The exact text value is completely documented and exercised through crate-level rustdoc and law fixtures."
 
 [dependencies]
-sim-kernel = { version = "0.2.0" }
+sim-kernel = { version = "0.2.1" }
 
 [lints]
 workspace = true
