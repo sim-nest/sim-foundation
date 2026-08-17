@@ -9,6 +9,7 @@ members = [
   "crates/sim-lib-surface-card",
   "crates/sim-macros",
   "crates/sim-table-core",
+  "crates/sim-text",
   "crates/sim-value",
   "xtask",
 ]

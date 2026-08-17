@@ -111,6 +111,44 @@ pub enum IndexError {
         /// Missing documentation anchor id.
         id: String,
     },
+    /// The same anchor, role, and declaration path occur twice.
+    DuplicateSourceFact {
+        /// Owning anchor.
+        anchor: String,
+        /// Repeated source role.
+        role: &'static str,
+    },
+    /// A declaration's syntax does not honor its recorded bound.
+    InvalidSourceBound {
+        /// Owning anchor.
+        anchor: String,
+        /// Recorded byte bound.
+        max_bytes: usize,
+    },
+    /// The same protocol relation occurs twice.
+    DuplicateProtocolRelation {
+        /// Owning anchor.
+        anchor: String,
+        /// Implementing type.
+        implementor: String,
+    },
+    /// One protocol relation carries incompatible resolution states.
+    ConflictingProtocolResolution {
+        /// Owning anchor.
+        anchor: String,
+        /// Implementing type.
+        implementor: String,
+    },
+    /// A protocol resolution state is malformed.
+    InvalidProtocolResolution {
+        /// Owning anchor.
+        anchor: String,
+    },
+    /// Additive source records are not in canonical order.
+    UnstableOrdering {
+        /// Collection that is not strictly ordered.
+        kind: &'static str,
+    },
 }
 
 impl fmt::Display for IndexError {
@@ -141,6 +179,30 @@ impl fmt::Display for IndexError {
             Self::DanglingDocAnchor { owner, id } => {
                 write!(f, "{owner} references missing doc anchor: {id}")
             }
+            Self::DuplicateSourceFact { anchor, role } => {
+                write!(f, "duplicate {role} source fact at {anchor}")
+            }
+            Self::InvalidSourceBound { anchor, max_bytes } => {
+                write!(f, "invalid source bound {max_bytes} at {anchor}")
+            }
+            Self::DuplicateProtocolRelation {
+                anchor,
+                implementor,
+            } => write!(
+                f,
+                "duplicate protocol relation for {implementor} at {anchor}"
+            ),
+            Self::ConflictingProtocolResolution {
+                anchor,
+                implementor,
+            } => write!(
+                f,
+                "conflicting protocol resolution for {implementor} at {anchor}"
+            ),
+            Self::InvalidProtocolResolution { anchor } => {
+                write!(f, "invalid protocol resolution at {anchor}")
+            }
+            Self::UnstableOrdering { kind } => write!(f, "unstable {kind} ordering"),
         }
     }
 }

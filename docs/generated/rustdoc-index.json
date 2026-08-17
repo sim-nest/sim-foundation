@@ -51,6 +51,13 @@
       "summary": "Shared table substrate: path validation, path-reference resolution, and the table operation protocol."
     },
     {
+      "crate_name": "sim_text",
+      "group": "workspace",
+      "manifest": "crates/sim-text/Cargo.toml",
+      "package": "sim-text",
+      "summary": "Exact UTF-16 code-unit text with explicit scalar projections."
+    },
+    {
       "crate_name": "sim_value",
       "group": "workspace",
       "manifest": "crates/sim-value/Cargo.toml",

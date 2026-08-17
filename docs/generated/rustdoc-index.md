@@ -10,6 +10,7 @@
 | `sim-lib-net-core` | `workspace` | Reusable, side-effect-free HTTP/streaming parsing and wire-format helpers. |
 | `sim-lib-surface-card` | `workspace` | Shared, plain-data surface-card spine. |
 | `sim-macros` | `workspace` | Proc-macro surface for authored SIM libraries. |
-| `sim-table-core` | `workspace` | Shared table substrate: path validation and the table operation protocol. |
+| `sim-table-core` | `workspace` | Shared table substrate: path validation, path-reference resolution, and the table operation protocol. |
+| `sim-text` | `workspace` | Exact UTF-16 code-unit text with explicit scalar projections. |
 | `sim-value` | `workspace` | Ergonomic construction and access for kernel Expr data. |
 | `xtask` | `workspace` | SIM workspace package for xtask. |

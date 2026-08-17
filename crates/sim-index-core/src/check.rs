@@ -8,16 +8,32 @@ pub use crate::check_error::{IndexError, IndexReport};
 
 /// Checks a complete index document.
 pub fn check_index_doc(doc: &IndexDoc) -> Result<IndexReport, IndexError> {
+    check_index(doc, false)
+}
+
+/// Checks one repository fragment before constellation merge.
+///
+/// Fragment checks retain every local invariant while allowing authored
+/// relationship and route targets that another repository contributes. The
+/// complete merged document must still pass check_index_doc, which resolves
+/// those deferred endpoints and rejects typos or missing repositories.
+pub fn check_index_fragment(doc: &IndexDoc) -> Result<IndexReport, IndexError> {
+    check_index(doc, true)
+}
+
+fn check_index(doc: &IndexDoc, allow_deferred_targets: bool) -> Result<IndexReport, IndexError> {
     reject_non_ascii(doc)?;
     reject_invalid_ids(doc)?;
     reject_duplicate_ids(doc)?;
+    crate::source_check::reject_invalid_source_facts(doc)?;
+    crate::source_check::reject_unstable_source_fact_order(doc)?;
     reject_authored_literals(doc)?;
-    reject_unresolved_claims(doc)?;
+    reject_unresolved_claims(doc, allow_deferred_targets)?;
     reject_duplicate_claims(doc)?;
     reject_canonical_key_collisions(doc)?;
     reject_invalid_grammar_contracts(doc)?;
     reject_unrunnable_specimen_claims(doc)?;
-    reject_dead_route_steps(doc)?;
+    reject_dead_route_steps(doc, allow_deferred_targets)?;
     reject_dangling_doc_anchors(doc)?;
     Ok(IndexReport::from_doc(doc))
 }
@@ -33,6 +49,29 @@ fn reject_non_ascii(doc: &IndexDoc) -> Result<(), IndexError> {
     for anchor in &doc.anchors {
         check_ascii("anchor.id", anchor.id.as_str())?;
         check_ascii("anchor.kind", &anchor.kind)?;
+    }
+    for fact in &doc.declarations {
+        check_ascii("declaration.module_path", &fact.module_path)?;
+        check_ascii("declaration.generics", &fact.generics)?;
+        check_ascii("declaration.file", &fact.location.file)?;
+        for member in &fact.members {
+            check_ascii("declaration.member", member)?;
+        }
+    }
+    for relation in &doc.protocol_relations {
+        check_ascii("protocol.implementor", &relation.implementor)?;
+        check_ascii("protocol.source_spelling", &relation.source_spelling)?;
+        check_ascii("protocol.body_fingerprint", &relation.body_fingerprint)?;
+        match &relation.resolution {
+            crate::ProtocolResolution::Resolved { protocol } => {
+                check_ascii("protocol.resolved", protocol)?
+            }
+            crate::ProtocolResolution::Unresolved { candidates, .. } => {
+                for candidate in candidates {
+                    check_ascii("protocol.candidate", candidate)?;
+                }
+            }
+        }
     }
     for surface in &doc.surfaces {
         check_ascii("surface.id", surface.id.as_str())?;
@@ -217,7 +256,10 @@ fn literal<T>(draft: &FeatureDraft, kind: &'static str) -> Result<T, IndexError>
     })
 }
 
-fn reject_unresolved_claims(doc: &IndexDoc) -> Result<(), IndexError> {
+fn reject_unresolved_claims(
+    doc: &IndexDoc,
+    allow_deferred_targets: bool,
+) -> Result<(), IndexError> {
     let subjects = ids(doc.subjects.iter().map(|record| record.id.as_str()));
     let anchors = ids(doc.anchors.iter().map(|record| record.id.as_str()));
     let surfaces = ids(doc.surfaces.iter().map(|record| record.id.as_str()));
@@ -336,7 +378,15 @@ fn reject_unresolved_claims(doc: &IndexDoc) -> Result<(), IndexError> {
             }
             "supports" | "presents" | "replaces" => {
                 require(&features, "edge", &edge.rel, "feature", &edge.from)?;
-                require(&features, "edge", &edge.rel, "feature", &edge.to)?;
+                require_deferred_target(
+                    &features,
+                    &known,
+                    "edge",
+                    &edge.rel,
+                    "feature",
+                    &edge.to,
+                    allow_deferred_targets,
+                )?;
             }
             "documents" => {
                 require(&known, "edge", &edge.rel, "index row", &edge.from)?;
@@ -348,11 +398,35 @@ fn reject_unresolved_claims(doc: &IndexDoc) -> Result<(), IndexError> {
             }
             _ => {
                 require(&known, "edge", &edge.rel, "index row", &edge.from)?;
-                require(&known, "edge", &edge.rel, "index row", &edge.to)?;
+                require_deferred_target(
+                    &known,
+                    &known,
+                    "edge",
+                    &edge.rel,
+                    "index row",
+                    &edge.to,
+                    allow_deferred_targets,
+                )?;
             }
         }
     }
     Ok(())
+}
+
+fn require_deferred_target(
+    expected: &BTreeSet<&str>,
+    known: &BTreeSet<&str>,
+    owner_kind: &'static str,
+    owner: &str,
+    value_kind: &'static str,
+    value: &str,
+    allow_deferred_targets: bool,
+) -> Result<(), IndexError> {
+    if allow_deferred_targets && !known.contains(value) {
+        Ok(())
+    } else {
+        require(expected, owner_kind, owner, value_kind, value)
+    }
 }
 
 fn ids<'a>(values: impl Iterator<Item = &'a str>) -> BTreeSet<&'a str> {
@@ -533,7 +607,7 @@ fn ensure_runnable(
     }
 }
 
-fn reject_dead_route_steps(doc: &IndexDoc) -> Result<(), IndexError> {
+fn reject_dead_route_steps(doc: &IndexDoc, allow_deferred_targets: bool) -> Result<(), IndexError> {
     let features = ids(doc.features.iter().map(|record| record.id.as_str()));
     let specimens = ids(doc.specimens.iter().map(|record| record.id.as_str()));
     for route in &doc.routes {
@@ -547,6 +621,8 @@ fn reject_dead_route_steps(doc: &IndexDoc) -> Result<(), IndexError> {
             match step {
                 RouteStep::Feature { id, .. } if features.contains(id.as_str()) => {}
                 RouteStep::Specimen { id, .. } if specimens.contains(id.as_str()) => {}
+                RouteStep::Feature { .. } if allow_deferred_targets => {}
+                RouteStep::Specimen { .. } if allow_deferred_targets => {}
                 RouteStep::Feature { id, .. } => {
                     return Err(IndexError::DeadRouteStep {
                         route: route.id.to_string(),
