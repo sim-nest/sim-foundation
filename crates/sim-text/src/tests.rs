@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 
 #[test]
 fn length_index_slice_and_code_unit_iteration_are_utf16() {
-    let string = CodeUnitString::from_scalar("A😀B");
+    let string = CodeUnitString::from_scalar("A\u{1f600}B");
     assert_eq!(string.len(), 4);
     assert_eq!(string.code_unit_at(CodeUnitOffset::new(1)), Some(0xd83d));
     assert_eq!(string.as_code_units(), [0x0041, 0xd83d, 0xde00, 0x0042]);
@@ -23,7 +23,7 @@ fn length_index_slice_and_code_unit_iteration_are_utf16() {
 #[test]
 fn scalar_conversion_and_paired_iteration_are_exact() {
     let string = CodeUnitString::from_code_units(vec![0xd83d, 0xde00]);
-    assert_eq!(string.to_scalar().unwrap(), "😀");
+    assert_eq!(string.to_scalar().unwrap(), "\u{1f600}");
     assert_eq!(
         string.iter_code_points().next().unwrap().as_code_units(),
         [0xd83d, 0xde00]
@@ -88,7 +88,7 @@ fn pair_iteration_preserves_lone_units_and_nul() {
 
 #[test]
 fn offset_conversion_is_bounded_and_never_splits_a_pair() {
-    let string = CodeUnitString::from_scalar("A😀B");
+    let string = CodeUnitString::from_scalar("A\u{1f600}B");
     assert_eq!(
         string.code_unit_offset(ScalarOffset::new(2)),
         Ok(CodeUnitOffset::new(3))
@@ -114,7 +114,7 @@ fn offset_conversion_is_bounded_and_never_splits_a_pair() {
 
 #[test]
 fn scalar_text_round_trips_for_generated_unicode_sequences() {
-    let alphabet = ['\0', 'a', 'ß', '中', '😀', '\u{10ffff}'];
+    let alphabet = ['\0', 'a', '\u{df}', '\u{4e2d}', '\u{1f600}', '\u{10ffff}'];
     for seed in 0usize..512 {
         let text: String = (0..seed % 17)
             .map(|at| alphabet[(seed.wrapping_mul(17) ^ at.wrapping_mul(31)) % alphabet.len()])
