@@ -1,6 +1,6 @@
 {
   "generator": "xtask crate-catalog v1",
-  "package_count": 9,
+  "package_count": 10,
   "packages": [
     {
       "description": "Table and Dir substrate for layered SIM configuration.",
@@ -85,6 +85,19 @@
       "publish": "true",
       "readme": "crates/sim-table-core/README.md",
       "root": "crates/sim-table-core",
+      "target_kinds": [
+        "lib",
+        "test"
+      ]
+    },
+    {
+      "description": "Neutral exact text values and explicit Unicode projections for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-text/Cargo.toml",
+      "name": "sim-text",
+      "publish": "true",
+      "readme": "crates/sim-text/README.md",
+      "root": "crates/sim-text",
       "target_kinds": [
         "lib",
         "test"

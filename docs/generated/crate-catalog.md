@@ -13,5 +13,6 @@ Generated from Cargo metadata by `xtask crate-catalog v1`.
 | `sim-lib-surface-card` | `true` | `custom-build, lib` | Shared, plain-data surface-card spine. |
 | `sim-macros` | `true` | `proc-macro, test` | Proc-macro surface for authored SIM libraries. |
 | `sim-table-core` | `true` | `lib, test` | Shared table substrate: path references and the table operation protocol. |
+| `sim-text` | `true` | `lib, test` | Neutral exact text values and explicit Unicode projections for SIM. |
 | `sim-value` | `true` | `lib` | Ergonomic construction and access for kernel Expr data. |
 | `xtask` | `false` | `bin` | SIM workspace package for xtask. |

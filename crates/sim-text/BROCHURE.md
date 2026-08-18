@@ -1,7 +1,6 @@
 # sim-text
 
-In one line: One lossless home for exact text that may contain code units which
-ordinary Unicode strings cannot represent.
+In one line: One lossless home for exact text that may contain code units which ordinary Unicode strings cannot represent.
 
 ## What it gives you
 
