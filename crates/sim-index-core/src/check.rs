@@ -25,7 +25,7 @@ fn check_index(doc: &IndexDoc, allow_deferred_targets: bool) -> Result<IndexRepo
     reject_non_ascii(doc)?;
     reject_invalid_ids(doc)?;
     reject_duplicate_ids(doc)?;
-    crate::source_check::reject_invalid_source_facts(doc)?;
+    crate::source_check::reject_invalid_source_facts(doc, allow_deferred_targets)?;
     crate::source_check::reject_unstable_source_fact_order(doc)?;
     reject_authored_literals(doc)?;
     reject_unresolved_claims(doc, allow_deferred_targets)?;
@@ -49,6 +49,10 @@ fn reject_non_ascii(doc: &IndexDoc) -> Result<(), IndexError> {
     for anchor in &doc.anchors {
         check_ascii("anchor.id", anchor.id.as_str())?;
         check_ascii("anchor.kind", &anchor.kind)?;
+    }
+    for unit in &doc.source_units {
+        check_ascii("source-unit.path", &unit.path)?;
+        check_ascii("source-unit.reason", &unit.reason)?;
     }
     for fact in &doc.declarations {
         check_ascii("declaration.module_path", &fact.module_path)?;

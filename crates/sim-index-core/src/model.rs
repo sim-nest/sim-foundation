@@ -78,6 +78,8 @@ pub struct IndexDoc {
     pub subjects: Vec<SubjectRecord>,
     /// Discovered source anchors.
     pub anchors: Vec<DiscoveredAnchor>,
+    /// Source units examined while discovering anchors and declaration facts.
+    pub source_units: Vec<SourceUnit>,
     /// Bounded public declaration facts attached to discovered anchors.
     pub declarations: Vec<DeclarationFact>,
     /// Protocol implementation relations attached to discovered anchors.
@@ -105,6 +107,7 @@ impl IndexDoc {
             visibility: Visibility::Public,
             subjects: Vec::new(),
             anchors: Vec::new(),
+            source_units: Vec::new(),
             declarations: Vec::new(),
             protocol_relations: Vec::new(),
             surfaces: Vec::new(),
@@ -113,6 +116,65 @@ impl IndexDoc {
             features: Vec::new(),
             routes: Vec::new(),
             edges: Vec::new(),
+        }
+    }
+}
+
+/// Durable evidence for one repository-relative source unit considered by discovery.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct SourceUnit {
+    /// Subject whose discovery traversal considered this unit.
+    pub subject: SubjectId,
+    /// Stable repository-relative source path and source-unit identity.
+    pub path: String,
+    /// Whether this unit can contribute facts reachable from the public graph.
+    pub reachability: SourceReachability,
+    /// Outcome of the bounded source scan.
+    pub completeness: SourceCompleteness,
+    /// Bounded diagnostic explaining a non-complete outcome.
+    pub reason: String,
+    /// Bound applied while retaining source for inspection.
+    pub retained_bound: SyntaxBound,
+    /// Number of declaration positions visited in deterministic source order.
+    pub declaration_count: usize,
+}
+
+/// Whether a scanned source unit can contribute public graph evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum SourceReachability {
+    /// The unit is reachable from a discovered public subject.
+    Reachable,
+    /// The unit is known but not reachable from the public graph.
+    Unreachable,
+}
+
+/// Closed source-scan outcome vocabulary shared by graph producers and consumers.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum SourceCompleteness {
+    /// The entire unit was read and understood within its bound.
+    Complete,
+    /// The unit was readable but syntactically malformed.
+    Malformed,
+    /// The unit could not be read.
+    Unreadable,
+    /// The retained input exceeded its explicit bound.
+    Truncated,
+    /// The unit uses a source form the scanner does not support.
+    Unsupported,
+    /// The scanner could not resolve the unit to a stable source identity.
+    Unresolved,
+}
+
+impl SourceCompleteness {
+    /// Returns the stable codec label for this outcome.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Complete => "complete",
+            Self::Malformed => "malformed",
+            Self::Unreadable => "unreadable",
+            Self::Truncated => "truncated",
+            Self::Unsupported => "unsupported",
+            Self::Unresolved => "unresolved",
         }
     }
 }

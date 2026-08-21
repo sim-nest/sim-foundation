@@ -125,6 +125,22 @@ pub enum IndexError {
         /// Recorded byte bound.
         max_bytes: usize,
     },
+    /// A source-unit evidence row is internally inconsistent or duplicated.
+    InvalidSourceUnit {
+        /// Subject that owns the unit.
+        subject: String,
+        /// Repository-relative unit path.
+        path: String,
+    },
+    /// A reachable unit was not scanned completely for a strict graph.
+    IncompleteReachableSource {
+        /// Subject that owns the unit.
+        subject: String,
+        /// Repository-relative unit path.
+        path: String,
+        /// Stable incomplete state label.
+        state: &'static str,
+    },
     /// The same protocol relation occurs twice.
     DuplicateProtocolRelation {
         /// Owning anchor.
@@ -185,6 +201,14 @@ impl fmt::Display for IndexError {
             Self::InvalidSourceBound { anchor, max_bytes } => {
                 write!(f, "invalid source bound {max_bytes} at {anchor}")
             }
+            Self::InvalidSourceUnit { subject, path } => {
+                write!(f, "invalid source unit {path} for {subject}")
+            }
+            Self::IncompleteReachableSource {
+                subject,
+                path,
+                state,
+            } => write!(f, "reachable source unit {path} for {subject} is {state}"),
             Self::DuplicateProtocolRelation {
                 anchor,
                 implementor,
