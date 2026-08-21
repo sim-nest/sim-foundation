@@ -39,10 +39,11 @@ pub use check::{IndexError, IndexReport, check_index_doc, check_index_fragment};
 pub use key::{CanonicalFeatureKey, canonical_feature_key};
 pub use model::{
     AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
-    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
-    IndexEdge, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
-    SourceCompleteness, SourceLocation, SourceReachability, SourceUnit, SpecimenId, SubjectId,
-    SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason, Visibility,
+    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, HostBindingFact,
+    HostBindingKind, HostSourceRole, IndexDoc, IndexEdge, ProtocolRelation, ProtocolResolution,
+    RouteId, RouteRecord, RouteStep, SourceCompleteness, SourceLocation, SourceReachability,
+    SourceUnit, SpecimenId, SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason,
+    Visibility,
 };
 
 #[cfg(test)]

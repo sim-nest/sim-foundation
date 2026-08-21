@@ -278,6 +278,91 @@ pub struct SourceLocation {
     pub declaration: usize,
 }
 
+/// A semantic binding from SIM source to a host-provided capability.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct HostBindingFact {
+    /// Existing source anchor that owns the binding.
+    pub anchor: AnchorId,
+    /// Host operation or dependency form that was discovered.
+    pub kind: HostBindingKind,
+    /// Structurally derived role of the source containing the binding.
+    pub role: HostSourceRole,
+    /// Cargo or foreign-language build target containing the source.
+    pub target: String,
+    /// Stable source location of the bound span.
+    pub location: SourceLocation,
+    /// True when the module graph places the binding below `cfg(test)`.
+    pub test_member: bool,
+    /// Canonical provider package or platform id, when resolution succeeded.
+    pub provider: String,
+    /// Resolved call, dependency edge, import, or artifact evidence.
+    pub evidence: String,
+    /// Required architectural move that removes or encapsulates the binding.
+    pub normalization_move: String,
+}
+
+/// Closed semantic kinds of host binding.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum HostBindingKind {
+    /// A call to an operating-system or hardware API.
+    Call,
+    /// A dependency whose implementation can reach the host.
+    Dependency,
+    /// A native or foreign ABI declaration without a call.
+    AbiDeclaration,
+    /// A native ABI implementation exported by this source.
+    ForeignImplementation,
+    /// An imported symbol present in a built artifact.
+    ArtifactImport,
+    /// A process-command fallback.
+    Subprocess,
+}
+
+impl HostBindingKind {
+    /// Returns the stable generated-ledger label.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Call => "call",
+            Self::Dependency => "dependency",
+            Self::AbiDeclaration => "abi-declaration",
+            Self::ForeignImplementation => "foreign-implementation",
+            Self::ArtifactImport => "artifact-import",
+            Self::Subprocess => "subprocess",
+        }
+    }
+}
+
+/// Structurally derived relationship between source and host behavior.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum HostSourceRole {
+    /// Product code expected to remain host-independent.
+    Pure,
+    /// A declared host capsule or concrete backend.
+    Capsule,
+    /// The single process/bootstrap boundary.
+    Bootstrap,
+    /// Build, development, or repository tooling.
+    Tool,
+    /// Test-only source derived from the module/target graph.
+    Test,
+    /// Temporary migration debt assigned to a later OS5 phase.
+    Debt,
+}
+
+impl HostSourceRole {
+    /// Returns the stable generated-ledger label.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Pure => "pure",
+            Self::Capsule => "capsule",
+            Self::Bootstrap => "bootstrap",
+            Self::Tool => "tool",
+            Self::Test => "test",
+            Self::Debt => "debt",
+        }
+    }
+}
+
 /// Applied bound and truncation state for normalized declaration syntax.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct SyntaxBound {
