@@ -16,6 +16,13 @@
       "summary": "Cookbook engine for SIM's crate-local tutorial recipes."
     },
     {
+      "crate_name": "sim_host_core",
+      "group": "workspace",
+      "manifest": "crates/sim-host-core/Cargo.toml",
+      "package": "sim-host-core",
+      "summary": "Neutral contracts for domain-defined host ports."
+    },
+    {
       "crate_name": "sim_index_core",
       "group": "workspace",
       "manifest": "crates/sim-index-core/Cargo.toml",

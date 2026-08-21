@@ -37,6 +37,7 @@
     "workspace": [
       "sim-config",
       "sim-cookbook",
+      "sim-host-core",
       "sim-index-core",
       "sim-lib-net-core",
       "sim-lib-surface-card",
@@ -49,7 +50,7 @@
   },
   "non_citizen_exemption_count": 0,
   "non_citizen_exemptions": [],
-  "package_count": 10,
+  "package_count": 11,
   "packages": [
     {
       "crate_name": "sim_config",
@@ -132,6 +133,33 @@
           ],
           "name": "sim_cookbook",
           "src": "crates/sim-cookbook/src/lib.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_host_core",
+      "dependencies": [],
+      "description": "Neutral host-port contracts for SIM domain libraries.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-host-core/Cargo.toml",
+      "name": "sim-host-core",
+      "publish": "true",
+      "root": "crates/sim-host-core",
+      "rustdoc_summary": "Neutral contracts for domain-defined host ports.",
+      "target_kinds": [
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_host_core",
+          "src": "crates/sim-host-core/src/lib.rs"
         }
       ]
     },
@@ -450,10 +478,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "ed2bdf8b8bf77835953faa92a9b3a91a878f65fb",
+    "git_commit": "7a355598c04f65fc9a5856bb896ba07cf9dcc9f4",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "ed2bdf8b8bf77835953faa92a9b3a91a878f65fb",
+    "source_commit": "7a355598c04f65fc9a5856bb896ba07cf9dcc9f4",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -466,9 +494,9 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "33649d32a0a14375",
+    "workspace_hash": "e8f5cb4ba3ac0981",
     "workspace_hash_algorithm": "fnv1a64",
-    "workspace_hash_input_count": 124,
+    "workspace_hash_input_count": 126,
     "workspace_hash_inputs": [
       "Cargo.toml",
       "crates/sim-config/Cargo.toml",
@@ -495,6 +523,8 @@
       "crates/sim-cookbook/src/project.rs",
       "crates/sim-cookbook/src/store.rs",
       "crates/sim-cookbook/src/toml_lite.rs",
+      "crates/sim-host-core/Cargo.toml",
+      "crates/sim-host-core/src/lib.rs",
       "crates/sim-index-core/Cargo.toml",
       "crates/sim-index-core/src/card.rs",
       "crates/sim-index-core/src/check.rs",

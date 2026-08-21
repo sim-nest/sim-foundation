@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 mod file_sizes;
+mod host_blind;
 mod package_floors;
 mod recipe_policy;
 mod simdoc;
@@ -11,10 +12,11 @@ fn main() {
     let result = match args.get(1).map(String::as_str) {
         Some("simdoc") => simdoc::run(args),
         Some("check-file-sizes") => file_sizes::run(&args),
+        Some("check-host-blind") => host_blind::run(&args),
         Some("check-package-floors") => package_floors::run(&args),
         Some("check-recipes") => recipe_policy::run(&args),
         _ => Err(format!(
-            "usage: {program} simdoc [--check] | check-file-sizes | check-package-floors | check-recipes"
+            "usage: {program} simdoc [--check] | check-file-sizes | check-host-blind | check-package-floors | check-recipes"
         )),
     };
     if let Err(err) = result {

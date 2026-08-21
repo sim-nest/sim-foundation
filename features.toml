@@ -87,11 +87,12 @@ claims_anchors = [
 [[feature]]
 id = "feature/sim-foundation/host-primitives"
 title = "Host primitive foundation"
-summary = "Provide shared network and surface-card helper crates for host-facing runtime libraries."
-owner = "crate/sim-lib-net-core"
+summary = "Define neutral host-port cards, open identities, mechanical refusals and budgets, and lexical object binding separately from concrete host realization."
+owner = "crate/sim-host-core"
 audiences = ["code", "framework"]
-guidance = "Use this row when a reusable host primitive needs shared network or surface-card support."
+guidance = "Use sim-host-core for domain-defined neutral port contracts and child-Env binding. Keep operating-system calls, provider realization, evidence grading, and product policy in platform or domain libraries."
 claims_anchors = [
+  "anchor/crate/sim-host-core",
   "anchor/crate/sim-lib-net-core",
   "anchor/crate/sim-lib-surface-card",
 ]
@@ -178,7 +179,7 @@ id = "route/add-host-primitive"
 task = "Add a host primitive"
 audiences = ["code", "framework"]
 steps = [
-  { feature = "feature/sim-foundation/host-primitives", why = "Host primitives start from shared network and surface-card helpers." },
+  { feature = "feature/sim-foundation/host-primitives", why = "Neutral port cards, open identities, runtime-mechanics refusals, budgets, and lexical bindings belong in sim-host-core; concrete host realization belongs in platform and domain libraries." },
 ]
 
 [[route]]
