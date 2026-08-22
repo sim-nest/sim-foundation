@@ -17,7 +17,7 @@ reason = "The cookbook entries document descriptor shapes for projection and are
 sim-cookbook = { version = "0.2.1", path = "../sim-cookbook" }
 
 [build-dependencies]
-sim-cookbook = { version = "0.2.1", path = "../sim-cookbook" }
+sim-cookbook-build = { version = "0.1.0", path = "../sim-cookbook-build" }
 
 [lib]
 path = "src/lib.rs"

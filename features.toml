@@ -117,6 +117,20 @@ claims_specimens = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/cookbook-build-tool"
+title = "Cookbook build host tool"
+summary = "Validate recipe packages and deterministically emit include-bytes source during Rust builds."
+owner = "crate/sim-cookbook-build"
+audiences = ["code", "framework"]
+guidance = "Use sim-cookbook-build only from build scripts. Product code consumes supplied embedded bytes through sim-cookbook; it must not depend on this filesystem-and-environment host tool. The foundation xtask is likewise a repository host tool, not a product dependency."
+claims_anchors = [
+  "anchor/crate/sim-cookbook-build",
+]
+supports = [
+  "feature/sim-foundation/cookbook",
+]
+
+[[feature]]
 id = "feature/sim-foundation/library-macros"
 title = "Library macro surface"
 summary = "Generate checked Rust declarations for authored SIM libraries and codec markers."
