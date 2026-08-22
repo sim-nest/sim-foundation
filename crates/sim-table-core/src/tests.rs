@@ -296,6 +296,11 @@ fn all_ops() -> Vec<TableOp> {
     vec![
         TableOp::Get(key()),
         TableOp::Set(key(), Expr::String("v".to_owned())),
+        TableOp::CompareExchange(
+            key(),
+            crate::CompareExpected::Absent,
+            crate::CompareReplacement::Value(Expr::Nil),
+        ),
         TableOp::Has(key()),
         TableOp::Delete(key()),
         TableOp::Keys,
@@ -307,6 +312,23 @@ fn all_ops() -> Vec<TableOp> {
         TableOp::Rmdir(key()),
         TableOp::IsDir(key()),
     ]
+}
+
+#[test]
+fn cas_wire_distinguishes_absent_nil_delete_and_value() {
+    use crate::{CompareExpected as E, CompareReplacement as R};
+    let cases = [
+        TableOp::CompareExchange(key(), E::Absent, R::Value(Expr::Nil)),
+        TableOp::CompareExchange(key(), E::Value(Expr::Nil), R::Delete),
+        TableOp::CompareExchange(
+            key(),
+            E::Value(Expr::String("old".into())),
+            R::Value(Expr::String("new".into())),
+        ),
+    ];
+    for case in cases {
+        assert_eq!(decode_table_op(&encode_table_op(&case)).unwrap(), case);
+    }
 }
 
 #[test]
