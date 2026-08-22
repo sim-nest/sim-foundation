@@ -345,8 +345,6 @@ pub enum HostSourceRole {
     Tool,
     /// Test-only source derived from the module/target graph.
     Test,
-    /// Temporary migration debt assigned to a later OS5 phase.
-    Debt,
 }
 
 impl HostSourceRole {
@@ -358,7 +356,6 @@ impl HostSourceRole {
             Self::Bootstrap => "bootstrap",
             Self::Tool => "tool",
             Self::Test => "test",
-            Self::Debt => "debt",
         }
     }
 }

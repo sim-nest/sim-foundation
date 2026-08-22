@@ -6,6 +6,8 @@
 | --- | --- | --- |
 | `sim-config` | `workspace` | Table and Dir substrate for layered SIM configuration. |
 | `sim-cookbook` | `workspace` | Cookbook engine for SIM's crate-local tutorial recipes. |
+| `sim-cookbook-build` | `workspace` | Portable host-side build support for cookbook recipe embedding. |
+| `sim-host-core` | `workspace` | Neutral contracts for domain-defined host ports. |
 | `sim-index-core` | `workspace` | Shared records and checks for the SIM Index. |
 | `sim-lib-net-core` | `workspace` | Reusable, side-effect-free HTTP/streaming parsing and wire-format helpers. |
 | `sim-lib-surface-card` | `workspace` | Shared, plain-data surface-card spine. |

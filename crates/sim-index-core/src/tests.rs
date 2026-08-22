@@ -2,13 +2,28 @@ use sim_kernel::{Value, card::Card, testing::bare_cx};
 
 use crate::{
     AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
-    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
-    IndexEdge, IndexError, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
-    SourceCompleteness, SourceLocation, SourceReachability, SourceUnit, SpecimenId, SubjectId,
-    SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason, Visibility, check_index_doc,
-    check_index_fragment, declaration_card, draft::materialize_draft, feature_card,
-    key::canonical_feature_key, protocol_relation_card, route_card, specimen_card,
+    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, HostSourceRole,
+    IndexDoc, IndexEdge, IndexError, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord,
+    RouteStep, SourceCompleteness, SourceLocation, SourceReachability, SourceUnit, SpecimenId,
+    SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason, Visibility,
+    check_index_doc, check_index_fragment, declaration_card, draft::materialize_draft,
+    feature_card, key::canonical_feature_key, protocol_relation_card, route_card, specimen_card,
 };
+
+#[test]
+fn host_source_roles_are_permanent_and_closed() {
+    assert_eq!(
+        [
+            HostSourceRole::Pure,
+            HostSourceRole::Capsule,
+            HostSourceRole::Bootstrap,
+            HostSourceRole::Tool,
+            HostSourceRole::Test,
+        ]
+        .map(HostSourceRole::as_str),
+        ["pure", "capsule", "bootstrap", "tool", "test"]
+    );
+}
 
 fn subject() -> SubjectRecord {
     SubjectRecord {

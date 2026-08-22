@@ -6,6 +6,8 @@
 | --- | --- | ---: | ---: |
 | `sim-config` | `workspace` | 0 | 0 |
 | `sim-cookbook` | `workspace` | 0 | 0 |
+| `sim-cookbook-build` | `workspace` | 0 | 0 |
+| `sim-host-core` | `workspace` | 0 | 0 |
 | `sim-index-core` | `workspace` | 0 | 0 |
 | `sim-lib-net-core` | `workspace` | 0 | 0 |
 | `sim-lib-surface-card` | `workspace` | 0 | 0 |
