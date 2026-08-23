@@ -58,6 +58,13 @@
       "summary": "One blocking HTTP policy boundary for SIM."
     },
     {
+      "crate_name": "sim_lib_protected_state",
+      "group": "workspace",
+      "manifest": "crates/sim-lib-protected-state/Cargo.toml",
+      "package": "sim-lib-protected-state",
+      "summary": "Binding-authenticated, bounded opaque state envelopes for continuation protocols."
+    },
+    {
       "crate_name": "sim_lib_surface_card",
       "group": "workspace",
       "manifest": "crates/sim-lib-surface-card/Cargo.toml",

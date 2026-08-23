@@ -26,6 +26,7 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 | `feature/sim-foundation/blocking-http-client` | `crate/sim-lib-net-http` | 1 | Provide one bounded, streaming, cancellation-aware blocking HTTP boundary over injected capsule connectors. |
 | `feature/sim-foundation/host-primitives` | `crate/sim-host-core` | 1 | Define neutral host-port cards, open identities, shared platform-time values and bindings, mechanical refusals and budgets, and lexical object binding separately from concrete host realization. |
 | `feature/sim-foundation/cancellation` | `crate/sim-cancel` | 1 | Bound request and provider lifetimes with one idempotent terminal transition, bounded reason, child propagation, and race-safe waiter removal. |
+| `feature/sim-foundation/protected-state` | `crate/sim-lib-protected-state` | 1 | Protect bounded opaque caller bytes under exact state bindings, injected retained keys, secure nonces, and platform time, with optional atomic single-use claims. |
 | `feature/sim-foundation/cookbook` | `crate/sim-cookbook` | 1 | Describe reusable recipe metadata and generated cookbook records consumed by public docs and tooling. |
 | `feature/sim-foundation/cookbook-build-tool` | `crate/sim-cookbook-build` | 0 | Validate recipe packages and deterministically emit include-bytes source during Rust builds. |
 | `feature/sim-foundation/library-macros` | `crate/sim-macros` | 0 | Generate checked Rust declarations for authored SIM libraries and codec markers. |
@@ -58,6 +59,12 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 - `crates/sim-lib-net-http/recipes/01-basics/bounded-get/setup.siml`
 - `crates/sim-lib-net-http/recipes/01-basics/chapter.toml`
 - `crates/sim-lib-net-http/recipes/book.toml`
+- `crates/sim-lib-protected-state/recipes/01-basics/README.md`
+- `crates/sim-lib-protected-state/recipes/01-basics/chapter.toml`
+- `crates/sim-lib-protected-state/recipes/01-basics/exact-binding/purpose.md`
+- `crates/sim-lib-protected-state/recipes/01-basics/exact-binding/recipe.toml`
+- `crates/sim-lib-protected-state/recipes/01-basics/exact-binding/setup.siml`
+- `crates/sim-lib-protected-state/recipes/book.toml`
 - `crates/sim-lib-surface-card/recipes/01-basics/chapter.toml`
 - `crates/sim-lib-surface-card/recipes/01-basics/external-name/purpose.md`
 - `crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml`
@@ -761,7 +768,9 @@ use std::sync::Arc;
 
 // conformance: Table and Dir core expressions round-trip through shared helpers.
 
-use sim_kernel::{CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, NoopEvalPolicy, Symbol};
+use sim_kernel::{
+    CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, HandleSeed, NoopEvalPolicy, Symbol,
+};
 
 use crate::capabilities::{
     edit, exec, find, fs_read, fs_read_aliases, fs_write, fs_write_aliases,
@@ -781,7 +790,11 @@ fn legal_segment_accepts_normal_name() {
 }
 
 fn seated_cx() -> (Cx, GrantSeat) {
-    Cx::new_seated(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
+    Cx::new_seated(
+        Arc::new(NoopEvalPolicy),
+        Arc::new(DefaultFactory),
+        HandleSeed::new(0),
+    )
 }
 
 trait GrantOutcome {
@@ -1413,6 +1426,23 @@ purpose = "purpose.md"
 order = 10
 tags = ["request", "cancellation", "lifetime", "sandbox-descriptor"]
 requires = ["cancel", "codec/lisp"]
+```
+
+### `feature/sim-foundation/protected-state`
+
+Specimen `recipe/sim-foundation/crates/sim-lib-protected-state/01-basics/exact-binding` is checked by `xtask check-recipes`.
+
+Source `crates/sim-lib-protected-state/recipes/01-basics/exact-binding/recipe.toml`:
+
+```toml
+id = "exact-binding"
+title = "Exact protected-state binding"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["state", "aead", "binding", "rotation", "sandbox-descriptor"]
+requires = ["protected-state", "host-time", "table", "codec/lisp"]
 ```
 
 ### `feature/sim-foundation/cookbook`

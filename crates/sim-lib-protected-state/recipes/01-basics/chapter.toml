@@ -1,0 +1,3 @@
+title = "Exact binding"
+order = 10
+summary = "Protect caller bytes with explicit key, nonce, clock, and binding ownership."

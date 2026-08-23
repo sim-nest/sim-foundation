@@ -1,5 +1,5 @@
 {
-  "card_count": 6,
+  "card_count": 7,
   "cards": [
     {
       "id": "browse/catalog",
@@ -24,6 +24,12 @@
       "kind": "cookbook-recipe",
       "owner": "sim-lib-net-http",
       "summary": "Bounded requests over injected capsule connectors."
+    },
+    {
+      "id": "cookbook/protected-state",
+      "kind": "cookbook-recipe",
+      "owner": "sim-lib-protected-state",
+      "summary": "Opaque state protection with explicit capabilities and optional single-use claims."
     },
     {
       "id": "cookbook/surface/card",
@@ -55,6 +61,7 @@
       "sim-index-core",
       "sim-lib-net-core",
       "sim-lib-net-http",
+      "sim-lib-protected-state",
       "sim-lib-surface-card",
       "sim-macros",
       "sim-relation-core",
@@ -66,7 +73,7 @@
   },
   "non_citizen_exemption_count": 0,
   "non_citizen_exemptions": [],
-  "package_count": 15,
+  "package_count": 16,
   "packages": [
     {
       "crate_name": "sim_cancel",
@@ -433,6 +440,66 @@
       ]
     },
     {
+      "crate_name": "sim_lib_protected_state",
+      "dependencies": [
+        {
+          "kind": "build",
+          "optional": false,
+          "package": "sim-cookbook-build",
+          "rename": null,
+          "target": null
+        },
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-cookbook",
+          "rename": null,
+          "target": null
+        },
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-host-core",
+          "rename": null,
+          "target": null
+        }
+      ],
+      "description": "Bounded, binding-authenticated opaque state envelopes for SIM protocols.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-lib-protected-state/Cargo.toml",
+      "name": "sim-lib-protected-state",
+      "publish": "true",
+      "root": "crates/sim-lib-protected-state",
+      "rustdoc_summary": "Binding-authenticated, bounded opaque state envelopes for continuation protocols.",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_lib_protected_state",
+          "src": "crates/sim-lib-protected-state/src/lib.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "custom-build"
+          ],
+          "name": "build-script-build",
+          "src": "crates/sim-lib-protected-state/build.rs"
+        }
+      ]
+    },
+    {
       "crate_name": "sim_lib_surface_card",
       "dependencies": [
         {
@@ -705,10 +772,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "c41fd9eceef7b27957a20bd4600ddf350f3b4b6b",
+    "git_commit": "487b6ef19f46d68f89634b0d54d7de449f3c9559",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "c41fd9eceef7b27957a20bd4600ddf350f3b4b6b",
+    "source_commit": "487b6ef19f46d68f89634b0d54d7de449f3c9559",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -721,9 +788,9 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "b25f832ba28f6d53",
+    "workspace_hash": "8cb5ffbec9380dca",
     "workspace_hash_algorithm": "fnv1a64",
-    "workspace_hash_input_count": 147,
+    "workspace_hash_input_count": 161,
     "workspace_hash_inputs": [
       "Cargo.toml",
       "crates/sim-cancel/Cargo.toml",
@@ -792,8 +859,22 @@
       "crates/sim-lib-net-http/build.rs",
       "crates/sim-lib-net-http/recipes/01-basics/bounded-get/recipe.toml",
       "crates/sim-lib-net-http/recipes/book.toml",
+      "crates/sim-lib-net-http/src/client.rs",
       "crates/sim-lib-net-http/src/lib.rs",
+      "crates/sim-lib-net-http/src/response.rs",
       "crates/sim-lib-net-http/src/tests.rs",
+      "crates/sim-lib-net-http/src/transport.rs",
+      "crates/sim-lib-net-http/src/types.rs",
+      "crates/sim-lib-protected-state/Cargo.toml",
+      "crates/sim-lib-protected-state/build.rs",
+      "crates/sim-lib-protected-state/recipes/01-basics/exact-binding/recipe.toml",
+      "crates/sim-lib-protected-state/recipes/book.toml",
+      "crates/sim-lib-protected-state/src/binding.rs",
+      "crates/sim-lib-protected-state/src/crypto.rs",
+      "crates/sim-lib-protected-state/src/envelope.rs",
+      "crates/sim-lib-protected-state/src/ledger.rs",
+      "crates/sim-lib-protected-state/src/lib.rs",
+      "crates/sim-lib-protected-state/src/tests.rs",
       "crates/sim-lib-surface-card/Cargo.toml",
       "crates/sim-lib-surface-card/build.rs",
       "crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml",
@@ -874,7 +955,7 @@
       "xtask/Cargo.toml"
     ]
   },
-  "recipe_book_count": 4,
+  "recipe_book_count": 5,
   "recipes": [
     {
       "book": "cancel",
@@ -935,6 +1016,26 @@
       ],
       "summary": "Bounded requests over injected capsule connectors.",
       "title": "Blocking HTTP policy"
+    },
+    {
+      "book": "protected-state",
+      "book_toml": "crates/sim-lib-protected-state/recipes/book.toml",
+      "card_id": "cookbook/protected-state",
+      "group": "workspace",
+      "package": "sim-lib-protected-state",
+      "recipe_count": 1,
+      "recipes": [
+        {
+          "card_id": "protected-state/01-basics/exact-binding",
+          "codec": "lisp",
+          "id": "exact-binding",
+          "package": "sim-lib-protected-state",
+          "recipe_toml": "crates/sim-lib-protected-state/recipes/01-basics/exact-binding/recipe.toml",
+          "title": "Exact protected-state binding"
+        }
+      ],
+      "summary": "Opaque state protection with explicit capabilities and optional single-use claims.",
+      "title": "Protected state"
     },
     {
       "book": "surface/card",

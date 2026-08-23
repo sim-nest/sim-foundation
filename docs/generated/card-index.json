@@ -1,5 +1,5 @@
 {
-  "card_count": 6,
+  "card_count": 7,
   "cards": [
     {
       "id": "browse/catalog",
@@ -24,6 +24,12 @@
       "kind": "cookbook-recipe",
       "owner": "sim-lib-net-http",
       "summary": "Bounded requests over injected capsule connectors."
+    },
+    {
+      "id": "cookbook/protected-state",
+      "kind": "cookbook-recipe",
+      "owner": "sim-lib-protected-state",
+      "summary": "Opaque state protection with explicit capabilities and optional single-use claims."
     },
     {
       "id": "cookbook/surface/card",

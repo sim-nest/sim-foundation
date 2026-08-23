@@ -149,6 +149,24 @@ supports = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/protected-state"
+title = "Capability-injected protected state"
+summary = "Protect bounded opaque caller bytes under exact state bindings, injected retained keys, secure nonces, and platform time, with optional atomic single-use claims."
+owner = "crate/sim-lib-protected-state"
+audiences = ["code", "framework"]
+guidance = "Reuse this crate for opaque continuation or handoff state. Callers own typed serialization and canonical context digests; hosts inject keys, a reviewed CryptoRng, and WallClock. AEAD is not replay prevention: use TableConsumptionLedger when single-use behavior is required."
+claims_anchors = [
+  "anchor/crate/sim-lib-protected-state",
+]
+claims_specimens = [
+  "recipe/sim-foundation/crates/sim-lib-protected-state/01-basics/exact-binding",
+]
+supports = [
+  "feature/sim-foundation/host-primitives",
+  "feature/sim-foundation/table-dir-core",
+]
+
+[[feature]]
 id = "feature/sim-foundation/cookbook"
 title = "Cookbook recipe framework"
 summary = "Describe reusable recipe metadata and generated cookbook records consumed by public docs and tooling."
@@ -261,6 +279,16 @@ audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/host-primitives", why = "The capsule supplies DNS, socket, clock, cancellation, and trust realization without ambient host access." },
   { feature = "feature/sim-foundation/blocking-http-client", why = "The shared HTTP boundary owns framing, resource caps, sensitive headers, deadlines, cancellation, and authority policy." },
+]
+
+[[route]]
+id = "route/protect-opaque-state"
+task = "Protect opaque continuation or handoff state with rotation and optional single-use consumption"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/host-primitives", why = "The shared WallClock contract supplies the explicit expiry observation without ambient host time." },
+  { feature = "feature/sim-foundation/protected-state", why = "The protected-state owner supplies the bounded envelope, collision-free binding, injected key and nonce capabilities, rotation behavior, uniform rejection, and canonical Table consumption adapter." },
+  { specimen = "recipe/sim-foundation/crates/sim-lib-protected-state/01-basics/exact-binding", why = "The checked recipe keeps caller serialization, key custody, clock ownership, and optional replay claims explicit." },
 ]
 
 [[route]]

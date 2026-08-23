@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 // conformance: Table and Dir core expressions round-trip through shared helpers.
 
-use sim_kernel::{CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, NoopEvalPolicy, Symbol};
+use sim_kernel::{
+    CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, HandleSeed, NoopEvalPolicy, Symbol,
+};
 
 use crate::capabilities::{
     edit, exec, find, fs_read, fs_read_aliases, fs_write, fs_write_aliases,
@@ -22,7 +24,11 @@ fn legal_segment_accepts_normal_name() {
 }
 
 fn seated_cx() -> (Cx, GrantSeat) {
-    Cx::new_seated(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
+    Cx::new_seated(
+        Arc::new(NoopEvalPolicy),
+        Arc::new(DefaultFactory),
+        HandleSeed::new(0),
+    )
 }
 
 trait GrantOutcome {

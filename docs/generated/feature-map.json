@@ -58,6 +58,11 @@
     {
       "features": [],
       "group": "workspace",
+      "package": "sim-lib-protected-state"
+    },
+    {
+      "features": [],
+      "group": "workspace",
       "package": "sim-lib-surface-card"
     },
     {

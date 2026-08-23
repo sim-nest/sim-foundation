@@ -1,8 +1,9 @@
 use super::*;
 use std::{
     collections::VecDeque,
-    io::{self, Cursor},
+    io::{self, Cursor, Read, Write},
     sync::Mutex,
+    time::Duration,
 };
 struct Script {
     response: Mutex<VecDeque<Vec<u8>>>,

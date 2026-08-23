@@ -90,6 +90,10 @@ below the kernel boundary.
   `external_name`/`ExternalNamePolicy` rules for projecting a kernel `Symbol`
   onto foreign tool surfaces (MCP, OpenAI, file system, human-facing text) and a
   plain-data `SurfaceDescriptor` over kernel types.
+- `sim-lib-protected-state` -- bounded, versioned XChaCha20-Poly1305 envelopes
+  for caller-serialized opaque state, with exact purpose/audience/subject/context/expiry
+  binding, injected retained keys, cryptographic nonces and wall time, and an optional
+  atomic single-use adapter over canonical Table compare-exchange.
 
 ## Boundary
 
