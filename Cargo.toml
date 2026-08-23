@@ -9,6 +9,7 @@ members = [
   "crates/sim-host-core",
   "crates/sim-lib-net-core",
   "crates/sim-lib-surface-card",
+  "crates/sim-relation-core",
   "crates/sim-macros",
   "crates/sim-table-core",
   "crates/sim-text",

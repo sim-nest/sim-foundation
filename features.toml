@@ -74,6 +74,20 @@ claims_specimens = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/relation-core"
+title = "Open relational domain core"
+summary = "Define provider-neutral logical domains, typed cells and rows, exact storage representations, and canonical Datum-backed relational identity."
+owner = "crate/sim-relation-core"
+audiences = ["code", "framework"]
+guidance = "Reuse these records for relational schemas and provider boundaries. Extend the catalog with symbolic DomainSpec records; do not introduce a closed SQL value enum or a second digest implementation. Runtime Shape resolution belongs in sim-relation-shape."
+claims_anchors = [
+  "anchor/crate/sim-relation-core",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-relation-core/tests/domain_and_rows",
+]
+
+[[feature]]
 id = "feature/sim-foundation/index-graph-core"
 title = "Index graph core"
 summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."
