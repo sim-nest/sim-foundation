@@ -86,6 +86,13 @@
       "summary": "Open relational records built directly on the kernel data substrate."
     },
     {
+      "crate_name": "sim_relation_schema",
+      "group": "workspace",
+      "manifest": "crates/sim-relation-schema/Cargo.toml",
+      "package": "sim-relation-schema",
+      "summary": "Validated logical schema intent and normalized physical catalog evidence."
+    },
+    {
       "crate_name": "sim_table_core",
       "group": "workspace",
       "manifest": "crates/sim-table-core/Cargo.toml",

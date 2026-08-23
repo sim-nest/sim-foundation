@@ -78,6 +78,11 @@
     {
       "features": [],
       "group": "workspace",
+      "package": "sim-relation-schema"
+    },
+    {
+      "features": [],
+      "group": "workspace",
       "package": "sim-table-core"
     },
     {

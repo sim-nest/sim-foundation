@@ -76,3 +76,5 @@ name_type!(IndexName, "An index name.");
 name_type!(RevisionName, "A revision name.");
 name_type!(ProviderName, "A storage provider name.");
 name_type!(DomainId, "An open logical-domain identifier.");
+name_type!(SchemaName, "A logical schema name.");
+name_type!(ViewName, "A relational view name.");

@@ -30,6 +30,6 @@ pub use domain::{
 };
 pub use names::{
     BindingName, ColumnName, ConstraintName, DomainId, FieldName, IndexName, NameError,
-    ParameterName, ProviderName, RevisionName, SourceName, TableName,
+    ParameterName, ProviderName, RevisionName, SchemaName, SourceName, TableName, ViewName,
 };
 pub use record::{Cell, FieldType, RelationId, Row, RowError, RowType, ToRelationDatum};

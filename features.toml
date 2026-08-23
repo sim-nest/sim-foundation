@@ -88,6 +88,23 @@ claims_specimens = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/relation-schema"
+title = "Validated relational schemas"
+summary = "Define canonical provider-neutral schema intent and distinct normalized physical catalog evidence with fail-closed graph validation."
+owner = "crate/sim-relation-schema"
+audiences = ["code", "framework"]
+guidance = "Use Schema for portable relational intent and PhysicalSchema only for normalized live-provider observations. Reuse sim-relation-core domain ids and identities; inject domain Shape validation for defaults and generated expressions."
+claims_anchors = [
+  "anchor/crate/sim-relation-schema",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-relation-schema/tests/schema_contract",
+]
+supports = [
+  "feature/sim-foundation/relation-core",
+]
+
+[[feature]]
 id = "feature/sim-foundation/index-graph-core"
 title = "Index graph core"
 summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."
