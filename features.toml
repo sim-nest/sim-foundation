@@ -14,6 +14,20 @@ major_entrypoints = "advisory"
 frameworks = "advisory"
 
 [[feature]]
+id = "feature/sim-foundation/index-vault-projection"
+title = "Exact Index vault projection"
+summary = "Project every canonical Index row into a deterministic syntax-free note plan and prove exact primary and derived claim coverage."
+owner = "crate/sim-index-vault-core"
+audiences = ["code", "framework"]
+guidance = "Reuse this projection before rendering any complete public SIM Index as a vault. Keep canonical records as IndexRow values, add derived navigation only with an explicit origin, and require the exact claim certificate to close."
+claims_anchors = [
+  "anchor/crate/sim-index-vault-core",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-index-vault-core/tests/projection",
+]
+
+[[feature]]
 id = "feature/sim-foundation/value-helpers"
 title = "Value helper framework"
 summary = "Provide shared value conversion, expression builder, expression field reader, map field reader, and field access helpers for reusable runtime libraries."

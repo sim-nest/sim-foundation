@@ -1,0 +1,20 @@
+[package]
+name = "sim-index-vault-core"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Pure, complete vault projection and exact claim certificates for the SIM Index."
+readme = "README.md"
+publish = true
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[package.metadata.sim-recipes]
+policy = "rustdoc"
+reason = "The pure projection law is taught by rustdoc examples and property-oriented tests."
+
+[dependencies]
+sim-index-core = { version = "0.2.0", path = "../sim-index-core" }
+
+[lints]
+workspace = true
