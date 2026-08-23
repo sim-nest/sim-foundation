@@ -123,6 +123,25 @@ supports = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/relation-migrate"
+title = "Checked relational migrations"
+summary = "Admit linear, identity-checked schema evolution programs and verify provider state with exact attestations."
+owner = "crate/sim-relation-migrate"
+audiences = ["code", "framework"]
+guidance = "Use authored migration operations for destructive or ambiguous changes. Automatic derivation is intentionally limited to lossless table creation and nullable column addition; providers must offer transactional DDL and post-apply introspection."
+claims_anchors = [
+  "anchor/crate/sim-relation-migrate",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-relation-migrate/tests/migration",
+]
+supports = [
+  "feature/sim-foundation/relation-core",
+  "feature/sim-foundation/relation-schema",
+  "feature/sim-foundation/relation-plan",
+]
+
+[[feature]]
 id = "feature/sim-foundation/index-graph-core"
 title = "Index graph core"
 summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."

@@ -14,6 +14,7 @@ members = [
   "crates/sim-lib-surface-card",
   "crates/sim-relation-core",
   "crates/sim-relation-plan",
+  "crates/sim-relation-migrate",
   "crates/sim-relation-schema",
   "crates/sim-macros",
   "crates/sim-table-core",
