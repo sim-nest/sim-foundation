@@ -1,0 +1,8 @@
+id = "bounded-get"
+title = "Bounded capsule request descriptor"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["net", "http", "policy", "sandbox-descriptor"]
+requires = ["net-http", "codec/lisp"]

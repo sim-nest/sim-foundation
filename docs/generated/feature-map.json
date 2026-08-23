@@ -32,6 +32,25 @@
       "package": "sim-lib-net-core"
     },
     {
+      "features": [
+        {
+          "edges": [],
+          "name": "default",
+          "workspace_edges": []
+        },
+        {
+          "edges": [
+            "dep:rustls",
+            "dep:rustls-native-certs"
+          ],
+          "name": "tls",
+          "workspace_edges": []
+        }
+      ],
+      "group": "workspace",
+      "package": "sim-lib-net-http"
+    },
+    {
       "features": [],
       "group": "workspace",
       "package": "sim-lib-surface-card"

@@ -1,0 +1,30 @@
+[package]
+name = "sim-lib-net-http"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Policy-complete blocking HTTP client for SIM capsule transports."
+readme = "README.md"
+publish = true
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[package.metadata.sim-recipes]
+policy = "descriptor"
+reason = "The recipe documents capsule connector and policy assembly without opening a network connection."
+
+[dependencies]
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"], optional = true }
+rustls-native-certs = { version = "0.8", optional = true }
+sim-lib-net-core = { version = "0.2.1", path = "../sim-lib-net-core" }
+sim-cookbook = { version = "0.2.1", path = "../sim-cookbook" }
+
+[build-dependencies]
+sim-cookbook-build = { version = "0.1.0", path = "../sim-cookbook-build" }
+
+[features]
+default = []
+tls = ["dep:rustls", "dep:rustls-native-certs"]
+
+[lints]
+workspace = true

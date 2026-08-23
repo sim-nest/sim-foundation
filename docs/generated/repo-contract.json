@@ -1,5 +1,5 @@
 {
-  "card_count": 4,
+  "card_count": 5,
   "cards": [
     {
       "id": "browse/catalog",
@@ -12,6 +12,12 @@
       "kind": "cookbook-recipe",
       "owner": "sim-lib-net-core",
       "summary": "Side-effect-free HTTP and stream parsing descriptors."
+    },
+    {
+      "id": "cookbook/net-http",
+      "kind": "cookbook-recipe",
+      "owner": "sim-lib-net-http",
+      "summary": "Bounded requests over injected capsule connectors."
     },
     {
       "id": "cookbook/surface/card",
@@ -41,6 +47,7 @@
       "sim-host-core",
       "sim-index-core",
       "sim-lib-net-core",
+      "sim-lib-net-http",
       "sim-lib-surface-card",
       "sim-macros",
       "sim-relation-core",
@@ -52,7 +59,7 @@
   },
   "non_citizen_exemption_count": 0,
   "non_citizen_exemptions": [],
-  "package_count": 13,
+  "package_count": 14,
   "packages": [
     {
       "crate_name": "sim_config",
@@ -277,6 +284,80 @@
           ],
           "name": "build-script-build",
           "src": "crates/sim-lib-net-core/build.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_lib_net_http",
+      "dependencies": [
+        {
+          "kind": "build",
+          "optional": false,
+          "package": "sim-cookbook-build",
+          "rename": null,
+          "target": null
+        },
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-cookbook",
+          "rename": null,
+          "target": null
+        },
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-lib-net-core",
+          "rename": null,
+          "target": null
+        }
+      ],
+      "description": "Policy-complete blocking HTTP client for SIM capsule transports.",
+      "features": [
+        {
+          "edges": [],
+          "name": "default",
+          "workspace_edges": []
+        },
+        {
+          "edges": [
+            "dep:rustls",
+            "dep:rustls-native-certs"
+          ],
+          "name": "tls",
+          "workspace_edges": []
+        }
+      ],
+      "group": "workspace",
+      "manifest": "crates/sim-lib-net-http/Cargo.toml",
+      "name": "sim-lib-net-http",
+      "publish": "true",
+      "root": "crates/sim-lib-net-http",
+      "rustdoc_summary": "One blocking HTTP policy boundary for SIM.",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_lib_net_http",
+          "src": "crates/sim-lib-net-http/src/lib.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "custom-build"
+          ],
+          "name": "build-script-build",
+          "src": "crates/sim-lib-net-http/build.rs"
         }
       ]
     },
@@ -553,10 +634,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "1cbc730f0b91ebeecbdb40872ed0d335e9b01b20",
+    "git_commit": "58f504aad20125122028c770ac5897e88e90dc97",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "1cbc730f0b91ebeecbdb40872ed0d335e9b01b20",
+    "source_commit": "58f504aad20125122028c770ac5897e88e90dc97",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -569,9 +650,9 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "8f8526bb14dce2fa",
+    "workspace_hash": "408e963347bde6a3",
     "workspace_hash_algorithm": "fnv1a64",
-    "workspace_hash_input_count": 133,
+    "workspace_hash_input_count": 139,
     "workspace_hash_inputs": [
       "Cargo.toml",
       "crates/sim-config/Cargo.toml",
@@ -628,6 +709,12 @@
       "crates/sim-lib-net-core/src/sse.rs",
       "crates/sim-lib-net-core/src/tests.rs",
       "crates/sim-lib-net-core/src/url.rs",
+      "crates/sim-lib-net-http/Cargo.toml",
+      "crates/sim-lib-net-http/build.rs",
+      "crates/sim-lib-net-http/recipes/01-basics/bounded-get/recipe.toml",
+      "crates/sim-lib-net-http/recipes/book.toml",
+      "crates/sim-lib-net-http/src/lib.rs",
+      "crates/sim-lib-net-http/src/tests.rs",
       "crates/sim-lib-surface-card/Cargo.toml",
       "crates/sim-lib-surface-card/build.rs",
       "crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml",
@@ -708,7 +795,7 @@
       "xtask/Cargo.toml"
     ]
   },
-  "recipe_book_count": 2,
+  "recipe_book_count": 3,
   "recipes": [
     {
       "book": "net-core",
@@ -729,6 +816,26 @@
       ],
       "summary": "Side-effect-free HTTP and stream parsing descriptors.",
       "title": "Net Core"
+    },
+    {
+      "book": "net-http",
+      "book_toml": "crates/sim-lib-net-http/recipes/book.toml",
+      "card_id": "cookbook/net-http",
+      "group": "workspace",
+      "package": "sim-lib-net-http",
+      "recipe_count": 1,
+      "recipes": [
+        {
+          "card_id": "net-http/01-basics/bounded-get",
+          "codec": "lisp",
+          "id": "bounded-get",
+          "package": "sim-lib-net-http",
+          "recipe_toml": "crates/sim-lib-net-http/recipes/01-basics/bounded-get/recipe.toml",
+          "title": "Bounded capsule request descriptor"
+        }
+      ],
+      "summary": "Bounded requests over injected capsule connectors.",
+      "title": "Blocking HTTP policy"
     },
     {
       "book": "surface/card",

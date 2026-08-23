@@ -1,0 +1,5 @@
+book = "net-http"
+title = "Blocking HTTP policy"
+summary = "Bounded requests over injected capsule connectors."
+order = 345
+chapters = ["01-basics"]

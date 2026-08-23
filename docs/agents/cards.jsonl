@@ -3,6 +3,12 @@
 {"kind":"recipe","path":"crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml"}
 {"kind":"recipe","path":"crates/sim-lib-net-core/recipes/01-basics/response-head/setup.siml"}
 {"kind":"recipe","path":"crates/sim-lib-net-core/recipes/book.toml"}
+{"kind":"recipe","path":"crates/sim-lib-net-http/recipes/01-basics/README.md"}
+{"kind":"recipe","path":"crates/sim-lib-net-http/recipes/01-basics/bounded-get/purpose.md"}
+{"kind":"recipe","path":"crates/sim-lib-net-http/recipes/01-basics/bounded-get/recipe.toml"}
+{"kind":"recipe","path":"crates/sim-lib-net-http/recipes/01-basics/bounded-get/setup.siml"}
+{"kind":"recipe","path":"crates/sim-lib-net-http/recipes/01-basics/chapter.toml"}
+{"kind":"recipe","path":"crates/sim-lib-net-http/recipes/book.toml"}
 {"kind":"recipe","path":"crates/sim-lib-surface-card/recipes/01-basics/chapter.toml"}
 {"kind":"recipe","path":"crates/sim-lib-surface-card/recipes/01-basics/external-name/purpose.md"}
 {"kind":"recipe","path":"crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml"}

@@ -23,6 +23,7 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 | `feature/sim-foundation/table-path-references` | `crate/sim-table-core` | 1 | Parse, normalize, resolve, and format bounded absolute and relative Table/Dir path references. |
 | `feature/sim-foundation/relation-core` | `crate/sim-relation-core` | 1 | Define provider-neutral logical domains, typed cells and rows, exact storage representations, and canonical Datum-backed relational identity. |
 | `feature/sim-foundation/index-graph-core` | `crate/sim-index-core` | 0 | Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs. |
+| `feature/sim-foundation/blocking-http-client` | `crate/sim-lib-net-http` | 1 | Provide one bounded, streaming, cancellation-aware blocking HTTP boundary over injected capsule connectors. |
 | `feature/sim-foundation/host-primitives` | `crate/sim-host-core` | 1 | Define neutral host-port cards, open identities, mechanical refusals and budgets, and lexical object binding separately from concrete host realization. |
 | `feature/sim-foundation/cookbook` | `crate/sim-cookbook` | 1 | Describe reusable recipe metadata and generated cookbook records consumed by public docs and tooling. |
 | `feature/sim-foundation/cookbook-build-tool` | `crate/sim-cookbook-build` | 0 | Validate recipe packages and deterministically emit include-bytes source during Rust builds. |
@@ -44,6 +45,12 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml`
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/setup.siml`
 - `crates/sim-lib-net-core/recipes/book.toml`
+- `crates/sim-lib-net-http/recipes/01-basics/README.md`
+- `crates/sim-lib-net-http/recipes/01-basics/bounded-get/purpose.md`
+- `crates/sim-lib-net-http/recipes/01-basics/bounded-get/recipe.toml`
+- `crates/sim-lib-net-http/recipes/01-basics/bounded-get/setup.siml`
+- `crates/sim-lib-net-http/recipes/01-basics/chapter.toml`
+- `crates/sim-lib-net-http/recipes/book.toml`
 - `crates/sim-lib-surface-card/recipes/01-basics/chapter.toml`
 - `crates/sim-lib-surface-card/recipes/01-basics/external-name/purpose.md`
 - `crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml`
@@ -1348,6 +1355,23 @@ fn custom_domains_need_no_provider_change_and_identity_is_kernel_identity() {
         RelationId::of(&uuid.clone()).unwrap()
     );
 }
+```
+
+### `feature/sim-foundation/blocking-http-client`
+
+Specimen `recipe/sim-foundation/crates/sim-lib-net-http/01-basics/bounded-get` is checked by `xtask check-recipes`.
+
+Source `crates/sim-lib-net-http/recipes/01-basics/bounded-get/recipe.toml`:
+
+```toml
+id = "bounded-get"
+title = "Bounded capsule request descriptor"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["net", "http", "policy", "sandbox-descriptor"]
+requires = ["net-http", "codec/lisp"]
 ```
 
 ### `feature/sim-foundation/host-primitives`
