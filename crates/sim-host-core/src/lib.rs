@@ -13,6 +13,12 @@ use std::sync::Arc;
 
 use sim_kernel::{Env, Factory, RuntimeObject, Symbol, Value, error::Result};
 
+mod time;
+pub use time::{
+    DeterministicTime, MonotonicClock, MonotonicTimestamp, PlatformTime, SystemWallClock, Timer,
+    WallClock, WallTimestamp,
+};
+
 /// An open provider identity, represented as kernel data rather than an enum.
 pub type ProviderId = Symbol;
 

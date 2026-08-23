@@ -4,6 +4,11 @@
     {
       "features": [],
       "group": "workspace",
+      "package": "sim-cancel"
+    },
+    {
+      "features": [],
+      "group": "workspace",
       "package": "sim-config"
     },
     {

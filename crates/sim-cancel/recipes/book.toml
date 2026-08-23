@@ -1,0 +1,5 @@
+book = "cancel"
+title = "Explicit cancellation"
+summary = "Executor-neutral request lifetime composition."
+order = 350
+chapters = ["01-basics"]

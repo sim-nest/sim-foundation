@@ -118,10 +118,10 @@ supports = [
 [[feature]]
 id = "feature/sim-foundation/host-primitives"
 title = "Host primitive foundation"
-summary = "Define neutral host-port cards, open identities, mechanical refusals and budgets, and lexical object binding separately from concrete host realization."
+summary = "Define neutral host-port cards, open identities, shared platform-time values and bindings, mechanical refusals and budgets, and lexical object binding separately from concrete host realization."
 owner = "crate/sim-host-core"
 audiences = ["code", "framework"]
-guidance = "Use sim-host-core for domain-defined neutral port contracts and child-Env binding. Keep operating-system calls, provider realization, evidence grading, and product policy in platform or domain libraries."
+guidance = "Use sim-host-core for domain-defined neutral port contracts, child-Env binding, and the shared WallClock, MonotonicClock, Timer, timestamp, and deterministic model contracts. Keep operating-system calls, provider realization, evidence grading, and product policy in platform or domain libraries."
 claims_anchors = [
   "anchor/crate/sim-host-core",
   "anchor/crate/sim-lib-net-core",
@@ -129,6 +129,23 @@ claims_anchors = [
 ]
 claims_specimens = [
   "recipe/sim-foundation/crates/sim-lib-net-core/01-basics/response-head",
+]
+
+[[feature]]
+id = "feature/sim-foundation/cancellation"
+title = "Executor-neutral cancellation"
+summary = "Bound request and provider lifetimes with one idempotent terminal transition, bounded reason, child propagation, and race-safe waiter removal."
+owner = "crate/sim-cancel"
+audiences = ["code", "framework"]
+guidance = "Construct Cancellation at a host or binding boundary and pass it explicitly into owned work. Derive children for nested lifetimes. Await the executor-neutral future or observe the reason; never add a global token registry or retain application callbacks in cancellation state."
+claims_anchors = [
+  "anchor/crate/sim-cancel",
+]
+claims_specimens = [
+  "recipe/sim-foundation/crates/sim-cancel/01-basics/request-lifetime",
+]
+supports = [
+  "feature/sim-foundation/host-primitives",
 ]
 
 [[feature]]
@@ -225,6 +242,16 @@ task = "Add a host primitive"
 audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/host-primitives", why = "Neutral port cards, open identities, runtime-mechanics refusals, budgets, and lexical bindings belong in sim-host-core; concrete host realization belongs in platform and domain libraries." },
+]
+
+[[route]]
+id = "route/compose-platform-time"
+task = "Compose wall time, monotonic time, timers, and cancellation into a request lifetime"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/host-primitives", why = "The existing platform-time contracts own wall and monotonic values, timer behavior, explicit bindings, and the deterministic model." },
+  { feature = "feature/sim-foundation/cancellation", why = "Cancellation composes with a supplied deadline without choosing an executor, timer implementation, or transport." },
+  { specimen = "recipe/sim-foundation/crates/sim-cancel/01-basics/request-lifetime", why = "The checked recipe demonstrates explicit host-to-request ownership; the crate race suite proves registration, propagation, timeout conversion, completion, and dropped-waiter behavior." },
 ]
 
 [[route]]

@@ -7,6 +7,7 @@ members = [
   "crates/sim-cookbook-build",
   "crates/sim-index-core",
   "crates/sim-host-core",
+  "crates/sim-cancel",
   "crates/sim-lib-net-core",
   "crates/sim-lib-net-http",
   "crates/sim-lib-surface-card",

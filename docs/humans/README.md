@@ -24,7 +24,8 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 | `feature/sim-foundation/relation-core` | `crate/sim-relation-core` | 1 | Define provider-neutral logical domains, typed cells and rows, exact storage representations, and canonical Datum-backed relational identity. |
 | `feature/sim-foundation/index-graph-core` | `crate/sim-index-core` | 0 | Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs. |
 | `feature/sim-foundation/blocking-http-client` | `crate/sim-lib-net-http` | 1 | Provide one bounded, streaming, cancellation-aware blocking HTTP boundary over injected capsule connectors. |
-| `feature/sim-foundation/host-primitives` | `crate/sim-host-core` | 1 | Define neutral host-port cards, open identities, mechanical refusals and budgets, and lexical object binding separately from concrete host realization. |
+| `feature/sim-foundation/host-primitives` | `crate/sim-host-core` | 1 | Define neutral host-port cards, open identities, shared platform-time values and bindings, mechanical refusals and budgets, and lexical object binding separately from concrete host realization. |
+| `feature/sim-foundation/cancellation` | `crate/sim-cancel` | 1 | Bound request and provider lifetimes with one idempotent terminal transition, bounded reason, child propagation, and race-safe waiter removal. |
 | `feature/sim-foundation/cookbook` | `crate/sim-cookbook` | 1 | Describe reusable recipe metadata and generated cookbook records consumed by public docs and tooling. |
 | `feature/sim-foundation/cookbook-build-tool` | `crate/sim-cookbook-build` | 0 | Validate recipe packages and deterministically emit include-bytes source during Rust builds. |
 | `feature/sim-foundation/library-macros` | `crate/sim-macros` | 0 | Generate checked Rust declarations for authored SIM libraries and codec markers. |
@@ -40,6 +41,12 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 
 ## Recipes
 
+- `crates/sim-cancel/recipes/01-basics/README.md`
+- `crates/sim-cancel/recipes/01-basics/chapter.toml`
+- `crates/sim-cancel/recipes/01-basics/request-lifetime/purpose.md`
+- `crates/sim-cancel/recipes/01-basics/request-lifetime/recipe.toml`
+- `crates/sim-cancel/recipes/01-basics/request-lifetime/setup.siml`
+- `crates/sim-cancel/recipes/book.toml`
 - `crates/sim-lib-net-core/recipes/01-basics/chapter.toml`
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/purpose.md`
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml`
@@ -1389,6 +1396,23 @@ purpose = "purpose.md"
 order = 10
 tags = ["net", "http", "parser", "sandbox-descriptor"]
 requires = ["net-core", "codec/lisp"]
+```
+
+### `feature/sim-foundation/cancellation`
+
+Specimen `recipe/sim-foundation/crates/sim-cancel/01-basics/request-lifetime` is checked by `xtask check-recipes`.
+
+Source `crates/sim-cancel/recipes/01-basics/request-lifetime/recipe.toml`:
+
+```toml
+id = "request-lifetime"
+title = "Bound a request lifetime"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["request", "cancellation", "lifetime", "sandbox-descriptor"]
+requires = ["cancel", "codec/lisp"]
 ```
 
 ### `feature/sim-foundation/cookbook`

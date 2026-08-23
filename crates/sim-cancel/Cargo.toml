@@ -1,0 +1,23 @@
+[package]
+name = "sim-cancel"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Executor-neutral hierarchical cancellation for SIM request lifetimes."
+readme = "README.md"
+publish = true
+
+[package.metadata.sim-recipes]
+policy = "descriptor"
+reason = "The recipe documents explicit host-to-request cancellation ownership without selecting an executor."
+
+[dependencies]
+sim-cookbook = { version = "0.2.1", path = "../sim-cookbook" }
+
+[build-dependencies]
+sim-cookbook-build = { version = "0.1.0", path = "../sim-cookbook-build" }
+
+[lints]
+workspace = true
