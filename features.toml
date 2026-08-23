@@ -105,6 +105,24 @@ supports = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/relation-plan"
+title = "Admitted logical relation plans"
+summary = "Define complete scoped query and mutation algebra and admit it into opaque, canonically identified provider requests."
+owner = "crate/sim-relation-plan"
+audiences = ["code", "framework"]
+guidance = "Build Rel, Scalar, Aggregate, and Mutation records in product libraries, then use admission as the sole path to CheckedQuery or CheckedMutation. Providers consume checked plans and must not accept SQL text or unchecked records."
+claims_anchors = [
+  "anchor/crate/sim-relation-plan",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-relation-plan/tests/admission",
+]
+supports = [
+  "feature/sim-foundation/relation-core",
+  "feature/sim-foundation/relation-schema",
+]
+
+[[feature]]
 id = "feature/sim-foundation/index-graph-core"
 title = "Index graph core"
 summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."

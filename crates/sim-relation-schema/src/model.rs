@@ -45,6 +45,14 @@ impl Column {
     pub const fn nullable(&self) -> bool {
         self.nullable
     }
+    /// Returns whether omission is legal because a default is installed.
+    pub const fn has_default(&self) -> bool {
+        self.default.is_some()
+    }
+    /// Returns whether the provider computes this column.
+    pub const fn is_generated(&self) -> bool {
+        self.generated.is_some()
+    }
 }
 /// An ordered primary key.
 #[derive(Clone, Debug, PartialEq, Eq)]
