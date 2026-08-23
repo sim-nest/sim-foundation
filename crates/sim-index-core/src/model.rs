@@ -66,7 +66,7 @@ id_type!(
 );
 
 /// Top-level SIM Index document.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct IndexDoc {
     /// Schema marker, normally `sim.index`.
     pub schema: String,
@@ -180,7 +180,7 @@ impl SourceCompleteness {
 }
 
 /// Visibility boundary for an index document.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Visibility {
     /// Public, generated from public source facts.
     Public,
@@ -189,7 +189,7 @@ pub enum Visibility {
 }
 
 /// A discovered subject that can own anchors, surfaces, specimens, or features.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct SubjectRecord {
     /// Stable subject id.
     pub id: SubjectId,
@@ -200,7 +200,7 @@ pub struct SubjectRecord {
 }
 
 /// A discovered source anchor.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DiscoveredAnchor {
     /// Stable anchor id.
     pub id: AnchorId,
@@ -415,7 +415,7 @@ pub enum UnresolvedReason {
 }
 
 /// A discovered surface by which a subject is addressed.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DiscoveredSurface {
     /// Stable surface id.
     pub id: SurfaceId,
@@ -426,7 +426,7 @@ pub struct DiscoveredSurface {
 }
 
 /// A runnable, checked description of a feature.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DiscoveredSpecimen {
     /// Stable specimen id.
     pub id: SpecimenId,
@@ -449,7 +449,7 @@ pub struct DiscoveredSpecimen {
 }
 
 /// Authored feature overlay before discovered claims are materialized.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct FeatureDraft {
     /// Feature id being authored.
     pub id: FeatureId,
@@ -478,7 +478,7 @@ pub struct FeatureDraft {
 }
 
 /// Materialized feature row.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct FeatureRecord {
     /// Stable feature id.
     pub id: FeatureId,
@@ -503,7 +503,7 @@ pub struct FeatureRecord {
 }
 
 /// Contract tying a grammar to its discovered codec anchors and surface.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GrammarContract {
     /// Stable grammar id, such as `grammar/lisp`.
     pub id: String,
@@ -528,7 +528,7 @@ impl GrammarContract {
 }
 
 /// A route through features and specimens.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct RouteRecord {
     /// Stable route id.
     pub id: RouteId,
@@ -587,7 +587,7 @@ impl RouteStep {
 }
 
 /// Directed relationship between two index records.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct IndexEdge {
     /// Source index id.
     pub from: String,

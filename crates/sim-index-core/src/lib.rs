@@ -31,6 +31,7 @@ mod check_error;
 pub mod draft;
 pub mod key;
 pub mod model;
+pub mod rows;
 pub mod shape;
 mod source_check;
 
@@ -45,6 +46,7 @@ pub use model::{
     SourceUnit, SpecimenId, SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason,
     Visibility,
 };
+pub use rows::{IndexMetadataRef, IndexRow, IndexRowFamily, IndexRowRef};
 
 #[cfg(test)]
 mod tests;

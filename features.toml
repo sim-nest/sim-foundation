@@ -147,7 +147,7 @@ title = "Index graph core"
 summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."
 owner = "crate/sim-index-core"
 audiences = ["code"]
-guidance = "Use this row when a caller needs to build, validate, or project the SIM Index graph."
+guidance = "Use this row when a caller needs to build, validate, or project the SIM Index graph. Projection authors must traverse IndexDoc::inventory() instead of directly enumerating top-level fields; use normalized_inventory() only when structural identity order, rather than source order, is required."
 claims_anchors = [
   "anchor/crate/sim-index-core",
 ]

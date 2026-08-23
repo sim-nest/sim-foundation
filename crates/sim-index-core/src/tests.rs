@@ -11,6 +11,88 @@ use crate::{
 };
 
 #[test]
+fn inventory_is_exhaustive_ordered_and_borrowed() {
+    let mut doc = valid_doc();
+    doc.source_units
+        .push(source_unit(SourceCompleteness::Complete));
+    doc.declarations.push(declaration("inventory"));
+    doc.protocol_relations
+        .push(protocol(ProtocolResolution::Resolved {
+            protocol: "sim_index_core::Inventory".to_owned(),
+        }));
+    doc.drafts.push(FeatureDraft {
+        id: FeatureId::new("feature/sim-run/inventory-draft"),
+        subject: SubjectId::new("crate/sim-run"),
+        title: "Inventory draft".to_owned(),
+        summary: "Exercises the authored row family.".to_owned(),
+        claims_anchors: Vec::new(),
+        claims_surfaces: Vec::new(),
+        claims_specimens: Vec::new(),
+        literal_anchors: Vec::new(),
+        literal_surfaces: Vec::new(),
+        literal_specimens: Vec::new(),
+        grammar_contracts: Vec::new(),
+        doc_anchor: None,
+    });
+
+    let (metadata, rows) = doc.inventory();
+    assert_eq!(metadata.schema, doc.schema);
+    assert_eq!(metadata.generated_by, doc.generated_by);
+    assert_eq!(metadata.visibility, doc.visibility);
+    assert_eq!(rows.len(), 14);
+    assert_eq!(
+        rows.iter().map(|row| row.family()).collect::<Vec<_>>(),
+        [
+            crate::IndexRowFamily::Subject,
+            crate::IndexRowFamily::Subject,
+            crate::IndexRowFamily::Anchor,
+            crate::IndexRowFamily::Anchor,
+            crate::IndexRowFamily::SourceUnit,
+            crate::IndexRowFamily::Declaration,
+            crate::IndexRowFamily::ProtocolRelation,
+            crate::IndexRowFamily::Surface,
+            crate::IndexRowFamily::Specimen,
+            crate::IndexRowFamily::Draft,
+            crate::IndexRowFamily::Feature,
+            crate::IndexRowFamily::Route,
+            crate::IndexRowFamily::Edge,
+            crate::IndexRowFamily::Edge,
+        ]
+    );
+    assert!(
+        matches!(rows[0], crate::IndexRowRef::Subject(row) if std::ptr::eq(row, &doc.subjects[0]))
+    );
+    assert!(
+        matches!(rows[5], crate::IndexRowRef::Declaration(row) if std::ptr::eq(row, &doc.declarations[0]))
+    );
+    let owned: Vec<_> = rows.into_iter().map(crate::IndexRowRef::to_owned).collect();
+    let mut normalized = owned.clone();
+    normalized.sort();
+    assert_eq!(doc.normalized_inventory(), normalized);
+    assert_eq!(owned[5].diagnostic_key(), &owned[5]);
+}
+
+#[test]
+fn inventory_has_one_top_level_ownership_destructure() {
+    let source = include_str!("rows.rs");
+    assert_eq!(source.matches("let Self {").count(), 1);
+    assert!(!source.contains("let Self { .."));
+}
+
+#[test]
+fn exact_non_id_duplicates_are_distinct_from_duplicate_ids() {
+    let mut doc = valid_doc();
+    doc.edges.push(doc.edges[0].clone());
+    assert!(matches!(
+        check_index_doc(&doc),
+        Err(IndexError::DuplicateExactRow {
+            family: crate::IndexRowFamily::Edge,
+            ..
+        })
+    ));
+}
+
+#[test]
 fn host_source_roles_are_permanent_and_closed() {
     assert_eq!(
         [

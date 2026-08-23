@@ -53,6 +53,13 @@ pub enum IndexError {
         /// Duplicate id text.
         id: String,
     },
+    /// The same exact non-id row appears twice in one collection.
+    DuplicateExactRow {
+        /// Canonical row family containing the duplicate.
+        family: crate::IndexRowFamily,
+        /// Complete canonical row, retained as the stable diagnostic key.
+        row: Box<crate::IndexRow>,
+    },
     /// A feature or route points at a missing discovered fact.
     UnresolvedClaim {
         /// Feature, edge, or discovered row that made the claim.
@@ -175,6 +182,9 @@ impl fmt::Display for IndexError {
             }
             Self::InvalidId { kind, id } => write!(f, "invalid {kind} id: {id}"),
             Self::DuplicateId { kind, id } => write!(f, "duplicate {kind} id: {id}"),
+            Self::DuplicateExactRow { family, row } => {
+                write!(f, "duplicate exact {family:?} row: {row:?}")
+            }
             Self::UnresolvedClaim { owner, kind, id } => {
                 write!(f, "{owner} claims missing {kind}: {id}")
             }

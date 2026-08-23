@@ -27,6 +27,7 @@ fn check_index(doc: &IndexDoc, allow_deferred_targets: bool) -> Result<IndexRepo
     reject_duplicate_ids(doc)?;
     crate::source_check::reject_invalid_source_facts(doc, allow_deferred_targets)?;
     crate::source_check::reject_unstable_source_fact_order(doc)?;
+    reject_duplicate_exact_rows(doc)?;
     reject_authored_literals(doc)?;
     reject_unresolved_claims(doc, allow_deferred_targets)?;
     reject_duplicate_claims(doc)?;
@@ -233,6 +234,29 @@ fn duplicates<'a>(
                 kind,
                 id: id.to_owned(),
             });
+        }
+    }
+    Ok(())
+}
+
+fn reject_duplicate_exact_rows(doc: &IndexDoc) -> Result<(), IndexError> {
+    let mut seen = BTreeSet::new();
+    for row in doc.inventory().1 {
+        if matches!(
+            row,
+            crate::IndexRowRef::SourceUnit(_)
+                | crate::IndexRowRef::Declaration(_)
+                | crate::IndexRowRef::ProtocolRelation(_)
+                | crate::IndexRowRef::Edge(_)
+        ) {
+            let family = row.family();
+            let row = row.to_owned();
+            if !seen.insert(row.clone()) {
+                return Err(IndexError::DuplicateExactRow {
+                    family,
+                    row: Box::new(row),
+                });
+            }
         }
     }
     Ok(())
