@@ -21,6 +21,7 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 | `feature/sim-foundation/exact-code-unit-text` | `crate/sim-text` | 1 | Preserve UTF-16 code units through runtime values, tagged expressions, read construction, Shape matching, and browse without conflating them with scalar Unicode text. |
 | `feature/sim-foundation/table-dir-core` | `crate/sim-table-core` | 1 | Define shared table and directory contracts used by storage, index, and host-facing libraries. |
 | `feature/sim-foundation/table-path-references` | `crate/sim-table-core` | 1 | Parse, normalize, resolve, and format bounded absolute and relative Table/Dir path references. |
+| `feature/sim-foundation/relation-core` | `crate/sim-relation-core` | 1 | Define provider-neutral logical domains, typed cells and rows, exact storage representations, and canonical Datum-backed relational identity. |
 | `feature/sim-foundation/index-graph-core` | `crate/sim-index-core` | 0 | Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs. |
 | `feature/sim-foundation/host-primitives` | `crate/sim-host-core` | 1 | Define neutral host-port cards, open identities, mechanical refusals and budgets, and lexical object binding separately from concrete host realization. |
 | `feature/sim-foundation/cookbook` | `crate/sim-cookbook` | 1 | Describe reusable recipe metadata and generated cookbook records consumed by public docs and tooling. |
@@ -1040,6 +1041,11 @@ fn all_ops() -> Vec<TableOp> {
     vec![
         TableOp::Get(key()),
         TableOp::Set(key(), Expr::String("v".to_owned())),
+        TableOp::CompareExchange(
+            key(),
+            crate::CompareExpected::Absent,
+            crate::CompareReplacement::Value(Expr::Nil),
+        ),
         TableOp::Has(key()),
         TableOp::Delete(key()),
         TableOp::Keys,
@@ -1051,6 +1057,23 @@ fn all_ops() -> Vec<TableOp> {
         TableOp::Rmdir(key()),
         TableOp::IsDir(key()),
     ]
+}
+
+#[test]
+fn cas_wire_distinguishes_absent_nil_delete_and_value() {
+    use crate::{CompareExpected as E, CompareReplacement as R};
+    let cases = [
+        TableOp::CompareExchange(key(), E::Absent, R::Value(Expr::Nil)),
+        TableOp::CompareExchange(key(), E::Value(Expr::Nil), R::Delete),
+        TableOp::CompareExchange(
+            key(),
+            E::Value(Expr::String("old".into())),
+            R::Value(Expr::String("new".into())),
+        ),
+    ];
+    for case in cases {
+        assert_eq!(decode_table_op(&encode_table_op(&case)).unwrap(), case);
+    }
 }
 
 #[test]
@@ -1182,6 +1205,148 @@ fn backend_manifest_is_empty_host_registered_abi_0_1() {
     assert!(manifest.requires.is_empty());
     assert!(manifest.capabilities.is_empty());
     assert!(manifest.exports.is_empty());
+}
+```
+
+### `feature/sim-foundation/relation-core`
+
+Specimen `spec-test/sim-foundation/crates/sim-relation-core/tests/domain_and_rows` is checked by `cargo test`.
+
+Source `crates/sim-relation-core/tests/domain_and_rows.rs`:
+
+```rust
+use sim_kernel::{Datum, Ref, Symbol};
+use sim_relation_core::*;
+
+// conformance: open relational domains, rows, canonical identity, and storage edges.
+
+fn domain(name: &str) -> DomainId {
+    DomainId::new(Symbol::qualified("test", name)).unwrap()
+}
+
+#[test]
+fn names_are_sql_dialect_neutral_but_structurally_valid() {
+    assert!(TableName::new(Symbol::new("select / odd-name \"quoted\"")).is_ok());
+    assert_eq!(TableName::new(Symbol::new("")), Err(NameError::Empty));
+    assert_eq!(
+        TableName::new(Symbol::new("bad\nname")),
+        Err(NameError::Control)
+    );
+}
+
+#[test]
+fn catalogs_reject_duplicates_bad_refs_and_incoherent_traits() {
+    let id = domain("uuid");
+    let spec = DomainSpec::new(
+        id.clone(),
+        StorageRepr::Text,
+        Ref::Symbol(Symbol::new("uuid-shape")),
+        [DomainTrait::Equatable],
+    )
+    .unwrap();
+    assert!(matches!(
+        DomainCatalog::new([spec.clone(), spec]),
+        Err(DomainError::DuplicateId(_))
+    ));
+    assert_eq!(
+        DomainSpec::new(
+            id.clone(),
+            StorageRepr::Text,
+            Ref::Handle(sim_kernel::HandleId(1)),
+            []
+        ),
+        Err(DomainError::InvalidShapeRef)
+    );
+    assert_eq!(
+        DomainSpec::new(
+            id,
+            StorageRepr::Text,
+            Ref::Symbol(Symbol::new("shape")),
+            [DomainTrait::Ordered]
+        ),
+        Err(DomainError::IncoherentTraits)
+    );
+}
+
+#[test]
+fn typed_null_is_absence_and_rows_enforce_types() {
+    let id = domain("text");
+    let ty = RowType::new([FieldType {
+        name: FieldName::new(Symbol::new("nickname")).unwrap(),
+        domain: id.clone(),
+        nullable: true,
+    }])
+    .unwrap();
+    let row = Row::new(ty, [Cell::null(id)]).unwrap();
+    assert_eq!(row.cells()[0].value(), None);
+    assert!(matches!(row.to_datum(), Datum::Node { .. }));
+}
+
+#[test]
+fn base_storage_conversions_are_exact_and_float_edges_are_closed() {
+    let builtins = DomainCatalog::new([
+        BaseDomain::Bool.spec(),
+        BaseDomain::I64.spec(),
+        BaseDomain::F64.spec(),
+        BaseDomain::Text.spec(),
+        BaseDomain::Bytes.spec(),
+    ])
+    .unwrap();
+    assert_eq!(builtins.iter().count(), 5);
+    for (base, value) in [
+        (BaseDomain::Bool, StorageValue::Bool(true)),
+        (BaseDomain::I64, StorageValue::I64(i64::MIN)),
+        (BaseDomain::F64, StorageValue::F64(-0.0)),
+        (BaseDomain::Text, StorageValue::Text("hello".into())),
+        (BaseDomain::Bytes, StorageValue::Bytes(vec![0, 255])),
+    ] {
+        let datum = base.to_datum(value.clone()).unwrap();
+        assert_eq!(
+            base.from_datum(&datum).unwrap(),
+            value_with_canonical_zero(value)
+        );
+    }
+    assert_eq!(
+        BaseDomain::F64.to_datum(StorageValue::F64(f64::NAN)),
+        Err(DomainError::NonFiniteFloat)
+    );
+    assert_eq!(
+        BaseDomain::F64.to_datum(StorageValue::F64(f64::INFINITY)),
+        Err(DomainError::NonFiniteFloat)
+    );
+    assert_eq!(
+        BaseDomain::F64.to_datum(StorageValue::F64(-0.0)).unwrap(),
+        BaseDomain::F64.to_datum(StorageValue::F64(0.0)).unwrap()
+    );
+}
+
+fn value_with_canonical_zero(value: StorageValue) -> StorageValue {
+    match value {
+        StorageValue::F64(v) => StorageValue::F64(v + 0.0),
+        other => other,
+    }
+}
+
+#[test]
+fn custom_domains_need_no_provider_change_and_identity_is_kernel_identity() {
+    let uuid = DomainSpec::new(
+        domain("uuid"),
+        StorageRepr::Text,
+        Ref::Symbol(Symbol::new("uuid-shape")),
+        [DomainTrait::Equatable],
+    )
+    .unwrap();
+    let catalog = DomainCatalog::new([uuid.clone()]).unwrap();
+    assert_eq!(catalog.get(uuid.id()), Some(&uuid));
+    assert_eq!(uuid.card_datum(), uuid.lisp_datum());
+    assert_eq!(
+        RelationId::of(&uuid).unwrap().content_id(),
+        &uuid.to_datum().content_id().unwrap()
+    );
+    assert_eq!(
+        RelationId::of(&uuid).unwrap(),
+        RelationId::of(&uuid.clone()).unwrap()
+    );
 }
 ```
 

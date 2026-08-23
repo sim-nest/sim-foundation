@@ -58,6 +58,13 @@
       "summary": "Proc-macro surface for authored SIM libraries."
     },
     {
+      "crate_name": "sim_relation_core",
+      "group": "workspace",
+      "manifest": "crates/sim-relation-core/Cargo.toml",
+      "package": "sim-relation-core",
+      "summary": "Open relational records built directly on the kernel data substrate."
+    },
+    {
       "crate_name": "sim_table_core",
       "group": "workspace",
       "manifest": "crates/sim-table-core/Cargo.toml",

@@ -1,6 +1,8 @@
 use sim_kernel::{Datum, Ref, Symbol};
 use sim_relation_core::*;
 
+// conformance: open relational domains, rows, canonical identity, and storage edges.
+
 fn domain(name: &str) -> DomainId {
     DomainId::new(Symbol::qualified("test", name)).unwrap()
 }
