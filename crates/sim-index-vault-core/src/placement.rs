@@ -1,12 +1,20 @@
-use crate::{ClaimSite, DerivedClaim, Relation, VaultNoteId, VaultNoteKind};
+use crate::{ClaimSite, DerivedClaim, Relation, VaultGranularity, VaultNoteId, VaultNoteKind};
 use sim_index_core::{IndexRow, IndexRowRef, RouteStep};
 
-pub(crate) fn primary_site(row: IndexRowRef<'_>) -> (VaultNoteId, VaultNoteKind, &'static str) {
+pub(crate) fn primary_site(
+    row: IndexRowRef<'_>,
+    granularity: VaultGranularity,
+) -> (VaultNoteId, VaultNoteKind, &'static str) {
     match row {
         IndexRowRef::Subject(r) => (
             VaultNoteId::new(r.id.to_string()),
             VaultNoteKind::Subject,
             "subject",
+        ),
+        IndexRowRef::Anchor(r) if granularity == VaultGranularity::Full => (
+            VaultNoteId::new(r.id.to_string()),
+            VaultNoteKind::Anchor,
+            "anchor",
         ),
         IndexRowRef::Anchor(r) => (
             VaultNoteId::new(r.subject.to_string()),
@@ -29,18 +37,18 @@ pub(crate) fn primary_site(row: IndexRowRef<'_>) -> (VaultNoteId, VaultNoteKind,
             "protocols",
         ),
         IndexRowRef::Surface(r) => (
-            VaultNoteId::new(r.subject.to_string()),
-            VaultNoteKind::Subject,
-            "surfaces",
+            VaultNoteId::new(r.id.to_string()),
+            VaultNoteKind::Surface,
+            "surface",
         ),
         IndexRowRef::Specimen(r) => (
-            VaultNoteId::new(r.subject.to_string()),
-            VaultNoteKind::Subject,
-            "specimens",
+            VaultNoteId::new(r.id.to_string()),
+            VaultNoteKind::Specimen,
+            "specimen",
         ),
         IndexRowRef::Draft(r) => (
             VaultNoteId::new(r.id.to_string()),
-            VaultNoteKind::Feature,
+            VaultNoteKind::Draft,
             "draft",
         ),
         IndexRowRef::Feature(r) => (
@@ -110,11 +118,7 @@ pub(crate) fn derive(
                 add(target, "routes", "route-step");
             }
         }
-        IndexRowRef::Edge(r) => relations.push(Relation {
-            from: r.from.clone(),
-            rel: r.rel.clone(),
-            to: r.to.clone(),
-        }),
+        IndexRowRef::Edge(r) => relations.push(Relation::canonical(&r.from, &r.rel, &r.to)),
         _ => {}
     }
 }

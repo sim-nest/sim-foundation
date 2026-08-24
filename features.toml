@@ -50,10 +50,10 @@ claims_specimens = [
 [[feature]]
 id = "feature/sim-foundation/index-vault-projection"
 title = "Exact Index vault projection"
-summary = "Project every canonical Index row into a deterministic syntax-free note plan and prove exact primary and derived claim coverage."
+summary = "Project complete or repository-local Index inventories into deterministic compact/full note plans with exact local claims, derived navigation, and visible fragment boundaries."
 owner = "crate/sim-index-vault-core"
 audiences = ["code", "framework"]
-guidance = "Reuse this projection before rendering any complete public SIM Index as a vault. Keep canonical records as IndexRow values, add derived navigation only with an explicit origin, and require the exact claim certificate to close."
+guidance = "Reuse this projection before rendering a public SIM Index as a vault or checking a repository fragment. Keep canonical records as IndexRow values, derive incoming navigation only from forward facts, require complete certificates to close, and retain external fragment endpoints as typed boundary witnesses rather than claiming whole-graph completeness."
 claims_anchors = [
   "anchor/crate/sim-index-vault-core",
 ]

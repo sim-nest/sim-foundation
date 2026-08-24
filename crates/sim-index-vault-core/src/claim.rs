@@ -77,6 +77,10 @@ impl ClaimCertificate {
     pub fn primary(&self) -> &BTreeMap<IndexRow, ClaimSite> {
         &self.primary
     }
+    /// Exact canonical primary row set, independent of placement density.
+    pub fn primary_rows(&self) -> &BTreeSet<IndexRow> {
+        &self.canonical
+    }
     /// Explicit derived claims.
     pub fn derived(&self) -> &[DerivedClaim] {
         &self.derived

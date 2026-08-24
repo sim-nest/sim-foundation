@@ -3,11 +3,11 @@ use sim_index_core::{
     DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
     IndexEdge, IndexRow, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
     SourceCompleteness, SourceLocation, SourceReachability, SourceUnit, SpecimenId, SubjectId,
-    SubjectRecord, SurfaceId, SyntaxBound, Visibility, canonical_feature_key,
+    SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason, Visibility, canonical_feature_key,
 };
 use sim_index_vault_core::{
-    ClaimCertificate, ClaimSite, DerivedClaim, ProjectionError, VaultGranularity, VaultNoteId,
-    VaultProjection,
+    ClaimCertificate, ClaimSite, DerivedClaim, ProjectionError, Relation, RelationOrigin,
+    VaultGranularity, VaultNoteId, VaultNoteKind, VaultProjection, validate_incoming_relations,
 };
 
 fn fixture() -> IndexDoc {
@@ -223,5 +223,168 @@ fn private_documents_are_rejected_before_planning() {
     assert_eq!(
         VaultProjection::from_complete(&doc, VaultGranularity::Full),
         Err(ProjectionError::NonPublicDocument)
+    );
+}
+
+#[test]
+fn compact_and_full_have_identical_rows_and_only_anchor_placement_differs() {
+    let doc = fixture();
+    let compact = VaultProjection::from_complete(&doc, VaultGranularity::Compact).unwrap();
+    let full = VaultProjection::from_complete(&doc, VaultGranularity::Full).unwrap();
+    assert_eq!(
+        compact.certificate().primary_rows(),
+        full.certificate().primary_rows()
+    );
+    for row in compact.certificate().primary_rows() {
+        let compact_site = &compact.certificate().primary()[row];
+        let full_site = &full.certificate().primary()[row];
+        match row {
+            IndexRow::Anchor(_) | IndexRow::Declaration(_) | IndexRow::ProtocolRelation(_) => {
+                assert_ne!(compact_site.note, full_site.note)
+            }
+            _ => assert_eq!(compact_site, full_site),
+        }
+    }
+    assert!(
+        !compact
+            .notes()
+            .iter()
+            .any(|note| note.kind == VaultNoteKind::Anchor)
+    );
+    assert!(
+        full.notes()
+            .iter()
+            .any(|note| note.kind == VaultNoteKind::Anchor)
+    );
+}
+
+#[test]
+fn route_order_and_exact_source_and_grammar_fields_survive_normalization() {
+    let doc = fixture();
+    let projection = VaultProjection::from_complete(&doc, VaultGranularity::Full).unwrap();
+    let route = projection
+        .certificate()
+        .primary_rows()
+        .iter()
+        .find_map(|row| match row {
+            IndexRow::Route(route) => Some(route),
+            _ => None,
+        })
+        .unwrap();
+    assert!(matches!(
+        (&route.steps[0], &route.steps[1]),
+        (RouteStep::Feature { .. }, RouteStep::Specimen { .. })
+    ));
+    let source = projection
+        .certificate()
+        .primary_rows()
+        .iter()
+        .find_map(|row| match row {
+            IndexRow::SourceUnit(unit) => Some(unit),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(source.retained_bound, doc.source_units[0].retained_bound);
+    let feature = projection
+        .certificate()
+        .primary_rows()
+        .iter()
+        .find_map(|row| match row {
+            IndexRow::Feature(feature) => Some(feature),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(feature.grammar_contracts, doc.features[0].grammar_contracts);
+}
+
+#[test]
+fn incoming_relations_are_derived_and_cannot_be_forged_or_omitted() {
+    let projection = VaultProjection::from_complete(&fixture(), VaultGranularity::Full).unwrap();
+    assert!(
+        projection
+            .reverse_relations()
+            .iter()
+            .all(|relation| relation.origin == RelationOrigin::Derived)
+    );
+    validate_incoming_relations(projection.relations(), projection.reverse_relations()).unwrap();
+    let forged = Relation {
+        from: "feature/other".into(),
+        rel: "supports".into(),
+        to: "feature/missing".into(),
+        origin: RelationOrigin::Derived,
+    };
+    assert!(matches!(
+        validate_incoming_relations(projection.relations(), &[forged]),
+        Err(ProjectionError::ReverseWithoutForward(_))
+    ));
+    assert!(matches!(
+        validate_incoming_relations(projection.relations(), &[]),
+        Err(ProjectionError::MissingDerivedRelation(_))
+    ));
+    let mut dangling = fixture();
+    dangling.edges[0].to = "feature/external".into();
+    assert!(matches!(
+        VaultProjection::from_complete(&dangling, VaultGranularity::Full),
+        Err(ProjectionError::IncompleteDocument(_))
+    ));
+}
+
+#[test]
+fn fragments_close_local_rows_and_expose_external_boundaries() {
+    let mut doc = fixture();
+    doc.edges[0].to = "feature/external/deep/case-sensitive".into();
+    let fragment = VaultProjection::project_fragment(&doc).unwrap();
+    assert!(fragment.certificate().local_claims().is_closed());
+    assert!(!fragment.certificate().is_whole_graph_complete());
+    assert_eq!(fragment.certificate().metadata().generated_by, "vault-test");
+    assert_eq!(
+        fragment.certificate().deferred_external_endpoints()[0].external_to,
+        "feature/external/deep/case-sensitive"
+    );
+    let mut missing_local = doc;
+    missing_local.edges[0].from = "feature/missing-local".into();
+    assert!(matches!(
+        VaultProjection::project_fragment(&missing_local),
+        Err(ProjectionError::InvalidFragment(_))
+    ));
+}
+
+#[test]
+fn unsafe_source_paths_are_rejected_before_placement() {
+    for path in [
+        "../secret",
+        "src\\lib.rs",
+        "C:/absolute.rs",
+        "/absolute.rs",
+        "src//lib.rs",
+        "src/./lib.rs",
+        "src/\u{7f}lib.rs",
+    ] {
+        let mut doc = fixture();
+        doc.source_units[0].path = path.into();
+        assert_eq!(
+            VaultProjection::from_complete(&doc, VaultGranularity::Full),
+            Err(ProjectionError::InvalidSourcePath(path.into()))
+        );
+    }
+}
+
+#[test]
+fn optional_and_protocol_and_truncation_states_remain_exact() {
+    let mut doc = fixture();
+    doc.specimens[0].language = None;
+    doc.specimens[0].checked_by = None;
+    doc.declarations[0].syntax_bound.truncated = true;
+    doc.declarations[0].syntax_bound.max_bytes = 8;
+    doc.declarations[0].generics.clear();
+    doc.declarations[0].members.clear();
+    doc.protocol_relations[0].resolution = ProtocolResolution::Unresolved {
+        candidates: vec![],
+        reason: UnresolvedReason::ExternalMetadataAbsent,
+    };
+    let projection = VaultProjection::from_complete(&doc, VaultGranularity::Full).unwrap();
+    assert_eq!(
+        projection.certificate().primary_rows(),
+        &doc.normalized_inventory().into_iter().collect()
     );
 }
