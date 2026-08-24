@@ -21,7 +21,7 @@ owner = "crate/sim-lib-web-core"
 audiences = ["code", "framework"]
 guidance = "Reuse these records for provider-independent web evidence. Keep sockets, HTML parsing, provider payloads, ranking, and office evidence outside foundation; a citation must retain an exact selector over an immutable representation."
 claims_anchors = ["anchor/crate/sim-lib-web-core"]
-claims_specimens = ["recipe/sim-foundation/crates/sim-lib-web-core/01-basics/exact-selector", "spec-test/sim-foundation/crates/sim-lib-web-core/src/tests"]
+claims_specimens = ["recipe/sim-foundation/crates/sim-lib-web-core/01-basics/exact-selector"]
 
 [[feature]]
 id = "feature/sim-foundation/search-evidence-core"
@@ -31,7 +31,7 @@ owner = "crate/sim-lib-search-core"
 audiences = ["code", "framework"]
 guidance = "Compose this vocabulary with web-evidence-core and installed general-purpose codecs. Provider snippets remain ProviderClaim values and cannot construct citations; provider I/O and rank algorithms belong downstream."
 claims_anchors = ["anchor/crate/sim-lib-search-core"]
-claims_specimens = ["recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation", "spec-test/sim-foundation/crates/sim-lib-search-core/src/tests"]
+claims_specimens = ["recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation"]
 
 [[feature]]
 id = "feature/sim-foundation/study-core"
@@ -43,9 +43,6 @@ guidance = "Reuse these opaque subject revisions and canonical records whenever 
 claims_anchors = [
   "anchor/crate/sim-study-core",
 ]
-claims_specimens = [
-  "spec-test/sim-foundation/crates/sim-study-core/tests/study_contract",
-]
 
 [[feature]]
 id = "feature/sim-foundation/index-vault-projection"
@@ -53,7 +50,7 @@ title = "Exact Index vault projection"
 summary = "Project complete or repository-local Index inventories into deterministic compact/full note plans with exact local claims, derived navigation, and visible fragment boundaries."
 owner = "crate/sim-index-vault-core"
 audiences = ["code", "framework"]
-guidance = "Reuse this projection before rendering a public SIM Index as a vault or checking a repository fragment. Keep canonical records as IndexRow values, derive incoming navigation only from forward facts, require complete certificates to close, and retain external fragment endpoints as typed boundary witnesses rather than claiming whole-graph completeness."
+guidance = "Reuse IndexDoc::inventory and this pure projection before rendering any public SIM Index view or checking a repository fragment. Future projections must consume IndexRowRef rather than enumerate IndexDoc fields; future note targets must be admitted by the exact ClaimCertificate. Derive incoming navigation only from forward facts, require complete certificates to close, and retain external fragment endpoints as typed boundary witnesses rather than claiming whole-graph completeness."
 claims_anchors = [
   "anchor/crate/sim-index-vault-core",
 ]

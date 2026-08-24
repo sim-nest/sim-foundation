@@ -44,6 +44,13 @@
       "summary": "Shared records and checks for the SIM Index."
     },
     {
+      "crate_name": "sim_index_vault_core",
+      "group": "workspace",
+      "manifest": "crates/sim-index-vault-core/Cargo.toml",
+      "package": "sim-index-vault-core",
+      "summary": "Pure, complete vault projection for the canonical SIM Index inventory."
+    },
+    {
       "crate_name": "sim_lib_net_core",
       "group": "workspace",
       "manifest": "crates/sim-lib-net-core/Cargo.toml",
@@ -65,11 +72,25 @@
       "summary": "Binding-authenticated, bounded opaque state envelopes for continuation protocols."
     },
     {
+      "crate_name": "sim_lib_search_core",
+      "group": "workspace",
+      "manifest": "crates/sim-lib-search-core/Cargo.toml",
+      "package": "sim-lib-search-core",
+      "summary": "Provider-neutral, effect-free search and research records."
+    },
+    {
       "crate_name": "sim_lib_surface_card",
       "group": "workspace",
       "manifest": "crates/sim-lib-surface-card/Cargo.toml",
       "package": "sim-lib-surface-card",
       "summary": "Shared, plain-data surface-card spine."
+    },
+    {
+      "crate_name": "sim_lib_web_core",
+      "group": "workspace",
+      "manifest": "crates/sim-lib-web-core/Cargo.toml",
+      "package": "sim-lib-web-core",
+      "summary": "Pure, effect-free web evidence records."
     },
     {
       "crate_name": "sim_macros",
@@ -86,11 +107,32 @@
       "summary": "Open relational records built directly on the kernel data substrate."
     },
     {
+      "crate_name": "sim_relation_migrate",
+      "group": "workspace",
+      "manifest": "crates/sim-relation-migrate/Cargo.toml",
+      "package": "sim-relation-migrate",
+      "summary": "Checked relational schema evolution."
+    },
+    {
+      "crate_name": "sim_relation_plan",
+      "group": "workspace",
+      "manifest": "crates/sim-relation-plan/Cargo.toml",
+      "package": "sim-relation-plan",
+      "summary": "Complete provider-neutral relational plans with a sealed admission boundary."
+    },
+    {
       "crate_name": "sim_relation_schema",
       "group": "workspace",
       "manifest": "crates/sim-relation-schema/Cargo.toml",
       "package": "sim-relation-schema",
       "summary": "Validated logical schema intent and normalized physical catalog evidence."
+    },
+    {
+      "crate_name": "sim_study_core",
+      "group": "workspace",
+      "manifest": "crates/sim-study-core/Cargo.toml",
+      "package": "sim-study-core",
+      "summary": "Pure, domain-neutral records for repeatable studies."
     },
     {
       "crate_name": "sim_table_core",

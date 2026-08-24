@@ -1,3 +1,5 @@
+// conformance: relation migration plans preserve exact schema identities and policy.
+
 use sim_kernel::Symbol;
 use sim_relation_core::*;
 use sim_relation_migrate::*;

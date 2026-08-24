@@ -10,6 +10,26 @@ The crate performs no parsing, rendering, filesystem access, process work,
 environment inspection, clock access, or application-profile selection. Its
 only dependency is `sim-index-core`.
 
-The crate uses the `rustdoc` recipe-policy exception: rustdoc and the
-property-oriented fixture tests teach its pure data law, so it ships no recipe
-directory.
+## Compose a projection
+
+`IndexDoc::inventory()` is the canonical row inventory. A future projection
+must route every `IndexRowRef` through that inventory rather than repeat the
+eleven `IndexDoc` collections:
+
+```rust
+let (_metadata, rows) = index.inventory();
+for row in rows {
+    let owned = row.to_owned();
+    // Choose a note and make exactly one primary claim for `owned`.
+}
+```
+
+`VaultProjection::from_complete` performs that composition and closes its
+`ClaimCertificate`. A note target is valid only when the certificate contains
+the exact canonical row; derived backlinks cannot substitute for a primary
+claim. The `projection` conformance specimen includes a deliberately missing
+claim and proves closure fails.
+
+The crate uses the `rustdoc` recipe-policy exception: rustdoc and the checked
+`tests/projection.rs` teaching specimen cover exact substitution failure and
+the pure data law, so it ships no recipe directory or duplicate package.

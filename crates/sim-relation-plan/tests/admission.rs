@@ -1,3 +1,5 @@
+// conformance: relation plans admit checked schemas and reject invalid operations.
+
 use sim_kernel::{Datum, Symbol};
 use sim_relation_core::*;
 use sim_relation_plan::*;

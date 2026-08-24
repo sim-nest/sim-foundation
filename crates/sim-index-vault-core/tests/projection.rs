@@ -1,3 +1,5 @@
+// conformance: canonical inventory projection closes exact claims and rejects substitution.
+
 use sim_index_core::{
     AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
     DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,

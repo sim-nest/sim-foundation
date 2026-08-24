@@ -1,5 +1,5 @@
 {
-  "card_count": 7,
+  "card_count": 9,
   "cards": [
     {
       "id": "browse/catalog",
@@ -32,10 +32,22 @@
       "summary": "Opaque state protection with explicit capabilities and optional single-use claims."
     },
     {
+      "id": "cookbook/search-core",
+      "kind": "cookbook-recipe",
+      "owner": "sim-lib-search-core",
+      "summary": "Network-free provider claims, observations, and checked citations."
+    },
+    {
       "id": "cookbook/surface/card",
       "kind": "cookbook-recipe",
       "owner": "sim-lib-surface-card",
       "summary": "Codec-neutral surface descriptors and external naming policy."
+    },
+    {
+      "id": "cookbook/web-core",
+      "kind": "cookbook-recipe",
+      "owner": "sim-lib-web-core",
+      "summary": "Network-free immutable representation and selector descriptors."
     },
     {
       "id": "registry/catalog",
