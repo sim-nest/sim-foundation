@@ -14,6 +14,20 @@ major_entrypoints = "advisory"
 frameworks = "advisory"
 
 [[feature]]
+id = "feature/sim-foundation/study-core"
+title = "Domain-neutral study records"
+summary = "Define canonical subject, coordinate, attempt, outcome, estimate, decision, selection, evidence, and privacy records without storage, arithmetic, runtime, or AI behavior."
+owner = "crate/sim-study-core"
+audiences = ["code", "framework"]
+guidance = "Reuse these opaque subject revisions and canonical records whenever a domain needs study identity or evidence exchange. Keep operational paths, clocks, retry policy, placement, secrets, storage, arithmetic, and domain-specific verdict policy outside this crate."
+claims_anchors = [
+  "anchor/crate/sim-study-core",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-study-core/tests/study_contract",
+]
+
+[[feature]]
 id = "feature/sim-foundation/index-vault-projection"
 title = "Exact Index vault projection"
 summary = "Project every canonical Index row into a deterministic syntax-free note plan and prove exact primary and derived claim coverage."

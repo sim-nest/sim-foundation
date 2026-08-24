@@ -6,6 +6,7 @@ members = [
   "crates/sim-cookbook",
   "crates/sim-cookbook-build",
   "crates/sim-index-core",
+  "crates/sim-study-core",
   "crates/sim-index-vault-core",
   "crates/sim-host-core",
   "crates/sim-cancel",
