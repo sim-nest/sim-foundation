@@ -1,0 +1,5 @@
+book = "web-core"
+title = "Web Evidence Core"
+summary = "Network-free immutable representation and selector descriptors."
+order = 345
+chapters = ["01-basics"]

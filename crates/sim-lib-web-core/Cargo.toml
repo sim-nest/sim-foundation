@@ -1,0 +1,25 @@
+[package]
+name = "sim-lib-web-core"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Pure web capture, representation, selector, policy, and receipt records for SIM."
+readme = "README.md"
+publish = true
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[package.metadata.sim-recipes]
+policy = "descriptor"
+reason = "The network-free selector specimen is a sandbox descriptor backed by conformance tests."
+
+[dependencies]
+sim-kernel = { version = "0.2.1" }
+sim-lib-net-core = { version = "0.2.1", path = "../sim-lib-net-core" }
+sim-cookbook = { version = "0.2.1", path = "../sim-cookbook" }
+
+[build-dependencies]
+sim-cookbook-build = { version = "0.1.0", path = "../sim-cookbook-build" }
+
+[lints]
+workspace = true

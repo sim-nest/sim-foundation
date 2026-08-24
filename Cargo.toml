@@ -11,6 +11,8 @@ members = [
   "crates/sim-host-core",
   "crates/sim-cancel",
   "crates/sim-lib-net-core",
+  "crates/sim-lib-web-core",
+  "crates/sim-lib-search-core",
   "crates/sim-lib-net-http",
   "crates/sim-lib-protected-state",
   "crates/sim-lib-surface-card",

@@ -14,6 +14,26 @@ major_entrypoints = "advisory"
 frameworks = "advisory"
 
 [[feature]]
+id = "feature/sim-foundation/web-evidence-core"
+title = "Immutable web capture and evidence records"
+summary = "Separate raw capture and normalized representation identities, exact Unicode-scalar selectors, and complete fail-closed web policy receipts."
+owner = "crate/sim-lib-web-core"
+audiences = ["code", "framework"]
+guidance = "Reuse these records for provider-independent web evidence. Keep sockets, HTML parsing, provider payloads, ranking, and office evidence outside foundation; a citation must retain an exact selector over an immutable representation."
+claims_anchors = ["anchor/crate/sim-lib-web-core"]
+claims_specimens = ["recipe/sim-foundation/crates/sim-lib-web-core/01-basics/exact-selector", "spec-test/sim-foundation/crates/sim-lib-web-core/src/tests"]
+
+[[feature]]
+id = "feature/sim-foundation/search-evidence-core"
+title = "Open search and research records"
+summary = "Define queries, sites, provider claims, observations, pages, notices, alias evidence, rank contributions, runs, checked citations, bundles, and a pure wire-codec boundary."
+owner = "crate/sim-lib-search-core"
+audiences = ["code", "framework"]
+guidance = "Compose this vocabulary with web-evidence-core and installed general-purpose codecs. Provider snippets remain ProviderClaim values and cannot construct citations; provider I/O and rank algorithms belong downstream."
+claims_anchors = ["anchor/crate/sim-lib-search-core"]
+claims_specimens = ["recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation", "spec-test/sim-foundation/crates/sim-lib-search-core/src/tests"]
+
+[[feature]]
 id = "feature/sim-foundation/study-core"
 title = "Domain-neutral study records"
 summary = "Define canonical subject, coordinate, attempt, outcome, estimate, decision, selection, evidence, and privacy records without storage, arithmetic, runtime, or AI behavior."
@@ -317,6 +337,16 @@ task = "Preserve, inspect, encode, or round-trip exact UTF-16 code units"
 audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/exact-code-unit-text", why = "The neutral sim-text owner preserves paired and lone surrogate code units without depending on a guest-language string or pattern type." },
+]
+
+[[route]]
+id = "route/build-evidence-bearing-web-search"
+task = "Build provider-neutral web search with exact citation evidence"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/web-evidence-core", why = "The web row owns raw and normalized identities, exact selectors, and complete typed policy receipts." },
+  { feature = "feature/sim-foundation/search-evidence-core", why = "The search row keeps provider claims distinct from observations and checked citations while exposing a pure wire boundary." },
+  { specimen = "recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation", why = "The network-free checked specimen terminates at a provider claim beside an exact representation-bound citation." },
 ]
 
 [[route]]

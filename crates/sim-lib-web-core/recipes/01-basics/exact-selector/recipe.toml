@@ -1,0 +1,8 @@
+id = "exact-selector"
+title = "Exact normalized-text selector"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["web", "evidence", "selector", "sandbox-descriptor"]
+requires = ["web-core", "codec/lisp"]

@@ -1,9 +1,28 @@
 use crate::{
     CapOutcome, DEFAULT_MAX_LINE_BYTES, HeadOutcome, HttpBodyMode, LineDecoder, NdjsonDecoder,
-    NetError, SseDecoder, body_mode, build_http_request_head, decode_chunked, parse_http_head,
-    parse_url, parse_url_for_scheme, parse_url_for_scheme_preserving_path, read_capped_line,
-    read_head_until_double_crlf,
+    NetError, SseDecoder, body_mode, build_http_request_head, decode_chunked,
+    normalize_retrieval_uri, parse_http_head, parse_url, parse_url_for_scheme,
+    parse_url_for_scheme_preserving_path, read_capped_line, read_head_until_double_crlf,
 };
+
+#[test]
+fn retrieval_uri_normalization_preserves_semantic_distinctions() {
+    assert_eq!(
+        normalize_retrieval_uri("HTTPS://Example.COM:443/a/./b/../c?q=1&p=2#x")
+            .unwrap()
+            .as_str(),
+        "https://example.com/a/c?q=1&p=2"
+    );
+    assert_ne!(
+        normalize_retrieval_uri("https://example.com/?a=1&b=2").unwrap(),
+        normalize_retrieval_uri("https://example.com/?b=2&a=1").unwrap()
+    );
+    assert_ne!(
+        normalize_retrieval_uri("https://example.com/A%2fb").unwrap(),
+        normalize_retrieval_uri("https://example.com/a%2Fb").unwrap()
+    );
+    assert!(normalize_retrieval_uri("https://exämple.com/").is_err());
+}
 
 #[test]
 fn parses_url_with_explicit_port() {

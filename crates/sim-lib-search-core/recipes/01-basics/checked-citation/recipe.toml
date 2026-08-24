@@ -1,0 +1,8 @@
+id = "checked-citation"
+title = "Claim versus checked citation"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["search", "claim", "citation", "sandbox-descriptor"]
+requires = ["search-core", "web-core", "codec/lisp"]
