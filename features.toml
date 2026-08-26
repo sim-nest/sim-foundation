@@ -43,6 +43,9 @@ guidance = "Reuse these opaque subject revisions and canonical records whenever 
 claims_anchors = [
   "anchor/crate/sim-study-core",
 ]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-study-core/tests/study_contract",
+]
 
 [[feature]]
 id = "feature/sim-foundation/index-vault-projection"
@@ -290,6 +293,9 @@ audiences = ["code", "framework"]
 guidance = "Use sim-cookbook-build only from build scripts. Product code consumes supplied embedded bytes through sim-cookbook; it must not depend on this filesystem-and-environment host tool. The foundation xtask is likewise a repository host tool, not a product dependency."
 claims_anchors = [
   "anchor/crate/sim-cookbook-build",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-cookbook-build/src/lib",
 ]
 supports = [
   "feature/sim-foundation/cookbook",

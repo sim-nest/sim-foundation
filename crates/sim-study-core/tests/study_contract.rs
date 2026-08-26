@@ -1,3 +1,5 @@
+// conformance: canonical study records preserve identity and reject unsafe operational paths.
+
 use sim_kernel::{ContentId, Datum, NumberLiteral, Symbol};
 use sim_study_core::*;
 use std::collections::BTreeSet;

@@ -3,6 +3,8 @@
 //! Product crates use this library only from `build.rs`. Runtime cookbook
 //! behavior remains in `sim-cookbook`, over already-supplied embedded bytes.
 
+// conformance: cookbook generation validates packages and emits deterministic source.
+
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
