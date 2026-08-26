@@ -11,7 +11,6 @@
 
 use std::{fmt, sync::Arc};
 
-use rand_core::{CryptoRng, Rng};
 use sim_host_core::WallClock;
 use zeroize::{Zeroize, Zeroizing};
 
@@ -74,6 +73,16 @@ pub trait NonceSource: Send + Sync {
     fn fill_nonce(&self, nonce: &mut [u8; NONCE_BYTES]) -> Result<(), ProtectError>;
 }
 
+/// Reviewed cryptographic random-byte source used by [`CryptoNonceSource`].
+///
+/// Implementations must produce cryptographically secure, unpredictable bytes.
+/// Keeping this capability local avoids coupling the protected-state contract to
+/// one external RNG trait version.
+pub trait CryptoRng: Send {
+    /// Fills `bytes` with cryptographically secure random data.
+    fn fill_bytes(&mut self, bytes: &mut [u8]) -> Result<(), ProtectError>;
+}
+
 /// Mutex-serialized adapter for a reviewed `CryptoRng` implementation.
 pub struct CryptoNonceSource<R>(std::sync::Mutex<R>);
 
@@ -85,13 +94,12 @@ impl<R> CryptoNonceSource<R> {
     }
 }
 
-impl<R: Rng + CryptoRng + Send> NonceSource for CryptoNonceSource<R> {
+impl<R: CryptoRng> NonceSource for CryptoNonceSource<R> {
     fn fill_nonce(&self, nonce: &mut [u8; NONCE_BYTES]) -> Result<(), ProtectError> {
         self.0
             .lock()
             .map_err(|_| ProtectError::Dependency)?
-            .fill_bytes(nonce);
-        Ok(())
+            .fill_bytes(nonce)
     }
 }
 

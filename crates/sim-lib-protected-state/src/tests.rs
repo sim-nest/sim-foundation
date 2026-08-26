@@ -1,6 +1,5 @@
 use std::{collections::BTreeMap, sync::Arc, thread};
 
-use rand_core::{Infallible, TryCryptoRng, TryRng};
 use sim_host_core::{WallClock, WallTimestamp};
 use sim_kernel::{AssocTable, Cx, DefaultFactory, HandleSeed, NoopEvalPolicy, Symbol};
 
@@ -192,18 +191,8 @@ impl CounterCryptoRng {
     }
 }
 
-impl TryRng for CounterCryptoRng {
-    type Error = Infallible;
-
-    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
-        Ok(self.next_word() as u32)
-    }
-
-    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
-        Ok(self.next_word())
-    }
-
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
+impl CryptoRng for CounterCryptoRng {
+    fn fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), ProtectError> {
         for chunk in dst.chunks_mut(8) {
             let bytes = self.next_word().to_le_bytes();
             chunk.copy_from_slice(&bytes[..chunk.len()]);
@@ -211,8 +200,6 @@ impl TryRng for CounterCryptoRng {
         Ok(())
     }
 }
-
-impl TryCryptoRng for CounterCryptoRng {}
 
 impl CounterCryptoRng {
     fn next_word(&mut self) -> u64 {
