@@ -27,6 +27,7 @@
 
 pub mod card;
 pub mod check;
+mod check_doc;
 mod check_error;
 pub mod draft;
 pub mod key;
@@ -48,5 +49,7 @@ pub use model::{
 };
 pub use rows::{IndexMetadataRef, IndexRow, IndexRowFamily, IndexRowRef};
 
+#[cfg(test)]
+mod test_support;
 #[cfg(test)]
 mod tests;

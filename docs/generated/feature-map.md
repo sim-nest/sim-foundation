@@ -4,14 +4,25 @@
 
 | Package | Group | Features | Workspace feature edges |
 | --- | --- | ---: | ---: |
+| `sim-cancel` | `workspace` | 0 | 0 |
 | `sim-config` | `workspace` | 0 | 0 |
 | `sim-cookbook` | `workspace` | 0 | 0 |
 | `sim-cookbook-build` | `workspace` | 0 | 0 |
 | `sim-host-core` | `workspace` | 0 | 0 |
 | `sim-index-core` | `workspace` | 0 | 0 |
+| `sim-index-vault-core` | `workspace` | 0 | 0 |
 | `sim-lib-net-core` | `workspace` | 0 | 0 |
+| `sim-lib-net-http` | `workspace` | 2 | 0 |
+| `sim-lib-protected-state` | `workspace` | 0 | 0 |
+| `sim-lib-search-core` | `workspace` | 0 | 0 |
 | `sim-lib-surface-card` | `workspace` | 0 | 0 |
+| `sim-lib-web-core` | `workspace` | 0 | 0 |
 | `sim-macros` | `workspace` | 0 | 0 |
+| `sim-relation-core` | `workspace` | 0 | 0 |
+| `sim-relation-migrate` | `workspace` | 0 | 0 |
+| `sim-relation-plan` | `workspace` | 0 | 0 |
+| `sim-relation-schema` | `workspace` | 0 | 0 |
+| `sim-study-core` | `workspace` | 0 | 0 |
 | `sim-table-core` | `workspace` | 0 | 0 |
 | `sim-text` | `workspace` | 0 | 0 |
 | `sim-value` | `workspace` | 0 | 0 |

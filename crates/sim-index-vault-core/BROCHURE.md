@@ -1,10 +1,17 @@
-# Exact Index vault projection
+# sim-index-vault-core
 
-Project every canonical SIM Index fact into a deterministic note plan without
-copying its schema. Exact claim certificates distinguish missing, duplicate,
-unknown, and derived-only claims, including future row families exposed by the
-canonical inventory.
+In one line: Pure, complete vault projection and exact claim certificates for the SIM Index.
 
-Build future projections from `IndexDoc::inventory()` and `IndexRowRef`; admit
-future note targets only through the closed claim certificate. Syntax, profile
-selection, decoding, and filesystem writes remain separate owner layers.
+## What it gives you
+
+Project every canonical SIM Index fact into a deterministic note plan without copying its schema. Exact claim certificates distinguish missing, duplicate, unknown, and derived-only claims, including later row families exposed by the canonical inventory. Build later projections from `IndexDoc::inventory()` and `IndexRowRef`; admit later note targets only through the closed claim certificate. Syntax, profile selection, decoding, and filesystem writes remain separate owner layers. The contract keeps inputs, outputs, limits, and refusal cases explicit, so callers can compose the capability without acquiring unrelated host, transport, or product authority. Stable records make the result suitable for tests, inspection, and deterministic integration.
+
+## Why you will be glad
+
+- The public contract makes supported behavior, limits, and typed failures visible before integration.
+- One owning crate prevents neighboring libraries from growing competing copies of the same policy.
+- Deterministic records and checked tests keep adapters reviewable when implementations evolve.
+
+## Where it fits
+
+Within SIM, sim-index-vault-core owns only the focused contract described above. Adjacent runtime libraries, platform adapters, codecs, and user surfaces can build around it while retaining their own policy. That boundary keeps the kernel small, avoids competing implementations, and lets this capability evolve without forcing unrelated components to change.

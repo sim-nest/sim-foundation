@@ -1,5 +1,6 @@
-use sim_kernel::{Value, card::Card, testing::bare_cx};
+use sim_kernel::{Value, testing::bare_cx};
 
+use crate::test_support::{assert_card_entry, card};
 use crate::{
     AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
     DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, HostSourceRole,
@@ -681,10 +682,6 @@ fn feature_specimen_and_route_cards_publish_open_entries() {
         .expect("card projects to expr");
 }
 
-fn card(value: &Value) -> &Card {
-    value.object().downcast_ref::<Card>().expect("index card")
-}
-
 fn assert_entry_name(value: &Value, name: &str) {
     assert!(
         card(value)
@@ -693,13 +690,4 @@ fn assert_entry_name(value: &Value, name: &str) {
             .any(|(symbol, _)| symbol.as_qualified_str() == name),
         "missing card entry {name}"
     );
-}
-
-fn assert_card_entry(value: &Value, name: &str, expected: &str, cx: &mut sim_kernel::Cx) {
-    let (_, value) = card(value)
-        .entries()
-        .iter()
-        .find(|(symbol, _)| symbol.as_qualified_str() == name)
-        .unwrap_or_else(|| panic!("missing card entry {name}"));
-    assert_eq!(value.object().display(cx).expect("entry display"), expected);
 }

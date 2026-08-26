@@ -155,6 +155,46 @@ pub struct UrlParts {
     pub path: String,
 }
 
+fn parse_authority(
+    authority: &str,
+    url: &str,
+    default_port: impl FnOnce() -> Result<u16, NetError>,
+) -> Result<(String, u16), NetError> {
+    if let Some(bracketed) = authority.strip_prefix('[') {
+        let end = bracketed
+            .find(']')
+            .ok_or_else(|| NetError::MalformedUrl(url.to_owned()))?;
+        let host = &bracketed[..end];
+        host.parse::<std::net::Ipv6Addr>()
+            .map_err(|_| NetError::MalformedUrl(url.to_owned()))?;
+        let suffix = &bracketed[end + 1..];
+        let port = if suffix.is_empty() {
+            default_port()?
+        } else {
+            suffix
+                .strip_prefix(':')
+                .filter(|value| !value.is_empty())
+                .ok_or_else(|| NetError::MalformedUrl(url.to_owned()))?
+                .parse::<u16>()
+                .map_err(|_| NetError::InvalidPort(url.to_owned()))?
+        };
+        return Ok((host.to_owned(), port));
+    }
+    if authority.contains(['[', ']']) {
+        return Err(NetError::MalformedUrl(url.to_owned()));
+    }
+    match authority.rsplit_once(':') {
+        Some((host, port)) if !host.contains(':') && !host.is_empty() => Ok((
+            host.to_owned(),
+            port.parse::<u16>()
+                .map_err(|_| NetError::InvalidPort(url.to_owned()))?,
+        )),
+        Some(_) => Err(NetError::MalformedUrl(url.to_owned())),
+        None if authority.is_empty() => Err(NetError::MalformedUrl(url.to_owned())),
+        None => Ok((authority.to_owned(), default_port()?)),
+    }
+}
+
 /// Parse a `scheme://host[:port][/path]` URL.
 ///
 /// Extracted from `sim-lib-agent-runner-http`'s `parse_url`. Differences from
@@ -178,18 +218,7 @@ pub fn parse_url(url: &str) -> Result<UrlParts, NetError> {
         None => (rest, "/".to_owned()),
     };
 
-    let (host, port) = match host_port.rsplit_once(':') {
-        Some((host, port)) => (
-            host.to_owned(),
-            port.parse::<u16>()
-                .map_err(|_| NetError::InvalidPort(url.to_owned()))?,
-        ),
-        None => (host_port.to_owned(), default_port_for_scheme(scheme, url)?),
-    };
-
-    if host.is_empty() {
-        return Err(NetError::MalformedUrl(url.to_owned()));
-    }
+    let (host, port) = parse_authority(host_port, url, || default_port_for_scheme(scheme, url))?;
 
     Ok(UrlParts {
         scheme: scheme.to_owned(),
@@ -272,22 +301,10 @@ pub fn parse_url_for_scheme_preserving_path(
         None => (rest, default_path.to_owned()),
     };
 
-    let (host, port) = match host_port.rsplit_once(':') {
-        Some((host, port)) => (
-            host.to_owned(),
-            port.parse::<u16>()
-                .map_err(|_| NetError::InvalidPort(url.to_owned()))?,
-        ),
-        None => (
-            host_port.to_owned(),
-            web_default_port_for_scheme(url_scheme)
-                .ok_or_else(|| NetError::UnsupportedScheme(format!("{scheme} in {url}")))?,
-        ),
-    };
-
-    if host.is_empty() {
-        return Err(NetError::MalformedUrl(url.to_owned()));
-    }
+    let (host, port) = parse_authority(host_port, url, || {
+        web_default_port_for_scheme(url_scheme)
+            .ok_or_else(|| NetError::UnsupportedScheme(format!("{scheme} in {url}")))
+    })?;
 
     Ok(UrlParts {
         scheme: url_scheme.to_owned(),

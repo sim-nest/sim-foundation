@@ -6,7 +6,7 @@
 
 #![forbid(unsafe_code)]
 
-use sim_kernel::{ContentId, Datum, NumberLiteral, Symbol};
+use sim_kernel::{ContentId, Datum, NumberLiteral};
 use sim_lib_net_core::normalize_retrieval_uri;
 use sim_lib_web_core::{DecodeLimits, EvidenceSelector, WebRecordError, WebRepresentation};
 use std::{error::Error, fmt};
@@ -225,145 +225,10 @@ pub trait SearchWireCodec {
     ) -> Result<SearchPage, SearchError>;
 }
 
-/// Stable Shape/Citizen descriptor inventory for general-purpose codecs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct RecordDescriptor {
-    pub symbol: &'static str,
-    pub version: u32,
-}
-pub const RECORD_DESCRIPTORS: &[RecordDescriptor] = &[
-    RecordDescriptor {
-        symbol: "search/Query",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/Site",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/ProviderClaim",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/Observation",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/Page",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/Notice",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/AliasEvidence",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/RankContribution",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/Run",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/ResearchBundle",
-        version: 1,
-    },
-    RecordDescriptor {
-        symbol: "search/Citation",
-        version: 1,
-    },
-];
+mod wire;
 
-fn sym(s: &str) -> Symbol {
-    Symbol::qualified("search", s)
-}
-fn field(n: &str, v: Datum) -> (Symbol, Datum) {
-    (sym(n), v)
-}
-fn node(n: &str, f: Vec<(Symbol, Datum)>) -> Datum {
-    Datum::Node {
-        tag: sym(n),
-        fields: f,
-    }
-}
-fn u32d(v: u32) -> Datum {
-    Datum::Number(NumberLiteral {
-        domain: Symbol::qualified("numbers", "u32"),
-        canonical: v.to_string(),
-    })
-}
+pub use wire::{RECORD_DESCRIPTORS, RecordDescriptor};
+use wire::{field, node, sym, u32d};
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    fn raw(b: &[u8]) -> ContentId {
-        Datum::Bytes(b.to_vec()).content_id().unwrap()
-    }
-    #[test]
-    fn query_order_remains_distinct_observations() {
-        let a = SearchObservation::checked("https://EXAMPLE.com/?a=1&b=2", None, None).unwrap();
-        let b = SearchObservation::checked("https://example.com/?b=2&a=1", None, None).unwrap();
-        assert_ne!(a, b)
-    }
-    #[test]
-    fn citation_round_trip_requires_exact_quote() {
-        let rep = WebRepresentation::checked(
-            raw(b"raw"),
-            "alpha beta".into(),
-            sim_lib_web_core::RepresentationMetadata {
-                codec: "text".into(),
-                codec_version: "1".into(),
-                media_type: "text/plain".into(),
-                charset: None,
-                language: None,
-                fidelity_warnings: vec![],
-            },
-            DecodeLimits::default(),
-        )
-        .unwrap();
-        let citation = Citation::checked(&rep, rep.select(6, 10).unwrap()).unwrap();
-        assert_eq!(
-            Citation::from_datum(&citation.to_datum(), &rep, DecodeLimits::default()).unwrap(),
-            citation
-        );
-        let other = WebRepresentation::checked(
-            raw(b"other"),
-            "alpha zeta".into(),
-            sim_lib_web_core::RepresentationMetadata {
-                codec: "text".into(),
-                codec_version: "1".into(),
-                media_type: "text/plain".into(),
-                charset: None,
-                language: None,
-                fidelity_warnings: vec![],
-            },
-            DecodeLimits::default(),
-        )
-        .unwrap();
-        assert!(
-            Citation::from_datum(&citation.to_datum(), &other, DecodeLimits::default()).is_err()
-        )
-    }
-    #[test]
-    fn provider_claim_is_not_a_citation() {
-        let claim = ProviderClaim {
-            provider: "p".into(),
-            uri: "https://example.com".into(),
-            title: None,
-            snippet: Some("beta".into()),
-            position: Some(1),
-        };
-        assert_eq!(claim.snippet.as_deref(), Some("beta"));
-        assert_eq!(
-            RECORD_DESCRIPTORS
-                .iter()
-                .filter(|d| d.symbol.ends_with("Citation"))
-                .count(),
-            1
-        )
-    }
-}
+mod tests;

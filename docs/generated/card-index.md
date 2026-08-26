@@ -5,6 +5,11 @@
 | Card | Kind | Owner | Summary |
 | --- | --- | --- | --- |
 | `browse/catalog` | `browse-root` | `workspace` | root browse catalog |
+| `cookbook/cancel` | `cookbook-recipe` | `sim-cancel` | Executor-neutral request lifetime composition. |
 | `cookbook/net-core` | `cookbook-recipe` | `sim-lib-net-core` | Side-effect-free HTTP and stream parsing descriptors. |
+| `cookbook/net-http` | `cookbook-recipe` | `sim-lib-net-http` | Bounded requests over injected capsule connectors. |
+| `cookbook/protected-state` | `cookbook-recipe` | `sim-lib-protected-state` | Opaque state protection with explicit capabilities and optional single-use claims. |
+| `cookbook/search-core` | `cookbook-recipe` | `sim-lib-search-core` | Network-free provider claims, observations, and checked citations. |
 | `cookbook/surface/card` | `cookbook-recipe` | `sim-lib-surface-card` | Codec-neutral surface descriptors and external naming policy. |
+| `cookbook/web-core` | `cookbook-recipe` | `sim-lib-web-core` | Network-free immutable representation and selector descriptors. |
 | `registry/catalog` | `browse-registry` | `workspace` | registry catalog browse card |

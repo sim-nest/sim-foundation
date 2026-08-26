@@ -343,6 +343,21 @@ fn parse_url_for_scheme_requires_the_scheme() {
 }
 
 #[test]
+fn parse_url_accepts_bracketed_ipv6_authorities() {
+    let default_port = parse_url("https://[::1]/status").unwrap();
+    assert_eq!(default_port.host, "::1");
+    assert_eq!(default_port.port, 443);
+    assert_eq!(default_port.path, "/status");
+
+    let explicit_port = parse_url("http://[2001:db8::1]:8080/").unwrap();
+    assert_eq!(explicit_port.host, "2001:db8::1");
+    assert_eq!(explicit_port.port, 8080);
+
+    assert!(parse_url("http://[::1/").is_err());
+    assert!(parse_url("http://::1/").is_err());
+}
+
+#[test]
 fn parse_url_for_scheme_applies_default_path_when_absent() {
     // No path -> the caller's default is substituted.
     let parts = parse_url_for_scheme("http://host:9000", "http", "/v1/models").unwrap();
