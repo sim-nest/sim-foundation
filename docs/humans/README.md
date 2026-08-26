@@ -19,7 +19,7 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 | --- | --- | ---: | --- |
 | `feature/sim-foundation/web-evidence-core` | `crate/sim-lib-web-core` | 1 | Separate raw capture and normalized representation identities, exact Unicode-scalar selectors, and complete fail-closed web policy receipts. |
 | `feature/sim-foundation/search-evidence-core` | `crate/sim-lib-search-core` | 1 | Define queries, sites, provider claims, observations, pages, notices, alias evidence, rank contributions, runs, checked citations, bundles, and a pure wire-codec boundary. |
-| `feature/sim-foundation/study-core` | `crate/sim-study-core` | 0 | Define canonical subject, coordinate, attempt, outcome, estimate, decision, selection, evidence, and privacy records without storage, arithmetic, runtime, or AI behavior. |
+| `feature/sim-foundation/study-core` | `crate/sim-study-core` | 1 | Define canonical subject, coordinate, attempt, outcome, estimate, decision, selection, evidence, and privacy records without storage, arithmetic, runtime, or AI behavior. |
 | `feature/sim-foundation/index-vault-projection` | `crate/sim-index-vault-core` | 1 | Project complete or repository-local Index inventories into deterministic compact/full note plans with exact local claims, derived navigation, and visible fragment boundaries. |
 | `feature/sim-foundation/value-helpers` | `crate/sim-value` | 1 | Provide shared value conversion, expression builder, expression field reader, map field reader, and field access helpers for reusable runtime libraries. |
 | `feature/sim-foundation/exact-code-unit-text` | `crate/sim-text` | 1 | Preserve UTF-16 code units through runtime values, tagged expressions, read construction, Shape matching, and browse without conflating them with scalar Unicode text. |
@@ -35,7 +35,7 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 | `feature/sim-foundation/cancellation` | `crate/sim-cancel` | 1 | Bound request and provider lifetimes with one idempotent terminal transition, bounded reason, child propagation, and race-safe waiter removal. |
 | `feature/sim-foundation/protected-state` | `crate/sim-lib-protected-state` | 1 | Protect bounded opaque caller bytes under exact state bindings, injected retained keys, secure nonces, and platform time, with optional atomic single-use claims. |
 | `feature/sim-foundation/cookbook` | `crate/sim-cookbook` | 1 | Describe reusable recipe metadata and generated cookbook records consumed by public docs and tooling. |
-| `feature/sim-foundation/cookbook-build-tool` | `crate/sim-cookbook-build` | 0 | Validate recipe packages and deterministically emit include-bytes source during Rust builds. |
+| `feature/sim-foundation/cookbook-build-tool` | `crate/sim-cookbook-build` | 1 | Validate recipe packages and deterministically emit include-bytes source during Rust builds. |
 | `feature/sim-foundation/library-macros` | `crate/sim-macros` | 0 | Generate checked Rust declarations for authored SIM libraries and codec markers. |
 | `feature/sim-foundation/contract-emitter` | `crate/xtask` | 0 | Emit generated repository contract and index fragments for foundation crates. |
 
@@ -122,6 +122,551 @@ purpose = "purpose.md"
 order = 10
 tags = ["search", "claim", "citation", "sandbox-descriptor"]
 requires = ["search-core", "web-core", "codec/lisp"]
+```
+
+### `feature/sim-foundation/study-core`
+
+Specimen `spec-test/sim-foundation/crates/sim-study-core/tests/study_contract` is checked by `cargo test`.
+
+Source `crates/sim-study-core/tests/study_contract.rs`:
+
+```rust
+// conformance: canonical study records preserve identity and reject unsafe operational paths.
+
+use sim_kernel::{ContentId, Datum, NumberLiteral, Symbol};
+use sim_study_core::*;
+use std::collections::BTreeSet;
+
+fn id(byte: u8) -> ContentId {
+    ContentId::from_bytes(Symbol::qualified("core", "sha256-datum-v1"), [byte; 32])
+}
+fn coordinate() -> StudyCoordinate {
+    StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(3), id(4), id(5), 6)
+}
+fn number(domain: &str, value: &str) -> NumberLiteral {
+    NumberLiteral {
+        domain: Symbol::qualified("numbers", domain),
+        canonical: value.into(),
+    }
+}
+
+fn datum_id(value: Datum) -> ContentId {
+    value.content_id().unwrap()
+}
+
+#[test]
+fn coordinate_is_opaque_canonical_and_every_field_bears_identity() {
+    let base = coordinate();
+    let bytes = base.to_datum().canonical_bytes().unwrap();
+    let decoded = StudyCoordinate::from_datum(&base.to_datum()).unwrap();
+    assert_eq!(decoded, base);
+    assert_eq!(decoded.to_datum().canonical_bytes().unwrap(), bytes);
+    let variants = [
+        StudyCoordinate::new(SubjectRevision::new(id(9)), id(2), id(3), id(4), id(5), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(9), id(3), id(4), id(5), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(9), id(4), id(5), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(3), id(9), id(5), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(3), id(4), id(9), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(3), id(4), id(5), 9),
+    ];
+    for changed in variants {
+        assert_ne!(changed.content_id().unwrap(), base.content_id().unwrap());
+    }
+}
+
+#[test]
+fn operational_fields_are_identity_neutral_and_unsafe_paths_refuse() {
+    let key = coordinate().content_id().unwrap();
+    for context in [
+        OperationalContext {
+            safe_path: Some("work/item".into()),
+            ..Default::default()
+        },
+        OperationalContext {
+            timestamp: Some("2030-01-01T00:00:00Z".into()),
+            ..Default::default()
+        },
+        OperationalContext {
+            retry_policy: Some("bounded-three".into()),
+            ..Default::default()
+        },
+        OperationalContext {
+            placement: Some("site-a".into()),
+            ..Default::default()
+        },
+    ] {
+        context.validate().unwrap();
+        assert_eq!(coordinate().content_id().unwrap(), key);
+    }
+    assert_eq!(
+        OperationalContext {
+            safe_path: Some("../secret".into()),
+            ..Default::default()
+        }
+        .validate(),
+        Err(StudyError::UnsafePath)
+    );
+}
+
+#[test]
+fn every_non_coordinate_record_field_bears_identity() {
+    fn distinct(base: Datum, variants: impl IntoIterator<Item = Datum>) {
+        let base = datum_id(base);
+        for variant in variants {
+            assert_ne!(datum_id(variant), base);
+        }
+    }
+
+    let attempt = Attempt::new(coordinate(), 1, EvidenceClass::Publishable);
+    let mut terminal_attempt = attempt.clone();
+    terminal_attempt
+        .transition(AttemptOutcome::Observed)
+        .unwrap();
+    distinct(
+        attempt.to_datum(),
+        [
+            Attempt::new(
+                StudyCoordinate::new(SubjectRevision::new(id(9)), id(2), id(3), id(4), id(5), 6),
+                1,
+                EvidenceClass::Publishable,
+            )
+            .to_datum(),
+            Attempt::new(coordinate(), 2, EvidenceClass::Publishable).to_datum(),
+            Attempt::new(coordinate(), 1, EvidenceClass::ReportOnly).to_datum(),
+            terminal_attempt.to_datum(),
+        ],
+    );
+
+    let facet = FacetObservation {
+        coordinate: id(1),
+        facet: Symbol::qualified("study", "answer"),
+        value: Datum::Bool(true),
+        evidence: EvidenceClass::Publishable,
+    };
+    distinct(
+        facet.to_datum(),
+        [
+            FacetObservation {
+                coordinate: id(2),
+                ..facet.clone()
+            }
+            .to_datum(),
+            FacetObservation {
+                facet: Symbol::qualified("study", "score"),
+                ..facet.clone()
+            }
+            .to_datum(),
+            FacetObservation {
+                value: Datum::Bool(false),
+                ..facet.clone()
+            }
+            .to_datum(),
+            FacetObservation {
+                evidence: EvidenceClass::ReportOnly,
+                ..facet
+            }
+            .to_datum(),
+        ],
+    );
+
+    let resource = ResourceEvent {
+        coordinate: id(1),
+        resource: Symbol::qualified("study", "energy"),
+        amount: number("decimal", "1"),
+        evidence: EvidenceClass::Publishable,
+    };
+    distinct(
+        resource.to_datum(),
+        [
+            ResourceEvent {
+                coordinate: id(2),
+                ..resource.clone()
+            }
+            .to_datum(),
+            ResourceEvent {
+                resource: Symbol::qualified("study", "time"),
+                ..resource.clone()
+            }
+            .to_datum(),
+            ResourceEvent {
+                amount: number("decimal", "2"),
+                ..resource.clone()
+            }
+            .to_datum(),
+            ResourceEvent {
+                evidence: EvidenceClass::ReportOnly,
+                ..resource
+            }
+            .to_datum(),
+        ],
+    );
+
+    let treatment = TreatmentRecord {
+        treatment: id(1),
+        contract: id(2),
+        evidence: EvidenceClass::Publishable,
+    };
+    distinct(
+        treatment.to_datum(),
+        [
+            TreatmentRecord {
+                treatment: id(3),
+                ..treatment.clone()
+            }
+            .to_datum(),
+            TreatmentRecord {
+                contract: id(3),
+                ..treatment.clone()
+            }
+            .to_datum(),
+            TreatmentRecord {
+                evidence: EvidenceClass::ReportOnly,
+                ..treatment
+            }
+            .to_datum(),
+        ],
+    );
+
+    let estimate = EstimateRecord::new(
+        number("decimal", "1"),
+        number("decimal", "0"),
+        number("decimal", "2"),
+        number("decimal", ".95"),
+        id(1),
+        EvidenceClass::Publishable,
+    )
+    .unwrap();
+    distinct(
+        estimate.to_datum(),
+        [
+            EstimateRecord::new(
+                number("decimal", "3"),
+                estimate.lower.clone(),
+                estimate.upper.clone(),
+                estimate.confidence.clone(),
+                estimate.inference.clone(),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                number("decimal", "-1"),
+                estimate.upper.clone(),
+                estimate.confidence.clone(),
+                estimate.inference.clone(),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                estimate.lower.clone(),
+                number("decimal", "4"),
+                estimate.confidence.clone(),
+                estimate.inference.clone(),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                estimate.lower.clone(),
+                estimate.upper.clone(),
+                number("decimal", ".99"),
+                estimate.inference.clone(),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                estimate.lower.clone(),
+                estimate.upper.clone(),
+                estimate.confidence.clone(),
+                id(2),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                estimate.lower.clone(),
+                estimate.upper.clone(),
+                estimate.confidence.clone(),
+                estimate.inference.clone(),
+                EvidenceClass::ReportOnly,
+            )
+            .unwrap()
+            .to_datum(),
+        ],
+    );
+
+    let closure = BTreeSet::from([id(1), id(2), id(3)]);
+    let decision = DecisionRecord::new(
+        id(1),
+        vec![id(2)],
+        vec![id(3)],
+        Symbol::qualified("study", "keep"),
+        vec![Symbol::qualified("study", "quality")],
+        Some(id(1)),
+        EvidenceClass::Publishable,
+        &closure,
+    )
+    .unwrap();
+    distinct(
+        decision.to_datum(),
+        [
+            DecisionRecord::new(
+                id(2),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                vec![id(3)],
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                vec![id(2)],
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                Symbol::qualified("study", "reject"),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                vec![Symbol::qualified("study", "cost")],
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                None,
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                EvidenceClass::ReportOnly,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+        ],
+    );
+
+    let selection = SelectionRecord {
+        decision: id(1),
+        subject: SubjectRevision::new(id(2)),
+        role: Symbol::qualified("study", "primary"),
+        evidence: EvidenceClass::Publishable,
+    };
+    distinct(
+        selection.to_datum(),
+        [
+            SelectionRecord {
+                decision: id(3),
+                ..selection.clone()
+            }
+            .to_datum(),
+            SelectionRecord {
+                subject: SubjectRevision::new(id(3)),
+                ..selection.clone()
+            }
+            .to_datum(),
+            SelectionRecord {
+                role: Symbol::qualified("study", "reference"),
+                ..selection.clone()
+            }
+            .to_datum(),
+            SelectionRecord {
+                evidence: EvidenceClass::ReportOnly,
+                ..selection
+            }
+            .to_datum(),
+        ],
+    );
+}
+
+#[test]
+fn terminal_transition_is_total_and_single_assignment() {
+    for outcome in [
+        AttemptOutcome::Observed,
+        AttemptOutcome::Unsupported,
+        AttemptOutcome::Unresolved,
+        AttemptOutcome::Quarantined,
+    ] {
+        let mut attempt = Attempt::new(coordinate(), 1, EvidenceClass::Publishable);
+        attempt.transition(outcome).unwrap();
+        assert_eq!(attempt.outcome(), Some(outcome));
+        assert_eq!(
+            attempt.transition(outcome),
+            Err(StudyError::AlreadyTerminal)
+        );
+        let other = if outcome == AttemptOutcome::Observed {
+            AttemptOutcome::Unsupported
+        } else {
+            AttemptOutcome::Observed
+        };
+        assert_eq!(
+            attempt.transition(other),
+            Err(StudyError::ConflictingTerminalOutcome)
+        );
+    }
+}
+
+#[test]
+fn estimate_domains_and_provenance_fail_closed() {
+    assert!(
+        EstimateRecord::new(
+            number("decimal", "1"),
+            number("decimal", "0"),
+            number("decimal", "2"),
+            number("decimal", ".95"),
+            id(7),
+            EvidenceClass::Publishable
+        )
+        .is_ok()
+    );
+    assert_eq!(
+        EstimateRecord::new(
+            number("decimal", "1"),
+            number("binary", "0"),
+            number("decimal", "2"),
+            number("decimal", ".95"),
+            id(7),
+            EvidenceClass::Publishable
+        ),
+        Err(StudyError::IncompatibleNumberDomain)
+    );
+    let closure = BTreeSet::from([id(1)]);
+    assert!(matches!(
+        DecisionRecord::new(
+            id(9),
+            vec![id(2)],
+            vec![],
+            Symbol::qualified("study", "keep"),
+            vec![],
+            None,
+            EvidenceClass::ReportOnly,
+            &closure
+        ),
+        Err(StudyError::MissingProvenance(_))
+    ));
+}
+
+#[test]
+fn evidence_only_weakens_and_exports_exclude_private_or_secret_values() {
+    assert_eq!(
+        EvidenceClass::derive([EvidenceClass::Publishable, EvidenceClass::PrivateLocal]),
+        EvidenceClass::PrivateLocal
+    );
+    assert_eq!(
+        EvidenceClass::PrivateLocal.permits_derivation(EvidenceClass::Publishable),
+        Err(StudyError::EvidenceStrengthened)
+    );
+    let private = FacetObservation {
+        coordinate: id(1),
+        facet: Symbol::qualified("study", "answer"),
+        value: Datum::Bool(true),
+        evidence: EvidenceClass::PrivateLocal,
+    };
+    assert_eq!(private.export_public(), Err(StudyError::PrivateExport));
+    let secret = FacetObservation {
+        coordinate: id(1),
+        facet: Symbol::qualified("study", "answer"),
+        value: Datum::Node {
+            tag: Symbol::qualified("study", "secret"),
+            fields: vec![],
+        },
+        evidence: EvidenceClass::Publishable,
+    };
+    assert_eq!(secret.export_public(), Err(StudyError::SecretForbidden));
+}
+
+#[test]
+fn shapes_reject_versions_duplicates_order_and_overflow() {
+    let mut datum = coordinate().to_datum();
+    COORDINATE_SHAPE.check(&datum).unwrap();
+    let Datum::Node { fields, .. } = &mut datum else {
+        unreachable!()
+    };
+    fields.swap(1, 2);
+    assert!(COORDINATE_SHAPE.check(&datum).is_err());
+    let mut wrong_version = coordinate().to_datum();
+    let Datum::Node { fields, .. } = &mut wrong_version else {
+        unreachable!()
+    };
+    fields[0].1 = Datum::Number(NumberLiteral {
+        domain: Symbol::qualified("numbers", "u32"),
+        canonical: "2".into(),
+    });
+    assert_eq!(
+        StudyCoordinate::from_datum(&wrong_version),
+        Err(StudyError::UnknownSchemaVersion(2))
+    );
+    let huge = "x".repeat(4097);
+    assert!(
+        EstimateRecord::new(
+            number("decimal", &huge),
+            number("decimal", "0"),
+            number("decimal", "2"),
+            number("decimal", ".95"),
+            id(7),
+            EvidenceClass::Publishable
+        )
+        .is_err()
+    );
+}
 ```
 
 ### `feature/sim-foundation/index-vault-projection`
@@ -3182,6 +3727,129 @@ mod tests {
         };
         assert!(run.ok);
         assert!(run.checks[0].pass);
+    }
+}
+```
+
+### `feature/sim-foundation/cookbook-build-tool`
+
+Specimen `spec-test/sim-foundation/crates/sim-cookbook-build/src/lib` is checked by `cargo test`.
+
+Source `crates/sim-cookbook-build/src/lib.rs`:
+
+```rust
+//! Portable host-side build support for cookbook recipe embedding.
+//!
+//! Product crates use this library only from `build.rs`. Runtime cookbook
+//! behavior remains in `sim-cookbook`, over already-supplied embedded bytes.
+
+// conformance: cookbook generation validates packages and emits deterministic source.
+
+#![forbid(unsafe_code)]
+#![deny(missing_docs)]
+
+use std::io;
+use std::path::{Path, PathBuf};
+
+/// Generate the embed slice and write it to `$OUT_DIR/cookbook_recipes.rs`.
+/// `recipes_subdir` is relative to `$CARGO_MANIFEST_DIR`.
+pub fn write_embed(recipes_subdir: &str) -> io::Result<()> {
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
+        .map_err(|_| io::Error::other("CARGO_MANIFEST_DIR not set (call from build.rs)"))?;
+    let out_dir = std::env::var("OUT_DIR")
+        .map_err(|_| io::Error::other("OUT_DIR not set (call from build.rs)"))?;
+    let root = Path::new(&manifest_dir).join(recipes_subdir);
+    println!("cargo:rerun-if-changed={}", root.display());
+    let code = generate_embed_code(&root)?;
+    std::fs::write(Path::new(&out_dir).join("cookbook_recipes.rs"), code)
+}
+
+/// Return the deterministic Rust source embedding all files below `recipes_root`.
+pub fn generate_embed_code(recipes_root: &Path) -> io::Result<String> {
+    let mut files: Vec<(String, PathBuf)> = Vec::new();
+    if recipes_root.is_dir() {
+        collect(recipes_root, recipes_root, &mut files)?;
+    }
+    files.sort();
+    validate_embedded_tree(recipes_root, &files)?;
+    let mut out = String::from("&[\n");
+    for (relative, absolute) in &files {
+        out.push_str(&format!(
+            "    ({:?}, include_bytes!({:?}) as &[u8]),\n",
+            relative,
+            absolute.to_string_lossy(),
+        ));
+    }
+    out.push_str("]\n");
+    Ok(out)
+}
+
+fn validate_embedded_tree(recipes_root: &Path, files: &[(String, PathBuf)]) -> io::Result<()> {
+    if files.is_empty() {
+        return Ok(());
+    }
+    let owned = files
+        .iter()
+        .map(|(relative, path)| std::fs::read(path).map(|bytes| (relative.as_str(), bytes)))
+        .collect::<io::Result<Vec<_>>>()?;
+    let embedded = owned
+        .iter()
+        .map(|(relative, bytes)| (*relative, bytes.as_slice()))
+        .collect::<Vec<_>>();
+    sim_cookbook::recipes_from_embedded(&embedded).map_err(|error| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!(
+                "invalid cookbook tree at {}: {error}",
+                recipes_root.display()
+            ),
+        )
+    })?;
+    Ok(())
+}
+
+fn collect(base: &Path, dir: &Path, out: &mut Vec<(String, PathBuf)>) -> io::Result<()> {
+    let mut entries = std::fs::read_dir(dir)?.collect::<io::Result<Vec<_>>>()?;
+    entries.sort_by_key(std::fs::DirEntry::file_name);
+    for entry in entries {
+        let path = entry.path();
+        if path.is_dir() {
+            collect(base, &path, out)?;
+        } else if path.is_file() {
+            let relative = path
+                .strip_prefix(base)
+                .map_err(io::Error::other)?
+                .components()
+                .map(|component| component.as_os_str().to_string_lossy())
+                .collect::<Vec<_>>()
+                .join("/");
+            out.push((relative, path));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generated_bytes_match_the_legacy_contract() {
+        let root = std::env::temp_dir().join(format!("sim-cookbook-build-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("01-basics/add")).unwrap();
+        std::fs::write(
+            root.join("book.toml"),
+            b"book = \"x\"\ntitle = \"X\"\nchapters = [\"01-basics\"]\n",
+        )
+        .unwrap();
+        std::fs::write(root.join("01-basics/add/recipe.toml"), b"id = \"a\"\ntitle = \"A\"\ncodec = \"lisp\"\nsetup = \"setup.siml\"\npurpose = \"purpose.md\"\n").unwrap();
+        std::fs::write(root.join("01-basics/add/setup.siml"), b"(+ 1 2)\n").unwrap();
+        std::fs::write(root.join("01-basics/add/purpose.md"), b"Add values.\n").unwrap();
+        let code = generate_embed_code(&root).unwrap();
+        assert!(code.starts_with("&[\n    (\"01-basics/add/purpose.md\", include_bytes!("));
+        assert!(code.ends_with(") as &[u8]),\n]\n"));
+        let _ = std::fs::remove_dir_all(root);
     }
 }
 ```
