@@ -14,7 +14,7 @@ policy = "rustdoc"
 reason = "This neutral contract crate is taught through rustdoc and unit tests; concrete host recipes belong to realizing domain libraries."
 
 [dependencies]
-sim-kernel = { version = "0.2.1" }
+sim-kernel = { version = "0.3.0" }
 
 [lints]
 workspace = true

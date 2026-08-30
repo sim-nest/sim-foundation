@@ -14,7 +14,7 @@ policy = "rustdoc"
 reason = "The custom-domain specimen is checked as a rustdoc example and unit test."
 
 [dependencies]
-sim-kernel = { version = "0.2.0" }
+sim-kernel = { version = "0.3.0" }
 
 [lints]
 workspace = true

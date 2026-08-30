@@ -14,7 +14,7 @@ policy = "descriptor"
 reason = "The recipe documents explicit host-to-request cancellation ownership without selecting an executor."
 
 [dependencies]
-sim-cookbook = { version = "0.2.1", path = "../sim-cookbook" }
+sim-cookbook = { version = "0.3.0", path = "../sim-cookbook" }
 
 [build-dependencies]
 sim-cookbook-build = { version = "0.1.0", path = "../sim-cookbook-build" }

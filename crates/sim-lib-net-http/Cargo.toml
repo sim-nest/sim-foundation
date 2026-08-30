@@ -16,8 +16,8 @@ reason = "The recipe documents capsule connector and policy assembly without ope
 [dependencies]
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"], optional = true }
 rustls-native-certs = { version = "0.8", optional = true }
-sim-lib-net-core = { version = "0.2.1", path = "../sim-lib-net-core" }
-sim-cookbook = { version = "0.2.1", path = "../sim-cookbook" }
+sim-lib-net-core = { version = "0.3.0", path = "../sim-lib-net-core" }
+sim-cookbook = { version = "0.3.0", path = "../sim-cookbook" }
 
 [build-dependencies]
 sim-cookbook-build = { version = "0.1.0", path = "../sim-cookbook-build" }

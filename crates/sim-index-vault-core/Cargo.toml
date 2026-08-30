@@ -14,7 +14,7 @@ policy = "rustdoc"
 reason = "The pure projection law is taught by rustdoc examples and property-oriented tests."
 
 [dependencies]
-sim-index-core = { version = "0.2.0", path = "../sim-index-core" }
+sim-index-core = { version = "0.3.0", path = "../sim-index-core" }
 
 [lints]
 workspace = true

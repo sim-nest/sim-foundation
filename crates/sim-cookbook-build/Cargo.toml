@@ -13,7 +13,7 @@ policy = "rustdoc"
 reason = "This host build-tool library is documented through rustdoc and has no recipe directory because it is not product runtime code."
 
 [dependencies]
-sim-cookbook = { version = "0.2.1", path = "../sim-cookbook" }
+sim-cookbook = { version = "0.3.0", path = "../sim-cookbook" }
 
 [lints]
 workspace = true
