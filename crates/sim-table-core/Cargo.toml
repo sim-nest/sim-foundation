@@ -1,6 +1,6 @@
 [package]
 name = "sim-table-core"
-version = "0.1.4"
+version = "0.2.0"
 edition = "2024"
 license = "MPL-2.0"
 description = "Shared table substrate: path references and the table operation protocol."
@@ -14,8 +14,8 @@ policy = "rustdoc"
 reason = "This table substrate is taught through rustdoc examples and unit tests; no recipe directory is shipped."
 
 [dependencies]
-sim-kernel = { version = "0.2.0" }
-sim-value = { version = "0.2.0", path = "../sim-value" }
+sim-kernel = { version = "0.3.0" }
+sim-value = { version = "0.3.0", path = "../sim-value" }
 
 [lints]
 workspace = true

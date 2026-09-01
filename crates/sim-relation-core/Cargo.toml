@@ -1,0 +1,20 @@
+[package]
+name = "sim-relation-core"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Open relational domain, row, and canonical identity records for SIM."
+readme = "README.md"
+publish = true
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+
+[package.metadata.sim-recipes]
+policy = "rustdoc"
+reason = "The custom-domain specimen is checked as a rustdoc example and unit test."
+
+[dependencies]
+sim-kernel = { version = "0.3.0" }
+
+[lints]
+workspace = true

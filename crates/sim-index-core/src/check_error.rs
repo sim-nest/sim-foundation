@@ -53,6 +53,13 @@ pub enum IndexError {
         /// Duplicate id text.
         id: String,
     },
+    /// The same exact non-id row appears twice in one collection.
+    DuplicateExactRow {
+        /// Canonical row family containing the duplicate.
+        family: crate::IndexRowFamily,
+        /// Complete canonical row, retained as the stable diagnostic key.
+        row: Box<crate::IndexRow>,
+    },
     /// A feature or route points at a missing discovered fact.
     UnresolvedClaim {
         /// Feature, edge, or discovered row that made the claim.
@@ -125,6 +132,22 @@ pub enum IndexError {
         /// Recorded byte bound.
         max_bytes: usize,
     },
+    /// A source-unit evidence row is internally inconsistent or duplicated.
+    InvalidSourceUnit {
+        /// Subject that owns the unit.
+        subject: String,
+        /// Repository-relative unit path.
+        path: String,
+    },
+    /// A reachable unit was not scanned completely for a strict graph.
+    IncompleteReachableSource {
+        /// Subject that owns the unit.
+        subject: String,
+        /// Repository-relative unit path.
+        path: String,
+        /// Stable incomplete state label.
+        state: &'static str,
+    },
     /// The same protocol relation occurs twice.
     DuplicateProtocolRelation {
         /// Owning anchor.
@@ -159,6 +182,9 @@ impl fmt::Display for IndexError {
             }
             Self::InvalidId { kind, id } => write!(f, "invalid {kind} id: {id}"),
             Self::DuplicateId { kind, id } => write!(f, "duplicate {kind} id: {id}"),
+            Self::DuplicateExactRow { family, row } => {
+                write!(f, "duplicate exact {family:?} row: {row:?}")
+            }
             Self::UnresolvedClaim { owner, kind, id } => {
                 write!(f, "{owner} claims missing {kind}: {id}")
             }
@@ -185,6 +211,14 @@ impl fmt::Display for IndexError {
             Self::InvalidSourceBound { anchor, max_bytes } => {
                 write!(f, "invalid source bound {max_bytes} at {anchor}")
             }
+            Self::InvalidSourceUnit { subject, path } => {
+                write!(f, "invalid source unit {path} for {subject}")
+            }
+            Self::IncompleteReachableSource {
+                subject,
+                path,
+                state,
+            } => write!(f, "reachable source unit {path} for {subject} is {state}"),
             Self::DuplicateProtocolRelation {
                 anchor,
                 implementor,

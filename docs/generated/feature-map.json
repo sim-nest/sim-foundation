@@ -4,6 +4,11 @@
     {
       "features": [],
       "group": "workspace",
+      "package": "sim-cancel"
+    },
+    {
+      "features": [],
+      "group": "workspace",
       "package": "sim-config"
     },
     {
@@ -14,12 +19,56 @@
     {
       "features": [],
       "group": "workspace",
+      "package": "sim-cookbook-build"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-host-core"
+    },
+    {
+      "features": [],
+      "group": "workspace",
       "package": "sim-index-core"
     },
     {
       "features": [],
       "group": "workspace",
+      "package": "sim-index-vault-core"
+    },
+    {
+      "features": [],
+      "group": "workspace",
       "package": "sim-lib-net-core"
+    },
+    {
+      "features": [
+        {
+          "edges": [],
+          "name": "default",
+          "workspace_edges": []
+        },
+        {
+          "edges": [
+            "dep:rustls",
+            "dep:rustls-native-certs"
+          ],
+          "name": "tls",
+          "workspace_edges": []
+        }
+      ],
+      "group": "workspace",
+      "package": "sim-lib-net-http"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-lib-protected-state"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-lib-search-core"
     },
     {
       "features": [],
@@ -29,7 +78,37 @@
     {
       "features": [],
       "group": "workspace",
+      "package": "sim-lib-web-core"
+    },
+    {
+      "features": [],
+      "group": "workspace",
       "package": "sim-macros"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-relation-core"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-relation-migrate"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-relation-plan"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-relation-schema"
+    },
+    {
+      "features": [],
+      "group": "workspace",
+      "package": "sim-study-core"
     },
     {
       "features": [],

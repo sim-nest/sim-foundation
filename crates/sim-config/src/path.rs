@@ -10,7 +10,7 @@ use crate::{ConfigError, ConfigResult};
 /// Central and working config roots.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ConfigRoots {
-    /// Central user config root, if one can be derived from the environment.
+    /// Explicit central user config root, when supplied by the host.
     pub home: Option<PathBuf>,
     /// Working config root.
     pub work: PathBuf,
@@ -20,16 +20,6 @@ impl ConfigRoots {
     /// Creates roots from explicit values without reading the filesystem.
     pub fn new(home: Option<PathBuf>, work: PathBuf) -> Self {
         Self { home, work }
-    }
-
-    /// Derives roots from process environment variables and a work root.
-    pub fn from_env(work_root: PathBuf) -> Self {
-        Self::from_env_values(
-            work_root,
-            std::env::var_os("SIM_CONFIG_HOME").map(PathBuf::from),
-            std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from),
-            std::env::var_os("HOME").map(PathBuf::from),
-        )
     }
 
     /// Derives roots from provided environment values.

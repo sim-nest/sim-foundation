@@ -80,8 +80,12 @@ below the kernel boundary.
   register as Card records that every surface projects.
 - `sim-index-core` -- the SIM Index graph model: subjects, anchors, surfaces,
   features, runnable specimens, grammar contracts, routes, canonical feature
-  keys, graph checks, and kernel Card projections. Depends only on
-  `sim-kernel`.
+  keys, graph checks, the canonical `IndexRowRef` inventory, and kernel Card
+  projections. New projections iterate `IndexDoc::inventory()` instead of
+  copying its fields. Depends only on `sim-kernel`.
+- `sim-index-vault-core` -- the syntax-free vault projection. It assigns each
+  canonical row one primary note claim and closes an exact `ClaimCertificate`;
+  renderers and filesystem exporters live downstream.
 - `sim-lib-net-core` -- reusable, side-effect-free HTTP/streaming parsing
   primitives: URL parsing, HTTP response-head parsing, body-mode classification,
   line framing, and SSE/NDJSON record decoders, with no socket/TLS I/O and no
@@ -90,6 +94,10 @@ below the kernel boundary.
   `external_name`/`ExternalNamePolicy` rules for projecting a kernel `Symbol`
   onto foreign tool surfaces (MCP, OpenAI, file system, human-facing text) and a
   plain-data `SurfaceDescriptor` over kernel types.
+- `sim-lib-protected-state` -- bounded, versioned XChaCha20-Poly1305 envelopes
+  for caller-serialized opaque state, with exact purpose/audience/subject/context/expiry
+  binding, injected retained keys, cryptographic nonces and wall time, and an optional
+  atomic single-use adapter over canonical Table compare-exchange.
 
 ## Boundary
 

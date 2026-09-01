@@ -4,6 +4,9 @@
 plain Rust records for subjects, anchors, surfaces, runnable specimens, features,
 routes, grammar contracts, canonical feature keys, and graph edges. Codecs and
 generators consume this crate instead of inventing a parallel index shape.
+Projection code traverses `IndexDoc::inventory()`, the exhaustive canonical row
+stream. Its borrowed rows preserve family and source order; callers that need a
+deterministic structural identity order use `normalized_inventory()`.
 
 The crate is deliberately small: it stores data, derives canonical feature keys,
 checks graph consistency, and projects feature, specimen, and route rows into

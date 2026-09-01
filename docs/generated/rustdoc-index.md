@@ -4,12 +4,25 @@
 
 | Package | Group | Summary |
 | --- | --- | --- |
+| `sim-cancel` | `workspace` | Executor-neutral, explicitly owned cancellation for bounded work. |
 | `sim-config` | `workspace` | Table and Dir substrate for layered SIM configuration. |
 | `sim-cookbook` | `workspace` | Cookbook engine for SIM's crate-local tutorial recipes. |
+| `sim-cookbook-build` | `workspace` | Portable host-side build support for cookbook recipe embedding. |
+| `sim-host-core` | `workspace` | Neutral contracts for domain-defined host ports. |
 | `sim-index-core` | `workspace` | Shared records and checks for the SIM Index. |
+| `sim-index-vault-core` | `workspace` | Pure, complete vault projection for the canonical SIM Index inventory. |
 | `sim-lib-net-core` | `workspace` | Reusable, side-effect-free HTTP/streaming parsing and wire-format helpers. |
+| `sim-lib-net-http` | `workspace` | One blocking HTTP policy boundary for SIM. |
+| `sim-lib-protected-state` | `workspace` | Binding-authenticated, bounded opaque state envelopes for continuation protocols. |
+| `sim-lib-search-core` | `workspace` | Provider-neutral, effect-free search and research records. |
 | `sim-lib-surface-card` | `workspace` | Shared, plain-data surface-card spine. |
+| `sim-lib-web-core` | `workspace` | Pure, effect-free web evidence records. |
 | `sim-macros` | `workspace` | Proc-macro surface for authored SIM libraries. |
+| `sim-relation-core` | `workspace` | Open relational records built directly on the kernel data substrate. |
+| `sim-relation-migrate` | `workspace` | Checked relational schema evolution. |
+| `sim-relation-plan` | `workspace` | Complete provider-neutral relational plans with a sealed admission boundary. |
+| `sim-relation-schema` | `workspace` | Validated logical schema intent and normalized physical catalog evidence. |
+| `sim-study-core` | `workspace` | Pure, domain-neutral records for repeatable studies. |
 | `sim-table-core` | `workspace` | Shared table substrate: path validation, path-reference resolution, and the table operation protocol. |
 | `sim-text` | `workspace` | Exact UTF-16 code-unit text with explicit scalar projections. |
 | `sim-value` | `workspace` | Ergonomic construction and access for kernel Expr data. |

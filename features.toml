@@ -14,6 +14,54 @@ major_entrypoints = "advisory"
 frameworks = "advisory"
 
 [[feature]]
+id = "feature/sim-foundation/web-evidence-core"
+title = "Immutable web capture and evidence records"
+summary = "Separate raw capture and normalized representation identities, exact Unicode-scalar selectors, and complete fail-closed web policy receipts."
+owner = "crate/sim-lib-web-core"
+audiences = ["code", "framework"]
+guidance = "Reuse these records for provider-independent web evidence. Keep sockets, HTML parsing, provider payloads, ranking, and office evidence outside foundation; a citation must retain an exact selector over an immutable representation."
+claims_anchors = ["anchor/crate/sim-lib-web-core"]
+claims_specimens = ["recipe/sim-foundation/crates/sim-lib-web-core/01-basics/exact-selector"]
+
+[[feature]]
+id = "feature/sim-foundation/search-evidence-core"
+title = "Open search and research records"
+summary = "Define queries, sites, provider claims, observations, pages, notices, alias evidence, rank contributions, runs, checked citations, bundles, and a pure wire-codec boundary."
+owner = "crate/sim-lib-search-core"
+audiences = ["code", "framework"]
+guidance = "Compose this vocabulary with web-evidence-core and installed general-purpose codecs. Provider snippets remain ProviderClaim values and cannot construct citations; provider I/O and rank algorithms belong downstream."
+claims_anchors = ["anchor/crate/sim-lib-search-core"]
+claims_specimens = ["recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation"]
+
+[[feature]]
+id = "feature/sim-foundation/study-core"
+title = "Domain-neutral study records"
+summary = "Define canonical subject, coordinate, attempt, outcome, estimate, decision, selection, evidence, and privacy records without storage, arithmetic, runtime, or AI behavior."
+owner = "crate/sim-study-core"
+audiences = ["code", "framework"]
+guidance = "Reuse these opaque subject revisions and canonical records whenever a domain needs study identity or evidence exchange. Keep operational paths, clocks, retry policy, placement, secrets, storage, arithmetic, and domain-specific verdict policy outside this crate."
+claims_anchors = [
+  "anchor/crate/sim-study-core",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-study-core/tests/study_contract",
+]
+
+[[feature]]
+id = "feature/sim-foundation/index-vault-projection"
+title = "Exact Index vault projection"
+summary = "Project complete or repository-local Index inventories into deterministic compact/full note plans with exact local claims, derived navigation, and visible fragment boundaries."
+owner = "crate/sim-index-vault-core"
+audiences = ["code", "framework"]
+guidance = "Reuse IndexDoc::inventory and this pure projection before rendering any public SIM Index view or checking a repository fragment. Future projections must consume IndexRowRef rather than enumerate IndexDoc fields; future note targets must be admitted by the exact ClaimCertificate. Derive incoming navigation only from forward facts, require complete certificates to close, and retain external fragment endpoints as typed boundary witnesses rather than claiming whole-graph completeness."
+claims_anchors = [
+  "anchor/crate/sim-index-vault-core",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-index-vault-core/tests/projection",
+]
+
+[[feature]]
 id = "feature/sim-foundation/value-helpers"
 title = "Value helper framework"
 summary = "Provide shared value conversion, expression builder, expression field reader, map field reader, and field access helpers for reusable runtime libraries."
@@ -74,29 +122,150 @@ claims_specimens = [
 ]
 
 [[feature]]
+id = "feature/sim-foundation/relation-core"
+title = "Open relational domain core"
+summary = "Define provider-neutral logical domains, typed cells and rows, exact storage representations, and canonical Datum-backed relational identity."
+owner = "crate/sim-relation-core"
+audiences = ["code", "framework"]
+guidance = "Reuse these records for relational schemas and provider boundaries. Extend the catalog with symbolic DomainSpec records; do not introduce a closed SQL value enum or a second digest implementation. Runtime Shape resolution belongs in sim-relation-shape."
+claims_anchors = [
+  "anchor/crate/sim-relation-core",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-relation-core/tests/domain_and_rows",
+]
+
+[[feature]]
+id = "feature/sim-foundation/relation-schema"
+title = "Validated relational schemas"
+summary = "Define canonical provider-neutral schema intent and distinct normalized physical catalog evidence with fail-closed graph validation."
+owner = "crate/sim-relation-schema"
+audiences = ["code", "framework"]
+guidance = "Use Schema for portable relational intent and PhysicalSchema only for normalized live-provider observations. Reuse sim-relation-core domain ids and identities; inject domain Shape validation for defaults and generated expressions."
+claims_anchors = [
+  "anchor/crate/sim-relation-schema",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-relation-schema/tests/schema_contract",
+]
+supports = [
+  "feature/sim-foundation/relation-core",
+]
+
+[[feature]]
+id = "feature/sim-foundation/relation-plan"
+title = "Admitted logical relation plans"
+summary = "Define complete scoped query and mutation algebra and admit it into opaque, canonically identified provider requests."
+owner = "crate/sim-relation-plan"
+audiences = ["code", "framework"]
+guidance = "Build Rel, Scalar, Aggregate, and Mutation records in product libraries, then use admission as the sole path to CheckedQuery or CheckedMutation. Providers consume checked plans and must not accept SQL text or unchecked records."
+claims_anchors = [
+  "anchor/crate/sim-relation-plan",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-relation-plan/tests/admission",
+]
+supports = [
+  "feature/sim-foundation/relation-core",
+  "feature/sim-foundation/relation-schema",
+]
+
+[[feature]]
+id = "feature/sim-foundation/relation-migrate"
+title = "Checked relational migrations"
+summary = "Admit linear, identity-checked schema evolution programs and verify provider state with exact attestations."
+owner = "crate/sim-relation-migrate"
+audiences = ["code", "framework"]
+guidance = "Use authored migration operations for destructive or ambiguous changes. Automatic derivation is intentionally limited to lossless table creation and nullable column addition; providers must offer transactional DDL and post-apply introspection."
+claims_anchors = [
+  "anchor/crate/sim-relation-migrate",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-relation-migrate/tests/migration",
+]
+supports = [
+  "feature/sim-foundation/relation-core",
+  "feature/sim-foundation/relation-schema",
+  "feature/sim-foundation/relation-plan",
+]
+
+[[feature]]
 id = "feature/sim-foundation/index-graph-core"
 title = "Index graph core"
 summary = "Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs."
 owner = "crate/sim-index-core"
 audiences = ["code"]
-guidance = "Use this row when a caller needs to build, validate, or project the SIM Index graph."
+guidance = "Use this row when a caller needs to build, validate, or project the SIM Index graph. Projection authors must traverse IndexDoc::inventory() instead of directly enumerating top-level fields; use normalized_inventory() only when structural identity order, rather than source order, is required."
 claims_anchors = [
   "anchor/crate/sim-index-core",
 ]
 
 [[feature]]
+id = "feature/sim-foundation/blocking-http-client"
+title = "Policy-complete blocking HTTP client"
+summary = "Provide one bounded, streaming, cancellation-aware blocking HTTP boundary over injected capsule connectors."
+owner = "crate/sim-lib-net-http"
+audiences = ["code", "framework"]
+guidance = "Reuse this client for generic blocking HTTP. Keep protocol parsing in sim-lib-net-core, inject capsule DNS/socket realization through Connector, mark credentials sensitive, and expand redirects, proxies, roots, or ambient authority only through explicit Policy fields."
+claims_anchors = [
+  "anchor/crate/sim-lib-net-http",
+]
+claims_specimens = [
+  "recipe/sim-foundation/crates/sim-lib-net-http/01-basics/bounded-get",
+]
+supports = [
+  "feature/sim-foundation/host-primitives",
+]
+
+[[feature]]
 id = "feature/sim-foundation/host-primitives"
 title = "Host primitive foundation"
-summary = "Provide shared network and surface-card helper crates for host-facing runtime libraries."
-owner = "crate/sim-lib-net-core"
+summary = "Define neutral host-port cards, open identities, shared platform-time values and bindings, mechanical refusals and budgets, and lexical object binding separately from concrete host realization."
+owner = "crate/sim-host-core"
 audiences = ["code", "framework"]
-guidance = "Use this row when a reusable host primitive needs shared network or surface-card support."
+guidance = "Use sim-host-core for domain-defined neutral port contracts, child-Env binding, and the shared WallClock, MonotonicClock, Timer, timestamp, and deterministic model contracts. Keep operating-system calls, provider realization, evidence grading, and product policy in platform or domain libraries."
 claims_anchors = [
+  "anchor/crate/sim-host-core",
   "anchor/crate/sim-lib-net-core",
   "anchor/crate/sim-lib-surface-card",
 ]
 claims_specimens = [
   "recipe/sim-foundation/crates/sim-lib-net-core/01-basics/response-head",
+]
+
+[[feature]]
+id = "feature/sim-foundation/cancellation"
+title = "Executor-neutral cancellation"
+summary = "Bound request and provider lifetimes with one idempotent terminal transition, bounded reason, child propagation, and race-safe waiter removal."
+owner = "crate/sim-cancel"
+audiences = ["code", "framework"]
+guidance = "Construct Cancellation at a host or binding boundary and pass it explicitly into owned work. Derive children for nested lifetimes. Await the executor-neutral future or observe the reason; never add a global token registry or retain application callbacks in cancellation state."
+claims_anchors = [
+  "anchor/crate/sim-cancel",
+]
+claims_specimens = [
+  "recipe/sim-foundation/crates/sim-cancel/01-basics/request-lifetime",
+]
+supports = [
+  "feature/sim-foundation/host-primitives",
+]
+
+[[feature]]
+id = "feature/sim-foundation/protected-state"
+title = "Capability-injected protected state"
+summary = "Protect bounded opaque caller bytes under exact state bindings, injected retained keys, secure nonces, and platform time, with optional atomic single-use claims."
+owner = "crate/sim-lib-protected-state"
+audiences = ["code", "framework"]
+guidance = "Reuse this crate for opaque continuation or handoff state. Callers own typed serialization and canonical context digests; hosts inject keys, a reviewed CryptoRng, and WallClock. AEAD is not replay prevention: use TableConsumptionLedger when single-use behavior is required."
+claims_anchors = [
+  "anchor/crate/sim-lib-protected-state",
+]
+claims_specimens = [
+  "recipe/sim-foundation/crates/sim-lib-protected-state/01-basics/exact-binding",
+]
+supports = [
+  "feature/sim-foundation/host-primitives",
+  "feature/sim-foundation/table-dir-core",
 ]
 
 [[feature]]
@@ -113,6 +282,23 @@ claims_anchors = [
 ]
 claims_specimens = [
   "spec-test/sim-foundation/crates/sim-cookbook/src/model",
+]
+
+[[feature]]
+id = "feature/sim-foundation/cookbook-build-tool"
+title = "Cookbook build host tool"
+summary = "Validate recipe packages and deterministically emit include-bytes source during Rust builds."
+owner = "crate/sim-cookbook-build"
+audiences = ["code", "framework"]
+guidance = "Use sim-cookbook-build only from build scripts. Product code consumes supplied embedded bytes through sim-cookbook; it must not depend on this filesystem-and-environment host tool. The foundation xtask is likewise a repository host tool, not a product dependency."
+claims_anchors = [
+  "anchor/crate/sim-cookbook-build",
+]
+claims_specimens = [
+  "spec-test/sim-foundation/crates/sim-cookbook-build/src/lib",
+]
+supports = [
+  "feature/sim-foundation/cookbook",
 ]
 
 [[feature]]
@@ -157,6 +343,16 @@ steps = [
 ]
 
 [[route]]
+id = "route/build-evidence-bearing-web-search"
+task = "Build provider-neutral web search with exact citation evidence"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/web-evidence-core", why = "The web row owns raw and normalized identities, exact selectors, and complete typed policy receipts." },
+  { feature = "feature/sim-foundation/search-evidence-core", why = "The search row keeps provider claims distinct from observations and checked citations while exposing a pure wire boundary." },
+  { specimen = "recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation", why = "The network-free checked specimen terminates at a provider claim beside an exact representation-bound citation." },
+]
+
+[[route]]
 id = "route/add-table-dir-core"
 task = "Add a Table or Dir core contract"
 audiences = ["code", "framework"]
@@ -178,7 +374,36 @@ id = "route/add-host-primitive"
 task = "Add a host primitive"
 audiences = ["code", "framework"]
 steps = [
-  { feature = "feature/sim-foundation/host-primitives", why = "Host primitives start from shared network and surface-card helpers." },
+  { feature = "feature/sim-foundation/host-primitives", why = "Neutral port cards, open identities, runtime-mechanics refusals, budgets, and lexical bindings belong in sim-host-core; concrete host realization belongs in platform and domain libraries." },
+]
+
+[[route]]
+id = "route/compose-platform-time"
+task = "Compose wall time, monotonic time, timers, and cancellation into a request lifetime"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/host-primitives", why = "The existing platform-time contracts own wall and monotonic values, timer behavior, explicit bindings, and the deterministic model." },
+  { feature = "feature/sim-foundation/cancellation", why = "Cancellation composes with a supplied deadline without choosing an executor, timer implementation, or transport." },
+  { specimen = "recipe/sim-foundation/crates/sim-cancel/01-basics/request-lifetime", why = "The checked recipe demonstrates explicit host-to-request ownership; the crate race suite proves registration, propagation, timeout conversion, completion, and dropped-waiter behavior." },
+]
+
+[[route]]
+id = "route/use-blocking-http"
+task = "Issue a bounded blocking HTTP request from a capsule-backed adapter"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/host-primitives", why = "The capsule supplies DNS, socket, clock, cancellation, and trust realization without ambient host access." },
+  { feature = "feature/sim-foundation/blocking-http-client", why = "The shared HTTP boundary owns framing, resource caps, sensitive headers, deadlines, cancellation, and authority policy." },
+]
+
+[[route]]
+id = "route/protect-opaque-state"
+task = "Protect opaque continuation or handoff state with rotation and optional single-use consumption"
+audiences = ["code", "framework"]
+steps = [
+  { feature = "feature/sim-foundation/host-primitives", why = "The shared WallClock contract supplies the explicit expiry observation without ambient host time." },
+  { feature = "feature/sim-foundation/protected-state", why = "The protected-state owner supplies the bounded envelope, collision-free binding, injected key and nonce capabilities, rotation behavior, uniform rejection, and canonical Table consumption adapter." },
+  { specimen = "recipe/sim-foundation/crates/sim-lib-protected-state/01-basics/exact-binding", why = "The checked recipe keeps caller serialization, key custody, clock ownership, and optional replay claims explicit." },
 ]
 
 [[route]]

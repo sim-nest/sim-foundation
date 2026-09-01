@@ -17,13 +17,25 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 
 | Feature | Subject | Specimens | Summary |
 | --- | --- | ---: | --- |
+| `feature/sim-foundation/web-evidence-core` | `crate/sim-lib-web-core` | 1 | Separate raw capture and normalized representation identities, exact Unicode-scalar selectors, and complete fail-closed web policy receipts. |
+| `feature/sim-foundation/search-evidence-core` | `crate/sim-lib-search-core` | 1 | Define queries, sites, provider claims, observations, pages, notices, alias evidence, rank contributions, runs, checked citations, bundles, and a pure wire-codec boundary. |
+| `feature/sim-foundation/study-core` | `crate/sim-study-core` | 1 | Define canonical subject, coordinate, attempt, outcome, estimate, decision, selection, evidence, and privacy records without storage, arithmetic, runtime, or AI behavior. |
+| `feature/sim-foundation/index-vault-projection` | `crate/sim-index-vault-core` | 1 | Project complete or repository-local Index inventories into deterministic compact/full note plans with exact local claims, derived navigation, and visible fragment boundaries. |
 | `feature/sim-foundation/value-helpers` | `crate/sim-value` | 1 | Provide shared value conversion, expression builder, expression field reader, map field reader, and field access helpers for reusable runtime libraries. |
 | `feature/sim-foundation/exact-code-unit-text` | `crate/sim-text` | 1 | Preserve UTF-16 code units through runtime values, tagged expressions, read construction, Shape matching, and browse without conflating them with scalar Unicode text. |
 | `feature/sim-foundation/table-dir-core` | `crate/sim-table-core` | 1 | Define shared table and directory contracts used by storage, index, and host-facing libraries. |
 | `feature/sim-foundation/table-path-references` | `crate/sim-table-core` | 1 | Parse, normalize, resolve, and format bounded absolute and relative Table/Dir path references. |
+| `feature/sim-foundation/relation-core` | `crate/sim-relation-core` | 1 | Define provider-neutral logical domains, typed cells and rows, exact storage representations, and canonical Datum-backed relational identity. |
+| `feature/sim-foundation/relation-schema` | `crate/sim-relation-schema` | 1 | Define canonical provider-neutral schema intent and distinct normalized physical catalog evidence with fail-closed graph validation. |
+| `feature/sim-foundation/relation-plan` | `crate/sim-relation-plan` | 1 | Define complete scoped query and mutation algebra and admit it into opaque, canonically identified provider requests. |
+| `feature/sim-foundation/relation-migrate` | `crate/sim-relation-migrate` | 1 | Admit linear, identity-checked schema evolution programs and verify provider state with exact attestations. |
 | `feature/sim-foundation/index-graph-core` | `crate/sim-index-core` | 0 | Define canonical SIM Index records, ids, edges, checks, and card projections for tooling and codecs. |
-| `feature/sim-foundation/host-primitives` | `crate/sim-lib-net-core` | 1 | Provide shared network and surface-card helper crates for host-facing runtime libraries. |
+| `feature/sim-foundation/blocking-http-client` | `crate/sim-lib-net-http` | 1 | Provide one bounded, streaming, cancellation-aware blocking HTTP boundary over injected capsule connectors. |
+| `feature/sim-foundation/host-primitives` | `crate/sim-host-core` | 1 | Define neutral host-port cards, open identities, shared platform-time values and bindings, mechanical refusals and budgets, and lexical object binding separately from concrete host realization. |
+| `feature/sim-foundation/cancellation` | `crate/sim-cancel` | 1 | Bound request and provider lifetimes with one idempotent terminal transition, bounded reason, child propagation, and race-safe waiter removal. |
+| `feature/sim-foundation/protected-state` | `crate/sim-lib-protected-state` | 1 | Protect bounded opaque caller bytes under exact state bindings, injected retained keys, secure nonces, and platform time, with optional atomic single-use claims. |
 | `feature/sim-foundation/cookbook` | `crate/sim-cookbook` | 1 | Describe reusable recipe metadata and generated cookbook records consumed by public docs and tooling. |
+| `feature/sim-foundation/cookbook-build-tool` | `crate/sim-cookbook-build` | 1 | Validate recipe packages and deterministically emit include-bytes source during Rust builds. |
 | `feature/sim-foundation/library-macros` | `crate/sim-macros` | 0 | Generate checked Rust declarations for authored SIM libraries and codec markers. |
 | `feature/sim-foundation/contract-emitter` | `crate/xtask` | 0 | Emit generated repository contract and index fragments for foundation crates. |
 
@@ -37,18 +49,1026 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 
 ## Recipes
 
+- `crates/sim-cancel/recipes/01-basics/README.md`
+- `crates/sim-cancel/recipes/01-basics/chapter.toml`
+- `crates/sim-cancel/recipes/01-basics/request-lifetime/purpose.md`
+- `crates/sim-cancel/recipes/01-basics/request-lifetime/recipe.toml`
+- `crates/sim-cancel/recipes/01-basics/request-lifetime/setup.siml`
+- `crates/sim-cancel/recipes/book.toml`
 - `crates/sim-lib-net-core/recipes/01-basics/chapter.toml`
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/purpose.md`
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml`
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/setup.siml`
 - `crates/sim-lib-net-core/recipes/book.toml`
+- `crates/sim-lib-net-http/recipes/01-basics/README.md`
+- `crates/sim-lib-net-http/recipes/01-basics/bounded-get/purpose.md`
+- `crates/sim-lib-net-http/recipes/01-basics/bounded-get/recipe.toml`
+- `crates/sim-lib-net-http/recipes/01-basics/bounded-get/setup.siml`
+- `crates/sim-lib-net-http/recipes/01-basics/chapter.toml`
+- `crates/sim-lib-net-http/recipes/book.toml`
+- `crates/sim-lib-protected-state/recipes/01-basics/README.md`
+- `crates/sim-lib-protected-state/recipes/01-basics/chapter.toml`
+- `crates/sim-lib-protected-state/recipes/01-basics/exact-binding/purpose.md`
+- `crates/sim-lib-protected-state/recipes/01-basics/exact-binding/recipe.toml`
+- `crates/sim-lib-protected-state/recipes/01-basics/exact-binding/setup.siml`
+- `crates/sim-lib-protected-state/recipes/book.toml`
+- `crates/sim-lib-search-core/recipes/01-basics/chapter.toml`
+- `crates/sim-lib-search-core/recipes/01-basics/checked-citation/purpose.md`
+- `crates/sim-lib-search-core/recipes/01-basics/checked-citation/recipe.toml`
+- `crates/sim-lib-search-core/recipes/01-basics/checked-citation/setup.siml`
+- `crates/sim-lib-search-core/recipes/book.toml`
 - `crates/sim-lib-surface-card/recipes/01-basics/chapter.toml`
 - `crates/sim-lib-surface-card/recipes/01-basics/external-name/purpose.md`
 - `crates/sim-lib-surface-card/recipes/01-basics/external-name/recipe.toml`
 - `crates/sim-lib-surface-card/recipes/01-basics/external-name/setup.siml`
 - `crates/sim-lib-surface-card/recipes/book.toml`
+- `crates/sim-lib-web-core/recipes/01-basics/chapter.toml`
+- `crates/sim-lib-web-core/recipes/01-basics/exact-selector/purpose.md`
+- `crates/sim-lib-web-core/recipes/01-basics/exact-selector/recipe.toml`
+- `crates/sim-lib-web-core/recipes/01-basics/exact-selector/setup.siml`
+- `crates/sim-lib-web-core/recipes/book.toml`
 
 ## Worked Examples
+
+### `feature/sim-foundation/web-evidence-core`
+
+Specimen `recipe/sim-foundation/crates/sim-lib-web-core/01-basics/exact-selector` is checked by `xtask check-recipes`.
+
+Source `crates/sim-lib-web-core/recipes/01-basics/exact-selector/recipe.toml`:
+
+```toml
+id = "exact-selector"
+title = "Exact normalized-text selector"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["web", "evidence", "selector", "sandbox-descriptor"]
+requires = ["web-core", "codec/lisp"]
+```
+
+### `feature/sim-foundation/search-evidence-core`
+
+Specimen `recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation` is checked by `xtask check-recipes`.
+
+Source `crates/sim-lib-search-core/recipes/01-basics/checked-citation/recipe.toml`:
+
+```toml
+id = "checked-citation"
+title = "Claim versus checked citation"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["search", "claim", "citation", "sandbox-descriptor"]
+requires = ["search-core", "web-core", "codec/lisp"]
+```
+
+### `feature/sim-foundation/study-core`
+
+Specimen `spec-test/sim-foundation/crates/sim-study-core/tests/study_contract` is checked by `cargo test`.
+
+Source `crates/sim-study-core/tests/study_contract.rs`:
+
+```rust
+// conformance: canonical study records preserve identity and reject unsafe operational paths.
+
+use sim_kernel::{ContentId, Datum, NumberLiteral, Symbol};
+use sim_study_core::*;
+use std::collections::BTreeSet;
+
+fn id(byte: u8) -> ContentId {
+    ContentId::from_bytes(Symbol::qualified("core", "sha256-datum-v1"), [byte; 32])
+}
+fn coordinate() -> StudyCoordinate {
+    StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(3), id(4), id(5), 6)
+}
+fn number(domain: &str, value: &str) -> NumberLiteral {
+    NumberLiteral {
+        domain: Symbol::qualified("numbers", domain),
+        canonical: value.into(),
+    }
+}
+
+fn datum_id(value: Datum) -> ContentId {
+    value.content_id().unwrap()
+}
+
+#[test]
+fn coordinate_is_opaque_canonical_and_every_field_bears_identity() {
+    let base = coordinate();
+    let bytes = base.to_datum().canonical_bytes().unwrap();
+    let decoded = StudyCoordinate::from_datum(&base.to_datum()).unwrap();
+    assert_eq!(decoded, base);
+    assert_eq!(decoded.to_datum().canonical_bytes().unwrap(), bytes);
+    let variants = [
+        StudyCoordinate::new(SubjectRevision::new(id(9)), id(2), id(3), id(4), id(5), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(9), id(3), id(4), id(5), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(9), id(4), id(5), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(3), id(9), id(5), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(3), id(4), id(9), 6),
+        StudyCoordinate::new(SubjectRevision::new(id(1)), id(2), id(3), id(4), id(5), 9),
+    ];
+    for changed in variants {
+        assert_ne!(changed.content_id().unwrap(), base.content_id().unwrap());
+    }
+}
+
+#[test]
+fn operational_fields_are_identity_neutral_and_unsafe_paths_refuse() {
+    let key = coordinate().content_id().unwrap();
+    for context in [
+        OperationalContext {
+            safe_path: Some("work/item".into()),
+            ..Default::default()
+        },
+        OperationalContext {
+            timestamp: Some("2030-01-01T00:00:00Z".into()),
+            ..Default::default()
+        },
+        OperationalContext {
+            retry_policy: Some("bounded-three".into()),
+            ..Default::default()
+        },
+        OperationalContext {
+            placement: Some("site-a".into()),
+            ..Default::default()
+        },
+    ] {
+        context.validate().unwrap();
+        assert_eq!(coordinate().content_id().unwrap(), key);
+    }
+    assert_eq!(
+        OperationalContext {
+            safe_path: Some("../secret".into()),
+            ..Default::default()
+        }
+        .validate(),
+        Err(StudyError::UnsafePath)
+    );
+}
+
+#[test]
+fn every_non_coordinate_record_field_bears_identity() {
+    fn distinct(base: Datum, variants: impl IntoIterator<Item = Datum>) {
+        let base = datum_id(base);
+        for variant in variants {
+            assert_ne!(datum_id(variant), base);
+        }
+    }
+
+    let attempt = Attempt::new(coordinate(), 1, EvidenceClass::Publishable);
+    let mut terminal_attempt = attempt.clone();
+    terminal_attempt
+        .transition(AttemptOutcome::Observed)
+        .unwrap();
+    distinct(
+        attempt.to_datum(),
+        [
+            Attempt::new(
+                StudyCoordinate::new(SubjectRevision::new(id(9)), id(2), id(3), id(4), id(5), 6),
+                1,
+                EvidenceClass::Publishable,
+            )
+            .to_datum(),
+            Attempt::new(coordinate(), 2, EvidenceClass::Publishable).to_datum(),
+            Attempt::new(coordinate(), 1, EvidenceClass::ReportOnly).to_datum(),
+            terminal_attempt.to_datum(),
+        ],
+    );
+
+    let facet = FacetObservation {
+        coordinate: id(1),
+        facet: Symbol::qualified("study", "answer"),
+        value: Datum::Bool(true),
+        evidence: EvidenceClass::Publishable,
+    };
+    distinct(
+        facet.to_datum(),
+        [
+            FacetObservation {
+                coordinate: id(2),
+                ..facet.clone()
+            }
+            .to_datum(),
+            FacetObservation {
+                facet: Symbol::qualified("study", "score"),
+                ..facet.clone()
+            }
+            .to_datum(),
+            FacetObservation {
+                value: Datum::Bool(false),
+                ..facet.clone()
+            }
+            .to_datum(),
+            FacetObservation {
+                evidence: EvidenceClass::ReportOnly,
+                ..facet
+            }
+            .to_datum(),
+        ],
+    );
+
+    let resource = ResourceEvent {
+        coordinate: id(1),
+        resource: Symbol::qualified("study", "energy"),
+        amount: number("decimal", "1"),
+        evidence: EvidenceClass::Publishable,
+    };
+    distinct(
+        resource.to_datum(),
+        [
+            ResourceEvent {
+                coordinate: id(2),
+                ..resource.clone()
+            }
+            .to_datum(),
+            ResourceEvent {
+                resource: Symbol::qualified("study", "time"),
+                ..resource.clone()
+            }
+            .to_datum(),
+            ResourceEvent {
+                amount: number("decimal", "2"),
+                ..resource.clone()
+            }
+            .to_datum(),
+            ResourceEvent {
+                evidence: EvidenceClass::ReportOnly,
+                ..resource
+            }
+            .to_datum(),
+        ],
+    );
+
+    let treatment = TreatmentRecord {
+        treatment: id(1),
+        contract: id(2),
+        evidence: EvidenceClass::Publishable,
+    };
+    distinct(
+        treatment.to_datum(),
+        [
+            TreatmentRecord {
+                treatment: id(3),
+                ..treatment.clone()
+            }
+            .to_datum(),
+            TreatmentRecord {
+                contract: id(3),
+                ..treatment.clone()
+            }
+            .to_datum(),
+            TreatmentRecord {
+                evidence: EvidenceClass::ReportOnly,
+                ..treatment
+            }
+            .to_datum(),
+        ],
+    );
+
+    let estimate = EstimateRecord::new(
+        number("decimal", "1"),
+        number("decimal", "0"),
+        number("decimal", "2"),
+        number("decimal", ".95"),
+        id(1),
+        EvidenceClass::Publishable,
+    )
+    .unwrap();
+    distinct(
+        estimate.to_datum(),
+        [
+            EstimateRecord::new(
+                number("decimal", "3"),
+                estimate.lower.clone(),
+                estimate.upper.clone(),
+                estimate.confidence.clone(),
+                estimate.inference.clone(),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                number("decimal", "-1"),
+                estimate.upper.clone(),
+                estimate.confidence.clone(),
+                estimate.inference.clone(),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                estimate.lower.clone(),
+                number("decimal", "4"),
+                estimate.confidence.clone(),
+                estimate.inference.clone(),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                estimate.lower.clone(),
+                estimate.upper.clone(),
+                number("decimal", ".99"),
+                estimate.inference.clone(),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                estimate.lower.clone(),
+                estimate.upper.clone(),
+                estimate.confidence.clone(),
+                id(2),
+                estimate.evidence,
+            )
+            .unwrap()
+            .to_datum(),
+            EstimateRecord::new(
+                estimate.point.clone(),
+                estimate.lower.clone(),
+                estimate.upper.clone(),
+                estimate.confidence.clone(),
+                estimate.inference.clone(),
+                EvidenceClass::ReportOnly,
+            )
+            .unwrap()
+            .to_datum(),
+        ],
+    );
+
+    let closure = BTreeSet::from([id(1), id(2), id(3)]);
+    let decision = DecisionRecord::new(
+        id(1),
+        vec![id(2)],
+        vec![id(3)],
+        Symbol::qualified("study", "keep"),
+        vec![Symbol::qualified("study", "quality")],
+        Some(id(1)),
+        EvidenceClass::Publishable,
+        &closure,
+    )
+    .unwrap();
+    distinct(
+        decision.to_datum(),
+        [
+            DecisionRecord::new(
+                id(2),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                vec![id(3)],
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                vec![id(2)],
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                Symbol::qualified("study", "reject"),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                vec![Symbol::qualified("study", "cost")],
+                decision.expiry.clone(),
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                None,
+                decision.evidence,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+            DecisionRecord::new(
+                decision.policy.clone(),
+                decision.evidence_ids.clone(),
+                decision.frontier.clone(),
+                decision.verdict.clone(),
+                decision.decisive_dimensions.clone(),
+                decision.expiry.clone(),
+                EvidenceClass::ReportOnly,
+                &closure,
+            )
+            .unwrap()
+            .to_datum(),
+        ],
+    );
+
+    let selection = SelectionRecord {
+        decision: id(1),
+        subject: SubjectRevision::new(id(2)),
+        role: Symbol::qualified("study", "primary"),
+        evidence: EvidenceClass::Publishable,
+    };
+    distinct(
+        selection.to_datum(),
+        [
+            SelectionRecord {
+                decision: id(3),
+                ..selection.clone()
+            }
+            .to_datum(),
+            SelectionRecord {
+                subject: SubjectRevision::new(id(3)),
+                ..selection.clone()
+            }
+            .to_datum(),
+            SelectionRecord {
+                role: Symbol::qualified("study", "reference"),
+                ..selection.clone()
+            }
+            .to_datum(),
+            SelectionRecord {
+                evidence: EvidenceClass::ReportOnly,
+                ..selection
+            }
+            .to_datum(),
+        ],
+    );
+}
+
+#[test]
+fn terminal_transition_is_total_and_single_assignment() {
+    for outcome in [
+        AttemptOutcome::Observed,
+        AttemptOutcome::Unsupported,
+        AttemptOutcome::Unresolved,
+        AttemptOutcome::Quarantined,
+    ] {
+        let mut attempt = Attempt::new(coordinate(), 1, EvidenceClass::Publishable);
+        attempt.transition(outcome).unwrap();
+        assert_eq!(attempt.outcome(), Some(outcome));
+        assert_eq!(
+            attempt.transition(outcome),
+            Err(StudyError::AlreadyTerminal)
+        );
+        let other = if outcome == AttemptOutcome::Observed {
+            AttemptOutcome::Unsupported
+        } else {
+            AttemptOutcome::Observed
+        };
+        assert_eq!(
+            attempt.transition(other),
+            Err(StudyError::ConflictingTerminalOutcome)
+        );
+    }
+}
+
+#[test]
+fn estimate_domains_and_provenance_fail_closed() {
+    assert!(
+        EstimateRecord::new(
+            number("decimal", "1"),
+            number("decimal", "0"),
+            number("decimal", "2"),
+            number("decimal", ".95"),
+            id(7),
+            EvidenceClass::Publishable
+        )
+        .is_ok()
+    );
+    assert_eq!(
+        EstimateRecord::new(
+            number("decimal", "1"),
+            number("binary", "0"),
+            number("decimal", "2"),
+            number("decimal", ".95"),
+            id(7),
+            EvidenceClass::Publishable
+        ),
+        Err(StudyError::IncompatibleNumberDomain)
+    );
+    let closure = BTreeSet::from([id(1)]);
+    assert!(matches!(
+        DecisionRecord::new(
+            id(9),
+            vec![id(2)],
+            vec![],
+            Symbol::qualified("study", "keep"),
+            vec![],
+            None,
+            EvidenceClass::ReportOnly,
+            &closure
+        ),
+        Err(StudyError::MissingProvenance(_))
+    ));
+}
+
+#[test]
+fn evidence_only_weakens_and_exports_exclude_private_or_secret_values() {
+    assert_eq!(
+        EvidenceClass::derive([EvidenceClass::Publishable, EvidenceClass::PrivateLocal]),
+        EvidenceClass::PrivateLocal
+    );
+    assert_eq!(
+        EvidenceClass::PrivateLocal.permits_derivation(EvidenceClass::Publishable),
+        Err(StudyError::EvidenceStrengthened)
+    );
+    let private = FacetObservation {
+        coordinate: id(1),
+        facet: Symbol::qualified("study", "answer"),
+        value: Datum::Bool(true),
+        evidence: EvidenceClass::PrivateLocal,
+    };
+    assert_eq!(private.export_public(), Err(StudyError::PrivateExport));
+    let secret = FacetObservation {
+        coordinate: id(1),
+        facet: Symbol::qualified("study", "answer"),
+        value: Datum::Node {
+            tag: Symbol::qualified("study", "secret"),
+            fields: vec![],
+        },
+        evidence: EvidenceClass::Publishable,
+    };
+    assert_eq!(secret.export_public(), Err(StudyError::SecretForbidden));
+}
+
+#[test]
+fn shapes_reject_versions_duplicates_order_and_overflow() {
+    let mut datum = coordinate().to_datum();
+    COORDINATE_SHAPE.check(&datum).unwrap();
+    let Datum::Node { fields, .. } = &mut datum else {
+        unreachable!()
+    };
+    fields.swap(1, 2);
+    assert!(COORDINATE_SHAPE.check(&datum).is_err());
+    let mut wrong_version = coordinate().to_datum();
+    let Datum::Node { fields, .. } = &mut wrong_version else {
+        unreachable!()
+    };
+    fields[0].1 = Datum::Number(NumberLiteral {
+        domain: Symbol::qualified("numbers", "u32"),
+        canonical: "2".into(),
+    });
+    assert_eq!(
+        StudyCoordinate::from_datum(&wrong_version),
+        Err(StudyError::UnknownSchemaVersion(2))
+    );
+    let huge = "x".repeat(4097);
+    assert!(
+        EstimateRecord::new(
+            number("decimal", &huge),
+            number("decimal", "0"),
+            number("decimal", "2"),
+            number("decimal", ".95"),
+            id(7),
+            EvidenceClass::Publishable
+        )
+        .is_err()
+    );
+}
+```
+
+### `feature/sim-foundation/index-vault-projection`
+
+Specimen `spec-test/sim-foundation/crates/sim-index-vault-core/tests/projection` is checked by `cargo test`.
+
+Source `crates/sim-index-vault-core/tests/projection.rs`:
+
+```rust
+// conformance: canonical inventory projection closes exact claims and rejects substitution.
+
+use sim_index_core::{
+    AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
+    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
+    IndexEdge, IndexRow, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
+    SourceCompleteness, SourceLocation, SourceReachability, SourceUnit, SpecimenId, SubjectId,
+    SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason, Visibility, canonical_feature_key,
+};
+use sim_index_vault_core::{
+    ClaimCertificate, ClaimSite, DerivedClaim, ProjectionError, Relation, RelationOrigin,
+    VaultGranularity, VaultNoteId, VaultNoteKind, VaultProjection, validate_incoming_relations,
+};
+
+fn fixture() -> IndexDoc {
+    let subject = SubjectId::new("crate/example");
+    let anchor = AnchorId::new("export/example/value");
+    let doc_anchor = AnchorId::new("doc/example/value");
+    let surface = SurfaceId::new("syntax/example");
+    let specimen = SpecimenId::new("recipe/example/value");
+    let feature = FeatureId::new("feature/example/value");
+    IndexDoc {
+        schema: "sim.index".into(),
+        generated_by: "vault-test".into(),
+        visibility: Visibility::Public,
+        subjects: vec![SubjectRecord {
+            id: subject.clone(),
+            kind: "crate".into(),
+            title: "Example".into(),
+        }],
+        anchors: vec![
+            DiscoveredAnchor {
+                id: anchor.clone(),
+                subject: subject.clone(),
+                kind: "export".into(),
+            },
+            DiscoveredAnchor {
+                id: doc_anchor.clone(),
+                subject: subject.clone(),
+                kind: "doc".into(),
+            },
+        ],
+        source_units: vec![SourceUnit {
+            subject: subject.clone(),
+            path: "src/lib.rs".into(),
+            reachability: SourceReachability::Reachable,
+            completeness: SourceCompleteness::Complete,
+            reason: String::new(),
+            retained_bound: SyntaxBound {
+                max_bytes: 4096,
+                truncated: false,
+            },
+            declaration_count: 2,
+        }],
+        declarations: vec![DeclarationFact {
+            anchor: anchor.clone(),
+            role: DeclarationRole::Struct,
+            module_path: "example::Value".into(),
+            generics: String::new(),
+            members: vec!["value: String".into()],
+            location: SourceLocation {
+                file: "src/lib.rs".into(),
+                declaration: 0,
+            },
+            syntax_bound: SyntaxBound {
+                max_bytes: 4096,
+                truncated: false,
+            },
+        }],
+        protocol_relations: vec![ProtocolRelation {
+            anchor: anchor.clone(),
+            implementor: "Value".into(),
+            source_spelling: "Display".into(),
+            body_fingerprint: "fmt".into(),
+            body_bound: SyntaxBound {
+                max_bytes: 4096,
+                truncated: false,
+            },
+            resolution: ProtocolResolution::Resolved {
+                protocol: "core::fmt::Display".into(),
+            },
+        }],
+        surfaces: vec![DiscoveredSurface {
+            id: surface.clone(),
+            subject: subject.clone(),
+            kind: "syntax".into(),
+        }],
+        specimens: vec![DiscoveredSpecimen {
+            id: specimen.clone(),
+            subject: subject.clone(),
+            kind: "recipe".into(),
+            path: "recipes/value".into(),
+            language: Some("sim".into()),
+            runnable: true,
+            checked: true,
+            checked_by: Some("test".into()),
+            doc_anchor: Some(doc_anchor.clone()),
+        }],
+        drafts: vec![FeatureDraft {
+            id: FeatureId::new("feature/example/draft"),
+            subject: subject.clone(),
+            title: "Draft".into(),
+            summary: "Draft feature".into(),
+            claims_anchors: vec![],
+            claims_surfaces: vec![],
+            claims_specimens: vec![],
+            literal_anchors: vec![],
+            literal_surfaces: vec![],
+            literal_specimens: vec![],
+            grammar_contracts: vec![],
+            doc_anchor: None,
+        }],
+        features: vec![FeatureRecord {
+            id: feature.clone(),
+            key: canonical_feature_key(&subject, feature.as_str()),
+            subject: subject.clone(),
+            title: "Value".into(),
+            summary: "Example value".into(),
+            anchors: vec![anchor.clone()],
+            surfaces: vec![surface.clone()],
+            specimens: vec![specimen.clone()],
+            grammar_contracts: vec![GrammarContract {
+                id: "grammar/example".into(),
+                decoder: Some(anchor),
+                encoder: None,
+                surface: Some(surface),
+                round_trip: true,
+            }],
+            doc_anchor: Some(doc_anchor),
+        }],
+        routes: vec![RouteRecord {
+            id: RouteId::new("route/example/value"),
+            title: "Use value".into(),
+            audiences: vec!["user".into()],
+            steps: vec![
+                RouteStep::Feature {
+                    id: feature.clone(),
+                    why: "Learn it".into(),
+                },
+                RouteStep::Specimen {
+                    id: specimen,
+                    why: "Run it".into(),
+                },
+            ],
+            doc_anchor: None,
+        }],
+        edges: vec![IndexEdge::relates(feature.clone(), "supports", feature)],
+    }
+}
+
+fn site() -> ClaimSite {
+    ClaimSite {
+        note: VaultNoteId::new("note/test"),
+        section: "rows".into(),
+    }
+}
+
+#[test]
+fn every_inventory_family_closes_and_permutations_are_identical() {
+    let doc = fixture();
+    let projection = VaultProjection::from_complete(&doc, VaultGranularity::Full).unwrap();
+    assert!(projection.certificate().is_closed());
+    assert_eq!(
+        projection.certificate().primary().len(),
+        doc.inventory().1.len()
+    );
+    let mut reordered = doc.clone();
+    reordered.anchors.reverse();
+    assert_eq!(
+        projection,
+        VaultProjection::from_complete(&reordered, VaultGranularity::Full).unwrap()
+    );
+    assert!(matches!(
+        doc.protocol_relations[0].resolution,
+        ProtocolResolution::Resolved { .. }
+    ));
+}
+
+#[test]
+fn exact_certificate_distinguishes_all_claim_failures_and_substitution() {
+    let a = IndexRow::Subject(fixture().subjects[0].clone());
+    let mut other = fixture().subjects[0].clone();
+    other.id = SubjectId::new("crate/other");
+    let b = IndexRow::Subject(other);
+    assert!(matches!(
+        ClaimCertificate::close([a.clone(), a.clone()], [], vec![]),
+        Err(ProjectionError::DuplicateCanonicalRow(_))
+    ));
+    assert!(matches!(
+        ClaimCertificate::close([a.clone()], [(b.clone(), site())], vec![]),
+        Err(ProjectionError::UnknownClaimedRow(_))
+    ));
+    assert!(matches!(
+        ClaimCertificate::close([a.clone()], [], vec![]),
+        Err(ProjectionError::UnclaimedRow(_))
+    ));
+    assert!(matches!(
+        ClaimCertificate::close(
+            [a.clone()],
+            [(a.clone(), site()), (a.clone(), site())],
+            vec![]
+        ),
+        Err(ProjectionError::MultiplyClaimedRow(_))
+    ));
+    let derived = DerivedClaim {
+        row: b.clone(),
+        site: site(),
+        origin: "test".into(),
+    };
+    assert!(matches!(
+        ClaimCertificate::close([a.clone()], [(a, site())], vec![derived]),
+        Err(ProjectionError::DerivedWithoutPrimary(_))
+    ));
+    // A same-sized substitution is rejected by row identity, never hidden by totals.
+    assert!(matches!(
+        ClaimCertificate::close([b.clone()], [(b.clone(), site()), (b, site())], vec![]),
+        Err(ProjectionError::MultiplyClaimedRow(_))
+    ));
+}
+
+#[test]
+fn private_documents_are_rejected_before_planning() {
+    let mut doc = fixture();
+    doc.visibility = Visibility::PrivateLocal;
+    assert_eq!(
+        VaultProjection::from_complete(&doc, VaultGranularity::Full),
+        Err(ProjectionError::NonPublicDocument)
+    );
+}
+
+#[test]
+fn compact_and_full_have_identical_rows_and_only_anchor_placement_differs() {
+    let doc = fixture();
+    let compact = VaultProjection::from_complete(&doc, VaultGranularity::Compact).unwrap();
+    let full = VaultProjection::from_complete(&doc, VaultGranularity::Full).unwrap();
+    assert_eq!(
+        compact.certificate().primary_rows(),
+        full.certificate().primary_rows()
+    );
+    for row in compact.certificate().primary_rows() {
+        let compact_site = &compact.certificate().primary()[row];
+        let full_site = &full.certificate().primary()[row];
+        match row {
+            IndexRow::Anchor(_) | IndexRow::Declaration(_) | IndexRow::ProtocolRelation(_) => {
+                assert_ne!(compact_site.note, full_site.note)
+            }
+            _ => assert_eq!(compact_site, full_site),
+        }
+    }
+    assert!(
+        !compact
+            .notes()
+            .iter()
+            .any(|note| note.kind == VaultNoteKind::Anchor)
+    );
+    assert!(
+        full.notes()
+            .iter()
+            .any(|note| note.kind == VaultNoteKind::Anchor)
+    );
+}
+
+#[test]
+fn route_order_and_exact_source_and_grammar_fields_survive_normalization() {
+    let doc = fixture();
+    let projection = VaultProjection::from_complete(&doc, VaultGranularity::Full).unwrap();
+    let route = projection
+        .certificate()
+        .primary_rows()
+        .iter()
+        .find_map(|row| match row {
+            IndexRow::Route(route) => Some(route),
+            _ => None,
+        })
+        .unwrap();
+    assert!(matches!(
+        (&route.steps[0], &route.steps[1]),
+        (RouteStep::Feature { .. }, RouteStep::Specimen { .. })
+    ));
+    let source = projection
+        .certificate()
+        .primary_rows()
+        .iter()
+        .find_map(|row| match row {
+            IndexRow::SourceUnit(unit) => Some(unit),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(source.retained_bound, doc.source_units[0].retained_bound);
+    let feature = projection
+        .certificate()
+        .primary_rows()
+        .iter()
+        .find_map(|row| match row {
+            IndexRow::Feature(feature) => Some(feature),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(feature.grammar_contracts, doc.features[0].grammar_contracts);
+}
+
+#[test]
+fn incoming_relations_are_derived_and_cannot_be_forged_or_omitted() {
+    let projection = VaultProjection::from_complete(&fixture(), VaultGranularity::Full).unwrap();
+    assert!(
+        projection
+            .reverse_relations()
+            .iter()
+            .all(|relation| relation.origin == RelationOrigin::Derived)
+    );
+    validate_incoming_relations(projection.relations(), projection.reverse_relations()).unwrap();
+    let forged = Relation {
+        from: "feature/other".into(),
+        rel: "supports".into(),
+        to: "feature/missing".into(),
+        origin: RelationOrigin::Derived,
+    };
+    assert!(matches!(
+        validate_incoming_relations(projection.relations(), &[forged]),
+        Err(ProjectionError::ReverseWithoutForward(_))
+    ));
+    assert!(matches!(
+        validate_incoming_relations(projection.relations(), &[]),
+        Err(ProjectionError::MissingDerivedRelation(_))
+    ));
+    let mut dangling = fixture();
+    dangling.edges[0].to = "feature/external".into();
+    assert!(matches!(
+        VaultProjection::from_complete(&dangling, VaultGranularity::Full),
+        Err(ProjectionError::IncompleteDocument(_))
+    ));
+}
+
+#[test]
+fn fragments_close_local_rows_and_expose_external_boundaries() {
+    let mut doc = fixture();
+    doc.edges[0].to = "feature/external/deep/case-sensitive".into();
+    let fragment = VaultProjection::project_fragment(&doc).unwrap();
+    assert!(fragment.certificate().local_claims().is_closed());
+    assert!(!fragment.certificate().is_whole_graph_complete());
+    assert_eq!(fragment.certificate().metadata().generated_by, "vault-test");
+    assert_eq!(
+        fragment.certificate().deferred_external_endpoints()[0].external_to,
+        "feature/external/deep/case-sensitive"
+    );
+    let mut missing_local = doc;
+    missing_local.edges[0].from = "feature/missing-local".into();
+    assert!(matches!(
+        VaultProjection::project_fragment(&missing_local),
+        Err(ProjectionError::InvalidFragment(_))
+    ));
+}
+
+#[test]
+fn unsafe_source_paths_are_rejected_before_placement() {
+    for path in [
+        "../secret",
+        "src\\lib.rs",
+        "C:/absolute.rs",
+        "/absolute.rs",
+        "src//lib.rs",
+        "src/./lib.rs",
+        "src/\u{7f}lib.rs",
+    ] {
+        let mut doc = fixture();
+        doc.source_units[0].path = path.into();
+        assert_eq!(
+            VaultProjection::from_complete(&doc, VaultGranularity::Full),
+            Err(ProjectionError::InvalidSourcePath(path.into()))
+        );
+    }
+}
+
+#[test]
+fn optional_and_protocol_and_truncation_states_remain_exact() {
+    let mut doc = fixture();
+    doc.specimens[0].language = None;
+    doc.specimens[0].checked_by = None;
+    doc.declarations[0].syntax_bound.truncated = true;
+    doc.declarations[0].syntax_bound.max_bytes = 8;
+    doc.declarations[0].generics.clear();
+    doc.declarations[0].members.clear();
+    doc.protocol_relations[0].resolution = ProtocolResolution::Unresolved {
+        candidates: vec![],
+        reason: UnresolvedReason::ExternalMetadataAbsent,
+    };
+    let projection = VaultProjection::from_complete(&doc, VaultGranularity::Full).unwrap();
+    assert_eq!(
+        projection.certificate().primary_rows(),
+        &doc.normalized_inventory().into_iter().collect()
+    );
+}
+```
 
 ### `feature/sim-foundation/value-helpers`
 
@@ -745,7 +1765,9 @@ use std::sync::Arc;
 
 // conformance: Table and Dir core expressions round-trip through shared helpers.
 
-use sim_kernel::{CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, NoopEvalPolicy, Symbol};
+use sim_kernel::{
+    CapabilityName, Cx, DefaultFactory, Expr, GrantSeat, HandleSeed, NoopEvalPolicy, Symbol,
+};
 
 use crate::capabilities::{
     edit, exec, find, fs_read, fs_read_aliases, fs_write, fs_write_aliases,
@@ -765,7 +1787,11 @@ fn legal_segment_accepts_normal_name() {
 }
 
 fn seated_cx() -> (Cx, GrantSeat) {
-    Cx::new_seated(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory))
+    Cx::new_seated(
+        Arc::new(NoopEvalPolicy),
+        Arc::new(DefaultFactory),
+        HandleSeed::new(0),
+    )
 }
 
 trait GrantOutcome {
@@ -1039,6 +2065,11 @@ fn all_ops() -> Vec<TableOp> {
     vec![
         TableOp::Get(key()),
         TableOp::Set(key(), Expr::String("v".to_owned())),
+        TableOp::CompareExchange(
+            key(),
+            crate::CompareExpected::Absent,
+            crate::CompareReplacement::Value(Expr::Nil),
+        ),
         TableOp::Has(key()),
         TableOp::Delete(key()),
         TableOp::Keys,
@@ -1050,6 +2081,23 @@ fn all_ops() -> Vec<TableOp> {
         TableOp::Rmdir(key()),
         TableOp::IsDir(key()),
     ]
+}
+
+#[test]
+fn cas_wire_distinguishes_absent_nil_delete_and_value() {
+    use crate::{CompareExpected as E, CompareReplacement as R};
+    let cases = [
+        TableOp::CompareExchange(key(), E::Absent, R::Value(Expr::Nil)),
+        TableOp::CompareExchange(key(), E::Value(Expr::Nil), R::Delete),
+        TableOp::CompareExchange(
+            key(),
+            E::Value(Expr::String("old".into())),
+            R::Value(Expr::String("new".into())),
+        ),
+    ];
+    for case in cases {
+        assert_eq!(decode_table_op(&encode_table_op(&case)).unwrap(), case);
+    }
 }
 
 #[test]
@@ -1184,6 +2232,1148 @@ fn backend_manifest_is_empty_host_registered_abi_0_1() {
 }
 ```
 
+### `feature/sim-foundation/relation-core`
+
+Specimen `spec-test/sim-foundation/crates/sim-relation-core/tests/domain_and_rows` is checked by `cargo test`.
+
+Source `crates/sim-relation-core/tests/domain_and_rows.rs`:
+
+```rust
+use sim_kernel::{Datum, Ref, Symbol};
+use sim_relation_core::*;
+
+// conformance: open relational domains, rows, canonical identity, and storage edges.
+
+fn domain(name: &str) -> DomainId {
+    DomainId::new(Symbol::qualified("test", name)).unwrap()
+}
+
+#[test]
+fn names_are_sql_dialect_neutral_but_structurally_valid() {
+    assert!(TableName::new(Symbol::new("select / odd-name \"quoted\"")).is_ok());
+    assert_eq!(TableName::new(Symbol::new("")), Err(NameError::Empty));
+    assert_eq!(
+        TableName::new(Symbol::new("bad\nname")),
+        Err(NameError::Control)
+    );
+}
+
+#[test]
+fn catalogs_reject_duplicates_bad_refs_and_incoherent_traits() {
+    let id = domain("uuid");
+    let spec = DomainSpec::new(
+        id.clone(),
+        StorageRepr::Text,
+        Ref::Symbol(Symbol::new("uuid-shape")),
+        [DomainTrait::Equatable],
+    )
+    .unwrap();
+    assert!(matches!(
+        DomainCatalog::new([spec.clone(), spec]),
+        Err(DomainError::DuplicateId(_))
+    ));
+    assert_eq!(
+        DomainSpec::new(
+            id.clone(),
+            StorageRepr::Text,
+            Ref::Handle(sim_kernel::HandleId(1)),
+            []
+        ),
+        Err(DomainError::InvalidShapeRef)
+    );
+    assert_eq!(
+        DomainSpec::new(
+            id,
+            StorageRepr::Text,
+            Ref::Symbol(Symbol::new("shape")),
+            [DomainTrait::Ordered]
+        ),
+        Err(DomainError::IncoherentTraits)
+    );
+}
+
+#[test]
+fn typed_null_is_absence_and_rows_enforce_types() {
+    let id = domain("text");
+    let ty = RowType::new([FieldType {
+        name: FieldName::new(Symbol::new("nickname")).unwrap(),
+        domain: id.clone(),
+        nullable: true,
+    }])
+    .unwrap();
+    let row = Row::new(ty, [Cell::null(id)]).unwrap();
+    assert_eq!(row.cells()[0].value(), None);
+    assert!(matches!(row.to_datum(), Datum::Node { .. }));
+}
+
+#[test]
+fn base_storage_conversions_are_exact_and_float_edges_are_closed() {
+    let builtins = DomainCatalog::new([
+        BaseDomain::Bool.spec(),
+        BaseDomain::I64.spec(),
+        BaseDomain::F64.spec(),
+        BaseDomain::Text.spec(),
+        BaseDomain::Bytes.spec(),
+    ])
+    .unwrap();
+    assert_eq!(builtins.iter().count(), 5);
+    for (base, value) in [
+        (BaseDomain::Bool, StorageValue::Bool(true)),
+        (BaseDomain::I64, StorageValue::I64(i64::MIN)),
+        (BaseDomain::F64, StorageValue::F64(-0.0)),
+        (BaseDomain::Text, StorageValue::Text("hello".into())),
+        (BaseDomain::Bytes, StorageValue::Bytes(vec![0, 255])),
+    ] {
+        let datum = base.to_datum(value.clone()).unwrap();
+        assert_eq!(
+            base.from_datum(&datum).unwrap(),
+            value_with_canonical_zero(value)
+        );
+    }
+    assert_eq!(
+        BaseDomain::F64.to_datum(StorageValue::F64(f64::NAN)),
+        Err(DomainError::NonFiniteFloat)
+    );
+    assert_eq!(
+        BaseDomain::F64.to_datum(StorageValue::F64(f64::INFINITY)),
+        Err(DomainError::NonFiniteFloat)
+    );
+    assert_eq!(
+        BaseDomain::F64.to_datum(StorageValue::F64(-0.0)).unwrap(),
+        BaseDomain::F64.to_datum(StorageValue::F64(0.0)).unwrap()
+    );
+}
+
+fn value_with_canonical_zero(value: StorageValue) -> StorageValue {
+    match value {
+        StorageValue::F64(v) => StorageValue::F64(v + 0.0),
+        other => other,
+    }
+}
+
+#[test]
+fn custom_domains_need_no_provider_change_and_identity_is_kernel_identity() {
+    let uuid = DomainSpec::new(
+        domain("uuid"),
+        StorageRepr::Text,
+        Ref::Symbol(Symbol::new("uuid-shape")),
+        [DomainTrait::Equatable],
+    )
+    .unwrap();
+    let catalog = DomainCatalog::new([uuid.clone()]).unwrap();
+    assert_eq!(catalog.get(uuid.id()), Some(&uuid));
+    assert_eq!(uuid.card_datum(), uuid.lisp_datum());
+    assert_eq!(
+        RelationId::of(&uuid).unwrap().content_id(),
+        &uuid.to_datum().content_id().unwrap()
+    );
+    assert_eq!(
+        RelationId::of(&uuid).unwrap(),
+        RelationId::of(&uuid.clone()).unwrap()
+    );
+}
+```
+
+### `feature/sim-foundation/relation-schema`
+
+Specimen `spec-test/sim-foundation/crates/sim-relation-schema/tests/schema_contract` is checked by `cargo test`.
+
+Source `crates/sim-relation-schema/tests/schema_contract.rs`:
+
+```rust
+// conformance: validated logical schemas and normalized physical catalog records remain stable.
+
+use sim_kernel::{Datum, Symbol};
+use sim_relation_core::{BaseDomain, DomainCatalog, StorageRepr};
+use sim_relation_schema::*;
+
+fn n<T: TryFrom<Symbol>>(s: &str) -> T
+where
+    T::Error: std::fmt::Debug,
+{
+    T::try_from(Symbol::new(s)).unwrap()
+}
+fn domains() -> DomainCatalog {
+    DomainCatalog::new([BaseDomain::I64.spec(), BaseDomain::Text.spec()]).unwrap()
+}
+fn column(name: &str, nullable: bool) -> Column {
+    if nullable {
+        ColumnBuilder::nullable(n(name), BaseDomain::I64.id())
+    } else {
+        ColumnBuilder::required(n(name), BaseDomain::I64.id())
+    }
+    .build()
+}
+fn table(name: &str) -> Table {
+    TableBuilder::new(n(name))
+        .column(column("id", false))
+        .constraint(Constraint::Primary(PrimaryKey {
+            name: n("pk"),
+            columns: vec![n("id")],
+        }))
+        .build()
+}
+
+#[test]
+fn exact_store_fixtures_are_distinct_and_canonical() {
+    let v = AcceptAllValues;
+    let values = [
+        fixtures::document(&v).unwrap(),
+        fixtures::gantt(&v).unwrap(),
+        fixtures::ledger(&v).unwrap(),
+        fixtures::relation_directory(&v).unwrap(),
+    ];
+    let ids: std::collections::BTreeSet<_> = values.iter().map(|v| v.id().unwrap()).collect();
+    assert_eq!(ids.len(), 4);
+    assert!(
+        values
+            .iter()
+            .all(|v| v.tables()[0].name().symbol().name.as_ref() == "items")
+    );
+}
+#[test]
+fn refuses_duplicate_and_dangling_names() {
+    let d = domains();
+    let v = AcceptAllValues;
+    assert!(matches!(
+        Schema::new(n("s"), [table("t"), table("t")], [], &d, &v),
+        Err(SchemaError::DuplicateTable(_))
+    ));
+    let bad = TableBuilder::new(n("t"))
+        .column(column("id", false))
+        .index(Index {
+            name: n("i"),
+            columns: vec![n("missing")],
+            unique: false,
+        })
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [bad], [], &d, &v),
+        Err(SchemaError::DanglingColumn { .. })
+    ));
+}
+#[test]
+fn refuses_key_generation_default_and_shape_errors() {
+    struct Reject;
+    impl ValueShapeValidator for Reject {
+        fn accepts(&self, _: &sim_relation_core::DomainId, _: &Datum) -> bool {
+            false
+        }
+    }
+    let d = domains();
+    let nullable = TableBuilder::new(n("t"))
+        .column(column("id", true))
+        .constraint(Constraint::Primary(PrimaryKey {
+            name: n("pk"),
+            columns: vec![n("id")],
+        }))
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [nullable], [], &d, &AcceptAllValues),
+        Err(SchemaError::NullablePrimaryKey(_))
+    ));
+    let both = TableBuilder::new(n("t"))
+        .column(
+            ColumnBuilder::required(n("id"), BaseDomain::I64.id())
+                .default(Datum::Bool(true))
+                .generated(GeneratedValue::new(Datum::Bool(true), []))
+                .build(),
+        )
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [both], [], &d, &AcceptAllValues),
+        Err(SchemaError::DefaultAndGenerated(_))
+    ));
+    let default = TableBuilder::new(n("t"))
+        .column(
+            ColumnBuilder::required(n("id"), BaseDomain::I64.id())
+                .default(Datum::Bool(true))
+                .build(),
+        )
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [default], [], &d, &Reject),
+        Err(SchemaError::InvalidDefault(_))
+    ));
+}
+#[test]
+fn refuses_foreign_key_arity_domain_and_view_cycles() {
+    let d = domains();
+    let fk = TableBuilder::new(n("child"))
+        .column(column("id", false))
+        .constraint(Constraint::Foreign(ForeignKey {
+            name: n("fk"),
+            columns: vec![n("id")],
+            target_table: n("parent"),
+            target_columns: vec![],
+        }))
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [table("parent"), fk], [], &d, &AcceptAllValues),
+        Err(SchemaError::ForeignKeyArity(_))
+    ));
+    let a = View {
+        name: n("a"),
+        query: Datum::Nil,
+        table_dependencies: vec![],
+        view_dependencies: vec![n("b")],
+    };
+    let b = View {
+        name: n("b"),
+        query: Datum::Nil,
+        table_dependencies: vec![],
+        view_dependencies: vec![n("a")],
+    };
+    assert!(matches!(
+        Schema::new(n("s"), [], [a, b], &d, &AcceptAllValues),
+        Err(SchemaError::ViewCycle(_))
+    ));
+}
+#[test]
+fn logical_identity_changes_for_every_meaningful_axis() {
+    let d = domains();
+    let v = AcceptAllValues;
+    let base = Schema::new(n("s"), [table("t")], [], &d, &v).unwrap();
+    let renamed = Schema::new(n("s2"), [table("t")], [], &d, &v).unwrap();
+    let nullable = Schema::new(
+        n("s"),
+        [TableBuilder::new(n("t")).column(column("id", true)).build()],
+        [],
+        &d,
+        &v,
+    )
+    .unwrap();
+    assert_ne!(base.id().unwrap(), renamed.id().unwrap());
+    assert_ne!(base.id().unwrap(), nullable.id().unwrap());
+}
+#[test]
+fn physical_normalization_is_order_independent_but_evidence_sensitive() {
+    let col = PhysicalColumn {
+        name: n("id"),
+        domain: BaseDomain::I64.id(),
+        storage: StorageRepr::I64,
+        nullable: false,
+        ordinal: 0,
+    };
+    let t1 = PhysicalTable {
+        name: n("z"),
+        columns: vec![col.clone()],
+        indexes: vec![],
+    };
+    let t2 = PhysicalTable {
+        name: n("a"),
+        columns: vec![col],
+        indexes: vec![],
+    };
+    let p1 =
+        PhysicalSchema::normalize(n("p"), n("s"), n("r1"), vec![t1.clone(), t2.clone()]).unwrap();
+    let p2 = PhysicalSchema::normalize(n("p"), n("s"), n("r1"), vec![t2, t1]).unwrap();
+    let p3 = PhysicalSchema::normalize(n("p"), n("s"), n("r2"), p2.tables().to_vec()).unwrap();
+    assert_eq!(p1.id().unwrap(), p2.id().unwrap());
+    assert_ne!(p1.id().unwrap(), p3.id().unwrap());
+}
+
+#[test]
+fn every_named_graph_refusal_is_exercised() {
+    let d = domains();
+    let v = AcceptAllValues;
+    let duplicate_column = TableBuilder::new(n("t"))
+        .column(column("id", false))
+        .column(column("id", false))
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [duplicate_column], [], &d, &v),
+        Err(SchemaError::DuplicateColumn { .. })
+    ));
+    let duplicate_constraint = TableBuilder::new(n("t"))
+        .column(column("id", false))
+        .constraint(Constraint::Unique(UniqueConstraint {
+            name: n("u"),
+            columns: vec![n("id")],
+        }))
+        .constraint(Constraint::Unique(UniqueConstraint {
+            name: n("u"),
+            columns: vec![n("id")],
+        }))
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [duplicate_constraint], [], &d, &v),
+        Err(SchemaError::DuplicateConstraint { .. })
+    ));
+    let duplicate_index = TableBuilder::new(n("t"))
+        .column(column("id", false))
+        .index(Index {
+            name: n("i"),
+            columns: vec![n("id")],
+            unique: false,
+        })
+        .index(Index {
+            name: n("i"),
+            columns: vec![n("id")],
+            unique: true,
+        })
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [duplicate_index], [], &d, &v),
+        Err(SchemaError::DuplicateIndex { .. })
+    ));
+    let views = [
+        View {
+            name: n("v"),
+            query: Datum::Nil,
+            table_dependencies: vec![],
+            view_dependencies: vec![],
+        },
+        View {
+            name: n("v"),
+            query: Datum::Nil,
+            table_dependencies: vec![],
+            view_dependencies: vec![],
+        },
+    ];
+    assert!(matches!(
+        Schema::new(n("s"), [], views, &d, &v),
+        Err(SchemaError::DuplicateView(_))
+    ));
+    let dangling_domain = TableBuilder::new(n("t"))
+        .column(ColumnBuilder::required(n("id"), n("unknown")).build())
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [dangling_domain], [], &d, &v),
+        Err(SchemaError::DanglingDomain(_))
+    ));
+    let empty_key = TableBuilder::new(n("t"))
+        .column(column("id", false))
+        .constraint(Constraint::Unique(UniqueConstraint {
+            name: n("u"),
+            columns: vec![],
+        }))
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [empty_key], [], &d, &v),
+        Err(SchemaError::EmptyKey(_))
+    ));
+    let generated_cycle = TableBuilder::new(n("t"))
+        .column(
+            ColumnBuilder::required(n("id"), BaseDomain::I64.id())
+                .generated(GeneratedValue::new(Datum::Nil, [n("id")]))
+                .build(),
+        )
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [generated_cycle], [], &d, &v),
+        Err(SchemaError::GeneratedCycle(_))
+    ));
+    struct Reject;
+    impl ValueShapeValidator for Reject {
+        fn accepts(&self, _: &sim_relation_core::DomainId, _: &Datum) -> bool {
+            false
+        }
+    }
+    let invalid_generated = TableBuilder::new(n("t"))
+        .column(
+            ColumnBuilder::required(n("id"), BaseDomain::I64.id())
+                .generated(GeneratedValue::new(Datum::Nil, []))
+                .build(),
+        )
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [invalid_generated], [], &d, &Reject),
+        Err(SchemaError::InvalidGenerated(_))
+    ));
+    let bad_check = TableBuilder::new(n("t"))
+        .column(column("id", false))
+        .constraint(Constraint::Check(CheckConstraint {
+            name: n("c"),
+            expression: Datum::Nil,
+            columns: vec![n("outside")],
+        }))
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [bad_check], [], &d, &v),
+        Err(SchemaError::DanglingColumn { .. })
+    ));
+    let dangling_table_view = View {
+        name: n("v"),
+        query: Datum::Nil,
+        table_dependencies: vec![n("missing")],
+        view_dependencies: vec![],
+    };
+    assert!(matches!(
+        Schema::new(n("s"), [], [dangling_table_view], &d, &v),
+        Err(SchemaError::DanglingTable(_))
+    ));
+    let dangling_view = View {
+        name: n("v"),
+        query: Datum::Nil,
+        table_dependencies: vec![],
+        view_dependencies: vec![n("missing")],
+    };
+    assert!(matches!(
+        Schema::new(n("s"), [], [dangling_view], &d, &v),
+        Err(SchemaError::DanglingView(_))
+    ));
+    let parent = TableBuilder::new(n("parent"))
+        .column(ColumnBuilder::required(n("id"), BaseDomain::Text.id()).build())
+        .build();
+    let child = TableBuilder::new(n("child"))
+        .column(column("id", false))
+        .constraint(Constraint::Foreign(ForeignKey {
+            name: n("fk"),
+            columns: vec![n("id")],
+            target_table: n("parent"),
+            target_columns: vec![n("id")],
+        }))
+        .build();
+    assert!(matches!(
+        Schema::new(n("s"), [parent, child], [], &d, &v),
+        Err(SchemaError::ForeignKeyDomain { .. })
+    ));
+}
+```
+
+### `feature/sim-foundation/relation-plan`
+
+Specimen `spec-test/sim-foundation/crates/sim-relation-plan/tests/admission` is checked by `cargo test`.
+
+Source `crates/sim-relation-plan/tests/admission.rs`:
+
+```rust
+// conformance: relation plans admit checked schemas and reject invalid operations.
+
+use sim_kernel::{Datum, Symbol};
+use sim_relation_core::*;
+use sim_relation_plan::*;
+use sim_relation_schema::*;
+
+fn sym(v: &str) -> Symbol {
+    Symbol::new(v)
+}
+fn field(v: &str) -> FieldName {
+    FieldName::new(sym(v)).unwrap()
+}
+fn column(v: &str) -> ColumnName {
+    ColumnName::new(sym(v)).unwrap()
+}
+fn table(v: &str) -> TableName {
+    TableName::new(sym(v)).unwrap()
+}
+fn bind(v: &str) -> BindingName {
+    BindingName::new(sym(v)).unwrap()
+}
+fn source() -> SourceName {
+    SourceName::new(sym("main")).unwrap()
+}
+fn empty() -> RowType {
+    RowType::new([]).unwrap()
+}
+fn int(value: &str) -> Scalar {
+    Scalar::Literal(Cell::new(
+        BaseDomain::I64.id(),
+        Some(Datum::Number(sim_kernel::NumberLiteral {
+            domain: Symbol::qualified("core", "i64"),
+            canonical: value.into(),
+        })),
+    ))
+}
+fn f(binding: &str, name: &str) -> Scalar {
+    Scalar::Field(FieldRef {
+        binding: bind(binding),
+        field: field(name),
+    })
+}
+fn named(name: &str, scalar: Scalar) -> NamedScalar {
+    NamedScalar {
+        name: field(name),
+        scalar,
+    }
+}
+fn scan(name: &str, binding: &str) -> Rel {
+    Rel::Scan {
+        source: source(),
+        table: table(name),
+        bind: bind(binding),
+    }
+}
+
+fn fixture() -> (DomainCatalog, Schema) {
+    let domains = DomainCatalog::new([
+        BaseDomain::Bool.spec(),
+        BaseDomain::I64.spec(),
+        BaseDomain::Text.spec(),
+    ])
+    .unwrap();
+    let ledger = TableBuilder::new(table("ledger"))
+        .column(ColumnBuilder::required(column("id"), BaseDomain::I64.id()).build())
+        .column(ColumnBuilder::required(column("account"), BaseDomain::Text.id()).build())
+        .column(ColumnBuilder::required(column("amount"), BaseDomain::I64.id()).build())
+        .column(ColumnBuilder::nullable(column("parent"), BaseDomain::I64.id()).build())
+        .constraint(Constraint::Primary(PrimaryKey {
+            name: ConstraintName::new(sym("ledger_pk")).unwrap(),
+            columns: vec![column("id")],
+        }))
+        .constraint(Constraint::Unique(UniqueConstraint {
+            name: ConstraintName::new(sym("ledger_account_key")).unwrap(),
+            columns: vec![column("account")],
+        }))
+        .build();
+    let product = TableBuilder::new(table("product"))
+        .column(ColumnBuilder::required(column("id"), BaseDomain::I64.id()).build())
+        .column(ColumnBuilder::required(column("name"), BaseDomain::Text.id()).build())
+        .constraint(Constraint::Primary(PrimaryKey {
+            name: ConstraintName::new(sym("product_pk")).unwrap(),
+            columns: vec![column("id")],
+        }))
+        .build();
+    let schema = SchemaBuilder::new(SchemaName::new(sym("app")).unwrap())
+        .table(ledger)
+        .table(product)
+        .build(&domains, &AcceptAllValues)
+        .unwrap();
+    (domains, schema)
+}
+
+#[test]
+fn admits_union_group_having_conditional_and_self_join() {
+    let (domains, schema) = fixture();
+    let grouped = Rel::Group {
+        input: Box::new(scan("ledger", "l")),
+        bind: bind("g"),
+        keys: vec![named("account", f("l", "account"))],
+        aggregates: vec![NamedAggregate {
+            name: field("total"),
+            aggregate: Aggregate::Sum(f("l", "amount")),
+        }],
+        having: Some(Scalar::Call(ScalarOp::Gt, vec![f("g", "total"), int("0")])),
+    };
+    let conditional = Rel::Project {
+        input: Box::new(grouped.clone()),
+        bind: bind("trial"),
+        fields: vec![named(
+            "side",
+            Scalar::Case {
+                branches: vec![(
+                    Scalar::Call(ScalarOp::Gt, vec![f("g", "total"), int("0")]),
+                    Scalar::Literal(Cell::new(
+                        BaseDomain::Text.id(),
+                        Some(Datum::String("debit".into())),
+                    )),
+                )],
+                otherwise: Some(Box::new(Scalar::Literal(Cell::new(
+                    BaseDomain::Text.id(),
+                    Some(Datum::String("credit".into())),
+                )))),
+            },
+        )],
+    };
+    let union = Rel::Set {
+        op: SetOp::UnionAll,
+        inputs: vec![conditional.clone(), conditional],
+    };
+    let checked = admit_query(
+        union,
+        &schema,
+        &domains,
+        empty(),
+        AdmissionLimits::default(),
+    )
+    .unwrap();
+    assert_eq!(checked.output().fields()[0].domain, BaseDomain::Text.id());
+
+    let joined = Rel::Project {
+        input: Box::new(Rel::Join {
+            left: Box::new(scan("ledger", "child")),
+            right: Box::new(scan("ledger", "parent")),
+            kind: JoinKind::Left,
+            on: Scalar::Call(ScalarOp::Eq, vec![f("child", "parent"), f("parent", "id")]),
+        }),
+        bind: bind("tree"),
+        fields: vec![
+            named("child", f("child", "id")),
+            named("parent", f("parent", "id")),
+        ],
+    };
+    let checked = admit_query(
+        joined,
+        &schema,
+        &domains,
+        empty(),
+        AdmissionLimits::default(),
+    )
+    .unwrap();
+    assert!(!checked.output().fields()[0].nullable);
+    assert!(checked.output().fields()[1].nullable);
+}
+
+#[test]
+fn admits_correlated_exists_in_and_scalar_subqueries() {
+    let (domains, schema) = fixture();
+    let one = |binding: &str| Rel::Project {
+        input: Box::new(scan("ledger", binding)),
+        bind: bind(&format!("{binding}_p")),
+        fields: vec![named("id", f(binding, "id"))],
+    };
+    let query = Rel::Project {
+        input: Box::new(scan("ledger", "outer")),
+        bind: bind("result"),
+        fields: vec![
+            named(
+                "exists",
+                Scalar::Exists(Box::new(Rel::Filter {
+                    input: Box::new(scan("ledger", "inner")),
+                    predicate: Scalar::Call(
+                        ScalarOp::Eq,
+                        vec![f("inner", "parent"), f("outer", "id")],
+                    ),
+                })),
+            ),
+            named(
+                "member",
+                Scalar::InQuery {
+                    value: Box::new(f("outer", "id")),
+                    query: Box::new(one("membership")),
+                },
+            ),
+            named(
+                "single",
+                Scalar::ScalarQuery(Box::new(Rel::Limit {
+                    input: Box::new(one("scalar")),
+                    count: Some(1),
+                    offset: 0,
+                })),
+            ),
+        ],
+    };
+    let checked = admit_query(
+        query,
+        &schema,
+        &domains,
+        empty(),
+        AdmissionLimits::default(),
+    )
+    .unwrap();
+    assert_eq!(checked.output().fields().len(), 3);
+}
+
+#[test]
+fn admits_complete_upsert_and_returned_values() {
+    let (domains, schema) = fixture();
+    let row_type = RowType::new([
+        FieldType {
+            name: field("id"),
+            domain: BaseDomain::I64.id(),
+            nullable: false,
+        },
+        FieldType {
+            name: field("name"),
+            domain: BaseDomain::Text.id(),
+            nullable: false,
+        },
+    ])
+    .unwrap();
+    let row = Row::new(
+        row_type.clone(),
+        [
+            Cell::new(
+                BaseDomain::I64.id(),
+                Some(Datum::Number(sim_kernel::NumberLiteral {
+                    domain: Symbol::qualified("core", "i64"),
+                    canonical: "1".into(),
+                })),
+            ),
+            Cell::new(BaseDomain::Text.id(), Some(Datum::String("paper".into()))),
+        ],
+    )
+    .unwrap();
+    let mutation = Mutation::Insert {
+        table: table("product"),
+        columns: vec![column("id"), column("name")],
+        input: Box::new(Rel::Values {
+            bind: bind("new"),
+            row_type,
+            rows: vec![row],
+        }),
+        conflict: ConflictAction::DoUpdate {
+            target: ConflictTarget::PrimaryKey,
+            assignments: vec![(column("name"), f("excluded", "name"))],
+            predicate: Some(Scalar::Call(
+                ScalarOp::Ne,
+                vec![f("target", "name"), f("excluded", "name")],
+            )),
+        },
+        returning: vec![named("id", f("target", "id"))],
+    };
+    let checked = admit_mutation(
+        mutation,
+        &schema,
+        &domains,
+        empty(),
+        AdmissionLimits::default(),
+    )
+    .unwrap();
+    assert_eq!(checked.output().fields()[0].domain, BaseDomain::I64.id());
+}
+
+#[test]
+fn rejects_unsafe_and_unbounded_plans() {
+    let (domains, schema) = fixture();
+    let ty = RowType::new([FieldType {
+        name: field("x"),
+        domain: BaseDomain::I64.id(),
+        nullable: false,
+    }])
+    .unwrap();
+    let row = Row::new(
+        ty.clone(),
+        [Cell::new(
+            BaseDomain::I64.id(),
+            Some(Datum::Number(sim_kernel::NumberLiteral {
+                domain: Symbol::qualified("core", "i64"),
+                canonical: "1".into(),
+            })),
+        )],
+    )
+    .unwrap();
+    assert!(matches!(
+        admit_query(
+            Rel::Values {
+                bind: bind("v"),
+                row_type: ty,
+                rows: vec![row]
+            },
+            &schema,
+            &domains,
+            empty(),
+            AdmissionLimits {
+                max_literal_rows: 0
+            }
+        ),
+        Err(AdmissionError::LiteralRowLimit { .. })
+    ));
+    let unresolved = Rel::Project {
+        input: Box::new(scan("ledger", "l")),
+        bind: bind("p"),
+        fields: vec![named("x", f("missing", "id"))],
+    };
+    assert!(matches!(
+        admit_query(
+            unresolved,
+            &schema,
+            &domains,
+            empty(),
+            AdmissionLimits::default()
+        ),
+        Err(AdmissionError::UnresolvedBinding(_))
+    ));
+}
+
+#[test]
+fn admits_update_delete_and_rejects_unsafe_conflict() {
+    let (domains, schema) = fixture();
+    let update = Mutation::Update {
+        table: table("product"),
+        bind: bind("p"),
+        assignments: vec![(
+            column("name"),
+            Scalar::Literal(Cell::new(
+                BaseDomain::Text.id(),
+                Some(Datum::String("updated".into())),
+            )),
+        )],
+        predicate: Some(Scalar::Call(ScalarOp::Eq, vec![f("p", "id"), int("1")])),
+        returning: vec![named("name", f("p", "name"))],
+    };
+    assert_eq!(
+        admit_mutation(
+            update,
+            &schema,
+            &domains,
+            empty(),
+            AdmissionLimits::default()
+        )
+        .unwrap()
+        .output()
+        .fields()
+        .len(),
+        1
+    );
+    let delete = Mutation::Delete {
+        table: table("product"),
+        bind: bind("p"),
+        predicate: None,
+        returning: vec![named("id", f("p", "id"))],
+    };
+    assert!(
+        admit_mutation(
+            delete,
+            &schema,
+            &domains,
+            empty(),
+            AdmissionLimits::default()
+        )
+        .is_ok()
+    );
+    let ty = RowType::new([
+        FieldType {
+            name: field("id"),
+            domain: BaseDomain::I64.id(),
+            nullable: false,
+        },
+        FieldType {
+            name: field("name"),
+            domain: BaseDomain::Text.id(),
+            nullable: false,
+        },
+    ])
+    .unwrap();
+    let unsafe_insert = Mutation::Insert {
+        table: table("product"),
+        columns: vec![column("id"), column("name")],
+        input: Box::new(Rel::Values {
+            bind: bind("new"),
+            row_type: ty,
+            rows: vec![],
+        }),
+        conflict: ConflictAction::DoNothing {
+            target: ConflictTarget::Columns(vec![column("name")]),
+        },
+        returning: vec![],
+    };
+    assert!(matches!(
+        admit_mutation(
+            unsafe_insert,
+            &schema,
+            &domains,
+            empty(),
+            AdmissionLimits::default()
+        ),
+        Err(AdmissionError::UnsafeConflictTarget)
+    ));
+}
+```
+
+### `feature/sim-foundation/relation-migrate`
+
+Specimen `spec-test/sim-foundation/crates/sim-relation-migrate/tests/migration` is checked by `cargo test`.
+
+Source `crates/sim-relation-migrate/tests/migration.rs`:
+
+```rust
+// conformance: relation migration plans preserve exact schema identities and policy.
+
+use sim_kernel::Symbol;
+use sim_relation_core::*;
+use sim_relation_migrate::*;
+use sim_relation_plan::*;
+use sim_relation_schema::*;
+
+fn n<T: TryFrom<Symbol>>(s: &str) -> T
+where
+    T::Error: std::fmt::Debug,
+{
+    T::try_from(Symbol::new(s)).unwrap()
+}
+fn domains() -> DomainCatalog {
+    DomainCatalog::new([BaseDomain::I64.spec(), BaseDomain::Text.spec()]).unwrap()
+}
+fn schema(nullable_extra: bool, second_table: bool) -> Schema {
+    let mut item = TableBuilder::new(n("items"))
+        .column(ColumnBuilder::required(n("id"), BaseDomain::I64.id()).build());
+    if nullable_extra {
+        item = item.column(ColumnBuilder::nullable(n("note"), BaseDomain::Text.id()).build());
+    }
+    let mut s = SchemaBuilder::new(n("app")).table(item.build());
+    if second_table {
+        s = s.table(
+            TableBuilder::new(n("audit"))
+                .column(ColumnBuilder::required(n("id"), BaseDomain::I64.id()).build())
+                .build(),
+        );
+    }
+    s.build(&domains(), &AcceptAllValues).unwrap()
+}
+fn rid(label: &str) -> RelationId {
+    SchemaBuilder::new(n(label))
+        .build(&domains(), &AcceptAllValues)
+        .unwrap()
+        .id()
+        .unwrap()
+}
+fn program(base: Schema, target: Schema, revision: Revision) -> MigrationProgram {
+    MigrationProgram {
+        base_revision: rid("base"),
+        base_schema: base,
+        revisions: vec![revision],
+        target_schema: target.id().unwrap(),
+    }
+}
+
+#[test]
+fn rejects_wrong_parent_skipped_revision_and_stale_schema() {
+    let a = schema(false, false);
+    let b = schema(true, false);
+    let op = Operation::new(
+        a.id().unwrap(),
+        b.clone(),
+        OperationKind::AddColumn {
+            table: n("items"),
+            column: b.tables()[0].columns()[1].clone(),
+        },
+    );
+    let wrong = Revision::new(
+        rid("r1"),
+        Some(rid("other")),
+        b.id().unwrap(),
+        vec![op.clone()],
+    );
+    assert_eq!(
+        admit(program(a.clone(), b.clone(), wrong)).unwrap_err(),
+        MigrationError::WrongParent
+    );
+    let skipped = Revision::new(
+        rid("r2"),
+        Some(rid("r0")),
+        b.id().unwrap(),
+        vec![op.clone()],
+    );
+    assert_eq!(
+        admit(program(a.clone(), b.clone(), skipped)).unwrap_err(),
+        MigrationError::WrongParent
+    );
+    let stale = Operation::new(rid("stale"), b.clone(), op.kind().clone());
+    let rev = Revision::new(rid("r1"), Some(rid("base")), b.id().unwrap(), vec![stale]);
+    assert_eq!(
+        admit(program(a, b, rev)).unwrap_err(),
+        MigrationError::StaleBefore
+    );
+}
+
+#[test]
+fn rejects_incomplete_coverage_and_target_claims() {
+    let a = schema(false, false);
+    let b = schema(true, false);
+    let lie = Operation::new(
+        a.id().unwrap(),
+        b.clone(),
+        OperationKind::DropTable(n("missing")),
+    );
+    let rev = Revision::new(rid("r1"), Some(rid("base")), b.id().unwrap(), vec![lie]);
+    assert_eq!(
+        admit(program(a.clone(), b.clone(), rev)).unwrap_err(),
+        MigrationError::IncompleteOperationCoverage
+    );
+    let op = derive_lossless(&a, &b).unwrap().remove(0);
+    let rev = Revision::new(rid("r1"), Some(rid("base")), rid("false-target"), vec![op]);
+    assert_eq!(
+        admit(program(a, b, rev)).unwrap_err(),
+        MigrationError::RevisionTargetMismatch
+    );
+}
+
+#[test]
+fn safe_derivation_is_narrow_and_admits() {
+    let a = schema(false, false);
+    let b = schema(true, false);
+    let ops = derive_lossless(&a, &b).unwrap();
+    assert_eq!(ops.len(), 1);
+    let rev = Revision::new(rid("r1"), Some(rid("base")), b.id().unwrap(), ops);
+    assert_eq!(
+        admit(program(a.clone(), b.clone(), rev))
+            .unwrap()
+            .program()
+            .target_schema,
+        b.id().unwrap()
+    );
+    let created = schema(false, true);
+    assert_eq!(derive_lossless(&a, &created).unwrap().len(), 1);
+    assert!(matches!(
+        derive_lossless(&b, &a),
+        Err(MigrationError::AuthoredOperationRequired)
+    ));
+}
+
+#[test]
+fn invalid_backfill_and_external_drift_fail_closed() {
+    let a = schema(false, false);
+    let b = schema(true, false);
+    let mutation = admit_mutation(
+        Mutation::Delete {
+            table: n("items"),
+            bind: n("i"),
+            predicate: None,
+            returning: vec![],
+        },
+        &a,
+        &domains(),
+        RowType::new([]).unwrap(),
+        AdmissionLimits::default(),
+    )
+    .unwrap();
+    let op = Operation::new(
+        b.id().unwrap(),
+        b.clone(),
+        OperationKind::Backfill(Box::new(mutation)),
+    );
+    let rev = Revision::new(rid("r1"), Some(rid("base")), b.id().unwrap(), vec![op]);
+    assert_eq!(
+        admit(program(b.clone(), b.clone(), rev)).unwrap_err(),
+        MigrationError::InvalidBackfill
+    );
+    let manifest = AdoptionManifest {
+        logical_schema: a.id().unwrap(),
+        physical_schema: rid("physical-a"),
+    };
+    assert_eq!(
+        manifest.verify(&rid("physical-b")),
+        Err(AdoptionError::ExternalDrift)
+    );
+    assert_eq!(manifest.verify(&rid("physical-a")), Ok(()));
+}
+
+#[test]
+fn capabilities_and_attestation_are_exact() {
+    assert!(
+        MigrationCapabilities {
+            transactional_ddl: true,
+            post_apply_introspection: true
+        }
+        .require()
+        .is_ok()
+    );
+    assert!(
+        MigrationCapabilities {
+            transactional_ddl: true,
+            post_apply_introspection: false
+        }
+        .require()
+        .is_err()
+    );
+    let attestation = SchemaAttestation {
+        logical_schema: rid("logical"),
+        physical_schema: rid("physical"),
+        revision: rid("r1"),
+    };
+    assert_ne!(attestation.logical_schema, attestation.physical_schema);
+}
+```
+
+### `feature/sim-foundation/blocking-http-client`
+
+Specimen `recipe/sim-foundation/crates/sim-lib-net-http/01-basics/bounded-get` is checked by `xtask check-recipes`.
+
+Source `crates/sim-lib-net-http/recipes/01-basics/bounded-get/recipe.toml`:
+
+```toml
+id = "bounded-get"
+title = "Bounded capsule request descriptor"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["net", "http", "policy", "sandbox-descriptor"]
+requires = ["net-http", "codec/lisp"]
+```
+
 ### `feature/sim-foundation/host-primitives`
 
 Specimen `recipe/sim-foundation/crates/sim-lib-net-core/01-basics/response-head` is checked by `xtask check-recipes`.
@@ -1199,6 +3389,40 @@ purpose = "purpose.md"
 order = 10
 tags = ["net", "http", "parser", "sandbox-descriptor"]
 requires = ["net-core", "codec/lisp"]
+```
+
+### `feature/sim-foundation/cancellation`
+
+Specimen `recipe/sim-foundation/crates/sim-cancel/01-basics/request-lifetime` is checked by `xtask check-recipes`.
+
+Source `crates/sim-cancel/recipes/01-basics/request-lifetime/recipe.toml`:
+
+```toml
+id = "request-lifetime"
+title = "Bound a request lifetime"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["request", "cancellation", "lifetime", "sandbox-descriptor"]
+requires = ["cancel", "codec/lisp"]
+```
+
+### `feature/sim-foundation/protected-state`
+
+Specimen `recipe/sim-foundation/crates/sim-lib-protected-state/01-basics/exact-binding` is checked by `xtask check-recipes`.
+
+Source `crates/sim-lib-protected-state/recipes/01-basics/exact-binding/recipe.toml`:
+
+```toml
+id = "exact-binding"
+title = "Exact protected-state binding"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["state", "aead", "binding", "rotation", "sandbox-descriptor"]
+requires = ["protected-state", "host-time", "table", "codec/lisp"]
 ```
 
 ### `feature/sim-foundation/cookbook`
@@ -1503,6 +3727,129 @@ mod tests {
         };
         assert!(run.ok);
         assert!(run.checks[0].pass);
+    }
+}
+```
+
+### `feature/sim-foundation/cookbook-build-tool`
+
+Specimen `spec-test/sim-foundation/crates/sim-cookbook-build/src/lib` is checked by `cargo test`.
+
+Source `crates/sim-cookbook-build/src/lib.rs`:
+
+```rust
+//! Portable host-side build support for cookbook recipe embedding.
+//!
+//! Product crates use this library only from `build.rs`. Runtime cookbook
+//! behavior remains in `sim-cookbook`, over already-supplied embedded bytes.
+
+// conformance: cookbook generation validates packages and emits deterministic source.
+
+#![forbid(unsafe_code)]
+#![deny(missing_docs)]
+
+use std::io;
+use std::path::{Path, PathBuf};
+
+/// Generate the embed slice and write it to `$OUT_DIR/cookbook_recipes.rs`.
+/// `recipes_subdir` is relative to `$CARGO_MANIFEST_DIR`.
+pub fn write_embed(recipes_subdir: &str) -> io::Result<()> {
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
+        .map_err(|_| io::Error::other("CARGO_MANIFEST_DIR not set (call from build.rs)"))?;
+    let out_dir = std::env::var("OUT_DIR")
+        .map_err(|_| io::Error::other("OUT_DIR not set (call from build.rs)"))?;
+    let root = Path::new(&manifest_dir).join(recipes_subdir);
+    println!("cargo:rerun-if-changed={}", root.display());
+    let code = generate_embed_code(&root)?;
+    std::fs::write(Path::new(&out_dir).join("cookbook_recipes.rs"), code)
+}
+
+/// Return the deterministic Rust source embedding all files below `recipes_root`.
+pub fn generate_embed_code(recipes_root: &Path) -> io::Result<String> {
+    let mut files: Vec<(String, PathBuf)> = Vec::new();
+    if recipes_root.is_dir() {
+        collect(recipes_root, recipes_root, &mut files)?;
+    }
+    files.sort();
+    validate_embedded_tree(recipes_root, &files)?;
+    let mut out = String::from("&[\n");
+    for (relative, absolute) in &files {
+        out.push_str(&format!(
+            "    ({:?}, include_bytes!({:?}) as &[u8]),\n",
+            relative,
+            absolute.to_string_lossy(),
+        ));
+    }
+    out.push_str("]\n");
+    Ok(out)
+}
+
+fn validate_embedded_tree(recipes_root: &Path, files: &[(String, PathBuf)]) -> io::Result<()> {
+    if files.is_empty() {
+        return Ok(());
+    }
+    let owned = files
+        .iter()
+        .map(|(relative, path)| std::fs::read(path).map(|bytes| (relative.as_str(), bytes)))
+        .collect::<io::Result<Vec<_>>>()?;
+    let embedded = owned
+        .iter()
+        .map(|(relative, bytes)| (*relative, bytes.as_slice()))
+        .collect::<Vec<_>>();
+    sim_cookbook::recipes_from_embedded(&embedded).map_err(|error| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!(
+                "invalid cookbook tree at {}: {error}",
+                recipes_root.display()
+            ),
+        )
+    })?;
+    Ok(())
+}
+
+fn collect(base: &Path, dir: &Path, out: &mut Vec<(String, PathBuf)>) -> io::Result<()> {
+    let mut entries = std::fs::read_dir(dir)?.collect::<io::Result<Vec<_>>>()?;
+    entries.sort_by_key(std::fs::DirEntry::file_name);
+    for entry in entries {
+        let path = entry.path();
+        if path.is_dir() {
+            collect(base, &path, out)?;
+        } else if path.is_file() {
+            let relative = path
+                .strip_prefix(base)
+                .map_err(io::Error::other)?
+                .components()
+                .map(|component| component.as_os_str().to_string_lossy())
+                .collect::<Vec<_>>()
+                .join("/");
+            out.push((relative, path));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generated_bytes_match_the_legacy_contract() {
+        let root = std::env::temp_dir().join(format!("sim-cookbook-build-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("01-basics/add")).unwrap();
+        std::fs::write(
+            root.join("book.toml"),
+            b"book = \"x\"\ntitle = \"X\"\nchapters = [\"01-basics\"]\n",
+        )
+        .unwrap();
+        std::fs::write(root.join("01-basics/add/recipe.toml"), b"id = \"a\"\ntitle = \"A\"\ncodec = \"lisp\"\nsetup = \"setup.siml\"\npurpose = \"purpose.md\"\n").unwrap();
+        std::fs::write(root.join("01-basics/add/setup.siml"), b"(+ 1 2)\n").unwrap();
+        std::fs::write(root.join("01-basics/add/purpose.md"), b"Add values.\n").unwrap();
+        let code = generate_embed_code(&root).unwrap();
+        assert!(code.starts_with("&[\n    (\"01-basics/add/purpose.md\", include_bytes!("));
+        assert!(code.ends_with(") as &[u8]),\n]\n"));
+        let _ = std::fs::remove_dir_all(root);
     }
 }
 ```

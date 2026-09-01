@@ -39,7 +39,9 @@ pub mod op;
 pub mod path;
 
 pub use manifest::backend_manifest;
-pub use op::{TableOp, TableOpError, decode_table_op, encode_table_op};
+pub use op::{
+    CompareExpected, CompareReplacement, TableOp, TableOpError, decode_table_op, encode_table_op,
+};
 pub use path::{
     MAX_TABLE_PATH_SEGMENTS, MAX_TABLE_PATH_TEXT_BYTES, TablePath, TablePathError, TablePathRef,
     TablePathRefError, TablePathRefPart, is_legal_table_segment,

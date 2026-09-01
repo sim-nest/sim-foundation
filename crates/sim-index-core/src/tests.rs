@@ -1,13 +1,112 @@
-use sim_kernel::{Value, card::Card, testing::bare_cx};
+use sim_kernel::{Value, testing::bare_cx};
 
+use crate::test_support::{assert_card_entry, card};
 use crate::{
     AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
-    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
-    IndexEdge, IndexError, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
-    SourceLocation, SpecimenId, SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason,
-    Visibility, check_index_doc, check_index_fragment, declaration_card, draft::materialize_draft,
+    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, HostSourceRole,
+    IndexDoc, IndexEdge, IndexError, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord,
+    RouteStep, SourceCompleteness, SourceLocation, SourceReachability, SourceUnit, SpecimenId,
+    SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason, Visibility,
+    check_index_doc, check_index_fragment, declaration_card, draft::materialize_draft,
     feature_card, key::canonical_feature_key, protocol_relation_card, route_card, specimen_card,
 };
+
+#[test]
+fn inventory_is_exhaustive_ordered_and_borrowed() {
+    let mut doc = valid_doc();
+    doc.source_units
+        .push(source_unit(SourceCompleteness::Complete));
+    doc.declarations.push(declaration("inventory"));
+    doc.protocol_relations
+        .push(protocol(ProtocolResolution::Resolved {
+            protocol: "sim_index_core::Inventory".to_owned(),
+        }));
+    doc.drafts.push(FeatureDraft {
+        id: FeatureId::new("feature/sim-run/inventory-draft"),
+        subject: SubjectId::new("crate/sim-run"),
+        title: "Inventory draft".to_owned(),
+        summary: "Exercises the authored row family.".to_owned(),
+        claims_anchors: Vec::new(),
+        claims_surfaces: Vec::new(),
+        claims_specimens: Vec::new(),
+        literal_anchors: Vec::new(),
+        literal_surfaces: Vec::new(),
+        literal_specimens: Vec::new(),
+        grammar_contracts: Vec::new(),
+        doc_anchor: None,
+    });
+
+    let (metadata, rows) = doc.inventory();
+    assert_eq!(metadata.schema, doc.schema);
+    assert_eq!(metadata.generated_by, doc.generated_by);
+    assert_eq!(metadata.visibility, doc.visibility);
+    assert_eq!(rows.len(), 14);
+    assert_eq!(
+        rows.iter().map(|row| row.family()).collect::<Vec<_>>(),
+        [
+            crate::IndexRowFamily::Subject,
+            crate::IndexRowFamily::Subject,
+            crate::IndexRowFamily::Anchor,
+            crate::IndexRowFamily::Anchor,
+            crate::IndexRowFamily::SourceUnit,
+            crate::IndexRowFamily::Declaration,
+            crate::IndexRowFamily::ProtocolRelation,
+            crate::IndexRowFamily::Surface,
+            crate::IndexRowFamily::Specimen,
+            crate::IndexRowFamily::Draft,
+            crate::IndexRowFamily::Feature,
+            crate::IndexRowFamily::Route,
+            crate::IndexRowFamily::Edge,
+            crate::IndexRowFamily::Edge,
+        ]
+    );
+    assert!(
+        matches!(rows[0], crate::IndexRowRef::Subject(row) if std::ptr::eq(row, &doc.subjects[0]))
+    );
+    assert!(
+        matches!(rows[5], crate::IndexRowRef::Declaration(row) if std::ptr::eq(row, &doc.declarations[0]))
+    );
+    let owned: Vec<_> = rows.into_iter().map(crate::IndexRowRef::to_owned).collect();
+    let mut normalized = owned.clone();
+    normalized.sort();
+    assert_eq!(doc.normalized_inventory(), normalized);
+    assert_eq!(owned[5].diagnostic_key(), &owned[5]);
+}
+
+#[test]
+fn inventory_has_one_top_level_ownership_destructure() {
+    let source = include_str!("rows.rs");
+    assert_eq!(source.matches("let Self {").count(), 1);
+    assert!(!source.contains("let Self { .."));
+}
+
+#[test]
+fn exact_non_id_duplicates_are_distinct_from_duplicate_ids() {
+    let mut doc = valid_doc();
+    doc.edges.push(doc.edges[0].clone());
+    assert!(matches!(
+        check_index_doc(&doc),
+        Err(IndexError::DuplicateExactRow {
+            family: crate::IndexRowFamily::Edge,
+            ..
+        })
+    ));
+}
+
+#[test]
+fn host_source_roles_are_permanent_and_closed() {
+    assert_eq!(
+        [
+            HostSourceRole::Pure,
+            HostSourceRole::Capsule,
+            HostSourceRole::Bootstrap,
+            HostSourceRole::Tool,
+            HostSourceRole::Test,
+        ]
+        .map(HostSourceRole::as_str),
+        ["pure", "capsule", "bootstrap", "tool", "test"]
+    );
+}
 
 fn subject() -> SubjectRecord {
     SubjectRecord {
@@ -104,6 +203,7 @@ fn valid_doc() -> IndexDoc {
         visibility: Visibility::Public,
         subjects: vec![repo_subject(), subject()],
         anchors: vec![anchor("export/sim-run/repl"), anchor("doc/sim-run/repl")],
+        source_units: Vec::new(),
         declarations: Vec::new(),
         protocol_relations: Vec::new(),
         surfaces: vec![surface()],
@@ -123,6 +223,63 @@ fn valid_doc() -> IndexDoc {
             ),
         ],
     }
+}
+
+fn source_unit(completeness: SourceCompleteness) -> SourceUnit {
+    SourceUnit {
+        subject: SubjectId::new("crate/sim-run"),
+        path: "src/lib.rs".to_owned(),
+        reachability: SourceReachability::Reachable,
+        completeness,
+        reason: if completeness == SourceCompleteness::Complete {
+            String::new()
+        } else {
+            "bounded scanner evidence".to_owned()
+        },
+        retained_bound: SyntaxBound {
+            max_bytes: 4096,
+            truncated: completeness == SourceCompleteness::Truncated,
+        },
+        declaration_count: 7,
+    }
+}
+
+#[test]
+fn fragments_retain_incomplete_units_but_strict_graphs_reject_them() {
+    for state in [
+        SourceCompleteness::Malformed,
+        SourceCompleteness::Unreadable,
+        SourceCompleteness::Truncated,
+        SourceCompleteness::Unsupported,
+        SourceCompleteness::Unresolved,
+    ] {
+        let mut doc = valid_doc();
+        doc.source_units.push(source_unit(state));
+        check_index_fragment(&doc).expect("fragment retains incomplete evidence");
+        assert!(matches!(
+            check_index_doc(&doc),
+            Err(IndexError::IncompleteReachableSource { state: actual, .. }) if actual == state.as_str()
+        ));
+    }
+}
+
+#[test]
+fn source_unit_reasons_and_bounds_are_closed_and_bounded() {
+    let mut doc = valid_doc();
+    let mut unit = source_unit(SourceCompleteness::Malformed);
+    unit.reason = "x".repeat(513);
+    doc.source_units.push(unit);
+    assert!(matches!(
+        check_index_fragment(&doc),
+        Err(IndexError::InvalidSourceUnit { .. })
+    ));
+
+    doc.source_units[0] = source_unit(SourceCompleteness::Truncated);
+    doc.source_units[0].retained_bound.truncated = false;
+    assert!(matches!(
+        check_index_fragment(&doc),
+        Err(IndexError::InvalidSourceUnit { .. })
+    ));
 }
 
 fn declaration(path: &str) -> DeclarationFact {
@@ -525,10 +682,6 @@ fn feature_specimen_and_route_cards_publish_open_entries() {
         .expect("card projects to expr");
 }
 
-fn card(value: &Value) -> &Card {
-    value.object().downcast_ref::<Card>().expect("index card")
-}
-
 fn assert_entry_name(value: &Value, name: &str) {
     assert!(
         card(value)
@@ -537,13 +690,4 @@ fn assert_entry_name(value: &Value, name: &str) {
             .any(|(symbol, _)| symbol.as_qualified_str() == name),
         "missing card entry {name}"
     );
-}
-
-fn assert_card_entry(value: &Value, name: &str, expected: &str, cx: &mut sim_kernel::Cx) {
-    let (_, value) = card(value)
-        .entries()
-        .iter()
-        .find(|(symbol, _)| symbol.as_qualified_str() == name)
-        .unwrap_or_else(|| panic!("missing card entry {name}"));
-    assert_eq!(value.object().display(cx).expect("entry display"), expected);
 }

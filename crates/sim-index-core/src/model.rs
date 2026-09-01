@@ -66,7 +66,7 @@ id_type!(
 );
 
 /// Top-level SIM Index document.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct IndexDoc {
     /// Schema marker, normally `sim.index`.
     pub schema: String,
@@ -78,6 +78,8 @@ pub struct IndexDoc {
     pub subjects: Vec<SubjectRecord>,
     /// Discovered source anchors.
     pub anchors: Vec<DiscoveredAnchor>,
+    /// Source units examined while discovering anchors and declaration facts.
+    pub source_units: Vec<SourceUnit>,
     /// Bounded public declaration facts attached to discovered anchors.
     pub declarations: Vec<DeclarationFact>,
     /// Protocol implementation relations attached to discovered anchors.
@@ -105,6 +107,7 @@ impl IndexDoc {
             visibility: Visibility::Public,
             subjects: Vec::new(),
             anchors: Vec::new(),
+            source_units: Vec::new(),
             declarations: Vec::new(),
             protocol_relations: Vec::new(),
             surfaces: Vec::new(),
@@ -117,8 +120,67 @@ impl IndexDoc {
     }
 }
 
+/// Durable evidence for one repository-relative source unit considered by discovery.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct SourceUnit {
+    /// Subject whose discovery traversal considered this unit.
+    pub subject: SubjectId,
+    /// Stable repository-relative source path and source-unit identity.
+    pub path: String,
+    /// Whether this unit can contribute facts reachable from the public graph.
+    pub reachability: SourceReachability,
+    /// Outcome of the bounded source scan.
+    pub completeness: SourceCompleteness,
+    /// Bounded diagnostic explaining a non-complete outcome.
+    pub reason: String,
+    /// Bound applied while retaining source for inspection.
+    pub retained_bound: SyntaxBound,
+    /// Number of declaration positions visited in deterministic source order.
+    pub declaration_count: usize,
+}
+
+/// Whether a scanned source unit can contribute public graph evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum SourceReachability {
+    /// The unit is reachable from a discovered public subject.
+    Reachable,
+    /// The unit is known but not reachable from the public graph.
+    Unreachable,
+}
+
+/// Closed source-scan outcome vocabulary shared by graph producers and consumers.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum SourceCompleteness {
+    /// The entire unit was read and understood within its bound.
+    Complete,
+    /// The unit was readable but syntactically malformed.
+    Malformed,
+    /// The unit could not be read.
+    Unreadable,
+    /// The retained input exceeded its explicit bound.
+    Truncated,
+    /// The unit uses a source form the scanner does not support.
+    Unsupported,
+    /// The scanner could not resolve the unit to a stable source identity.
+    Unresolved,
+}
+
+impl SourceCompleteness {
+    /// Returns the stable codec label for this outcome.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Complete => "complete",
+            Self::Malformed => "malformed",
+            Self::Unreadable => "unreadable",
+            Self::Truncated => "truncated",
+            Self::Unsupported => "unsupported",
+            Self::Unresolved => "unresolved",
+        }
+    }
+}
+
 /// Visibility boundary for an index document.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Visibility {
     /// Public, generated from public source facts.
     Public,
@@ -127,7 +189,7 @@ pub enum Visibility {
 }
 
 /// A discovered subject that can own anchors, surfaces, specimens, or features.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct SubjectRecord {
     /// Stable subject id.
     pub id: SubjectId,
@@ -138,7 +200,7 @@ pub struct SubjectRecord {
 }
 
 /// A discovered source anchor.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DiscoveredAnchor {
     /// Stable anchor id.
     pub id: AnchorId,
@@ -216,6 +278,88 @@ pub struct SourceLocation {
     pub declaration: usize,
 }
 
+/// A semantic binding from SIM source to a host-provided capability.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct HostBindingFact {
+    /// Existing source anchor that owns the binding.
+    pub anchor: AnchorId,
+    /// Host operation or dependency form that was discovered.
+    pub kind: HostBindingKind,
+    /// Structurally derived role of the source containing the binding.
+    pub role: HostSourceRole,
+    /// Cargo or foreign-language build target containing the source.
+    pub target: String,
+    /// Stable source location of the bound span.
+    pub location: SourceLocation,
+    /// True when the module graph places the binding below `cfg(test)`.
+    pub test_member: bool,
+    /// Canonical provider package or platform id, when resolution succeeded.
+    pub provider: String,
+    /// Resolved call, dependency edge, import, or artifact evidence.
+    pub evidence: String,
+    /// Required architectural move that removes or encapsulates the binding.
+    pub normalization_move: String,
+}
+
+/// Closed semantic kinds of host binding.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum HostBindingKind {
+    /// A call to an operating-system or hardware API.
+    Call,
+    /// A dependency whose implementation can reach the host.
+    Dependency,
+    /// A native or foreign ABI declaration without a call.
+    AbiDeclaration,
+    /// A native ABI implementation exported by this source.
+    ForeignImplementation,
+    /// An imported symbol present in a built artifact.
+    ArtifactImport,
+    /// A process-command fallback.
+    Subprocess,
+}
+
+impl HostBindingKind {
+    /// Returns the stable generated-ledger label.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Call => "call",
+            Self::Dependency => "dependency",
+            Self::AbiDeclaration => "abi-declaration",
+            Self::ForeignImplementation => "foreign-implementation",
+            Self::ArtifactImport => "artifact-import",
+            Self::Subprocess => "subprocess",
+        }
+    }
+}
+
+/// Structurally derived relationship between source and host behavior.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum HostSourceRole {
+    /// Product code expected to remain host-independent.
+    Pure,
+    /// A declared host capsule or concrete backend.
+    Capsule,
+    /// The single process/bootstrap boundary.
+    Bootstrap,
+    /// Build, development, or repository tooling.
+    Tool,
+    /// Test-only source derived from the module/target graph.
+    Test,
+}
+
+impl HostSourceRole {
+    /// Returns the stable generated-ledger label.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Pure => "pure",
+            Self::Capsule => "capsule",
+            Self::Bootstrap => "bootstrap",
+            Self::Tool => "tool",
+            Self::Test => "test",
+        }
+    }
+}
+
 /// Applied bound and truncation state for normalized declaration syntax.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct SyntaxBound {
@@ -271,7 +415,7 @@ pub enum UnresolvedReason {
 }
 
 /// A discovered surface by which a subject is addressed.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DiscoveredSurface {
     /// Stable surface id.
     pub id: SurfaceId,
@@ -282,7 +426,7 @@ pub struct DiscoveredSurface {
 }
 
 /// A runnable, checked description of a feature.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DiscoveredSpecimen {
     /// Stable specimen id.
     pub id: SpecimenId,
@@ -305,7 +449,7 @@ pub struct DiscoveredSpecimen {
 }
 
 /// Authored feature overlay before discovered claims are materialized.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct FeatureDraft {
     /// Feature id being authored.
     pub id: FeatureId,
@@ -334,7 +478,7 @@ pub struct FeatureDraft {
 }
 
 /// Materialized feature row.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct FeatureRecord {
     /// Stable feature id.
     pub id: FeatureId,
@@ -359,7 +503,7 @@ pub struct FeatureRecord {
 }
 
 /// Contract tying a grammar to its discovered codec anchors and surface.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct GrammarContract {
     /// Stable grammar id, such as `grammar/lisp`.
     pub id: String,
@@ -384,7 +528,7 @@ impl GrammarContract {
 }
 
 /// A route through features and specimens.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct RouteRecord {
     /// Stable route id.
     pub id: RouteId,
@@ -443,7 +587,7 @@ impl RouteStep {
 }
 
 /// Directed relationship between two index records.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct IndexEdge {
     /// Source index id.
     pub from: String,

@@ -1,6 +1,6 @@
 [package]
 name = "sim-text"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MPL-2.0"
 description = "Neutral exact text values and explicit Unicode projections for SIM."
@@ -14,7 +14,7 @@ policy = "rustdoc"
 reason = "The exact text value is completely documented and exercised through crate-level rustdoc and law fixtures."
 
 [dependencies]
-sim-kernel = { version = "0.2.1" }
+sim-kernel = { version = "0.3.0" }
 
 [lints]
 workspace = true

@@ -7,7 +7,7 @@
 //! rendered by every surface (CLI, WebUI, browse, agent).
 //!
 //! This crate owns the kernel-free cookbook engine: manifest parsing and lint,
-//! compile-time embedding, recipe stores, projection/search/next behavior, and
+//! embedded recipe loading, recipe stores, projection/search/next behavior, and
 //! deterministic user overlays. Runtime operations live in `sim-lib-cookbook`;
 //! the CLI, WebUI, browse/help, and agent surfaces all use that shared runtime
 //! projection instead of parallel cookbook logic.
@@ -18,7 +18,6 @@
 pub mod config;
 mod digest;
 mod embed;
-mod embed_codegen;
 mod legacy;
 mod manifest;
 mod model;
@@ -29,7 +28,6 @@ mod toml_lite;
 
 pub use digest::{audio_digest, fnv1a64, fnv1a64_hex, frame_digest};
 pub use embed::{EmbeddedDir, recipes_from_embedded};
-pub use embed_codegen::{generate_embed_code, write_embed};
 pub use manifest::{
     BookManifest, ChapterManifest, DEFAULT_ORDER, Diagnostic, RecipeManifest, lint_dir,
     lint_dir_strict_no_quote, parse_book, parse_chapter, parse_recipe,

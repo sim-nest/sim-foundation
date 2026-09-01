@@ -1,0 +1,5 @@
+book = "protected-state"
+title = "Protected state"
+summary = "Opaque state protection with explicit capabilities and optional single-use claims."
+order = 352
+chapters = ["01-basics"]

@@ -18,6 +18,24 @@ use sim_value::build::qsym;
 
 use crate::path::is_legal_table_segment;
 
+/// Expected wire state for compare-exchange.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CompareExpected {
+    /// The key must be absent.
+    Absent,
+    /// The key must contain this expression (including [`Expr::Nil`]).
+    Value(Expr),
+}
+
+/// Replacement wire state for compare-exchange.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CompareReplacement {
+    /// Delete the key.
+    Delete,
+    /// Store this expression (including [`Expr::Nil`]).
+    Value(Expr),
+}
+
 /// A single table operation, independent of any transport.
 #[derive(Clone, Debug, PartialEq)]
 pub enum TableOp {
@@ -25,6 +43,8 @@ pub enum TableOp {
     Get(Symbol),
     /// Store `value` at `key`.
     Set(Symbol, Expr),
+    /// Atomically mutate a key when its canonical expression matches.
+    CompareExchange(Symbol, CompareExpected, CompareReplacement),
     /// Whether `key` is present.
     Has(Symbol),
     /// Remove `key`, returning the prior value. Wire op: `del`.
@@ -66,6 +86,7 @@ fn wire_name(op: &TableOp) -> &'static str {
     match op {
         TableOp::Get(_) => "get",
         TableOp::Set(_, _) => "set",
+        TableOp::CompareExchange(_, _, _) => "cas",
         TableOp::Has(_) => "has",
         TableOp::Delete(_) => "del",
         TableOp::Keys => "keys",
@@ -90,11 +111,54 @@ pub fn encode_table_op(op: &TableOp) -> Expr {
         | TableOp::Rmdir(key)
         | TableOp::IsDir(key) => vec![Expr::Symbol(key.clone())],
         TableOp::Set(key, value) => vec![Expr::Symbol(key.clone()), value.clone()],
+        TableOp::CompareExchange(key, expected, replacement) => vec![
+            Expr::Symbol(key.clone()),
+            encode_expected(expected),
+            encode_replacement(replacement),
+        ],
         TableOp::Keys | TableOp::Entries | TableOp::Len | TableOp::Clear => Vec::new(),
     };
     Expr::Call {
         operator: Box::new(qsym("table", wire_name(op))),
         args,
+    }
+}
+
+fn tagged(name: &str, args: Vec<Expr>) -> Expr {
+    Expr::Call {
+        operator: Box::new(qsym("table", name)),
+        args,
+    }
+}
+
+fn encode_expected(expected: &CompareExpected) -> Expr {
+    match expected {
+        CompareExpected::Absent => tagged("absent", Vec::new()),
+        CompareExpected::Value(value) => tagged("value", vec![value.clone()]),
+    }
+}
+
+fn encode_replacement(replacement: &CompareReplacement) -> Expr {
+    match replacement {
+        CompareReplacement::Delete => tagged("delete", Vec::new()),
+        CompareReplacement::Value(value) => tagged("value", vec![value.clone()]),
+    }
+}
+
+fn decode_tag(expr: &Expr, expected: bool) -> Result<Option<Expr>, TableOpError> {
+    let Expr::Call { operator, args } = expr else {
+        return Err(TableOpError::BadArg("cas".into()));
+    };
+    let Expr::Symbol(symbol) = operator.as_ref() else {
+        return Err(TableOpError::BadArg("cas".into()));
+    };
+    if symbol.namespace.as_deref() != Some("table") {
+        return Err(TableOpError::BadArg("cas".into()));
+    }
+    match (expected, symbol.name.as_ref(), args.as_slice()) {
+        (true, "absent", []) | (false, "delete", []) => Ok(None),
+        (_, "value", [value]) => Ok(Some(value.clone())),
+        _ => Err(TableOpError::BadArg("cas".into())),
     }
 }
 
@@ -144,6 +208,21 @@ pub fn decode_table_op(expr: &Expr) -> Result<TableOp, TableOpError> {
         "set" => match args.as_slice() {
             [Expr::Symbol(key), value] => TableOp::Set(key.clone(), value.clone()),
             [_, _] => return Err(TableOpError::BadArg(name.to_owned())),
+            _ => return Err(TableOpError::BadArity(name.to_owned())),
+        },
+        "cas" => match args.as_slice() {
+            [Expr::Symbol(key), expected, replacement] => {
+                let expected = match decode_tag(expected, true)? {
+                    None => CompareExpected::Absent,
+                    Some(value) => CompareExpected::Value(value),
+                };
+                let replacement = match decode_tag(replacement, false)? {
+                    None => CompareReplacement::Delete,
+                    Some(value) => CompareReplacement::Value(value),
+                };
+                TableOp::CompareExchange(key.clone(), expected, replacement)
+            }
+            [_, _, _] => return Err(TableOpError::BadArg(name.to_owned())),
             _ => return Err(TableOpError::BadArity(name.to_owned())),
         },
         "has" => TableOp::Has(one_key(name, args)?),

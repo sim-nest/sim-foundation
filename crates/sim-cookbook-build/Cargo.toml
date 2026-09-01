@@ -1,0 +1,19 @@
+[package]
+name = "sim-cookbook-build"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+description = "Portable host build tool for embedding SIM cookbook recipes."
+repository = "https://github.com/sim-nest/sim-foundation"
+homepage = "https://github.com/sim-nest/sim-foundation"
+publish = true
+
+[package.metadata.sim-recipes]
+policy = "rustdoc"
+reason = "This host build-tool library is documented through rustdoc and has no recipe directory because it is not product runtime code."
+
+[dependencies]
+sim-cookbook = { version = "0.3.0", path = "../sim-cookbook" }
+
+[lints]
+workspace = true

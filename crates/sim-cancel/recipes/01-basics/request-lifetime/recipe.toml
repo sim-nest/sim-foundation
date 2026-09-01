@@ -1,0 +1,8 @@
+id = "request-lifetime"
+title = "Bound a request lifetime"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["request", "cancellation", "lifetime", "sandbox-descriptor"]
+requires = ["cancel", "codec/lisp"]

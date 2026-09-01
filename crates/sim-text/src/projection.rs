@@ -225,7 +225,7 @@ pub fn scalar_text(text: &CodeUnitString) -> core::result::Result<String, CodeUn
 mod tests {
     use std::sync::Arc;
 
-    use sim_kernel::{DefaultFactory, NoopEvalPolicy};
+    use sim_kernel::{DefaultFactory, HandleSeed, NoopEvalPolicy};
 
     use crate::{CodeUnitOffset, InvalidSurrogate};
 
@@ -247,7 +247,11 @@ mod tests {
 
     #[test]
     fn shape_and_browse_keep_exact_units_distinct_from_scalar_text() {
-        let mut cx = Cx::new(Arc::new(NoopEvalPolicy), Arc::new(DefaultFactory));
+        let mut cx = Cx::new(
+            Arc::new(NoopEvalPolicy),
+            Arc::new(DefaultFactory),
+            HandleSeed::new(0),
+        );
         let exact = CodeUnitString::from_code_units(vec![0xd800]);
         let value = cx.factory().opaque(Arc::new(exact.clone())).unwrap();
         assert!(

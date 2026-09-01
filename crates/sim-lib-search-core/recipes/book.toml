@@ -1,0 +1,5 @@
+book = "search-core"
+title = "Search Evidence Core"
+summary = "Network-free provider claims, observations, and checked citations."
+order = 346
+chapters = ["01-basics"]

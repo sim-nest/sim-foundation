@@ -1,7 +1,7 @@
 //! The in-memory store of loaded recipes.
 //!
 //! Each loaded lib registers its embedded book into a [`RecipeStore`]; the
-//! cookbook view (a later phase) is a projection over the store's cards. The
+//! cookbook view is a projection over the store's cards. The
 //! store lives in this crate, not the kernel: recipes are plain data, so no
 //! kernel cookbook type is needed. A server or CLI builds one store at startup
 //! by registering every loaded lib's book.

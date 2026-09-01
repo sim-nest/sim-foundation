@@ -1,0 +1,27 @@
+[package]
+name = "sim-lib-protected-state"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Bounded, binding-authenticated opaque state envelopes for SIM protocols."
+readme = "README.md"
+publish = true
+
+[package.metadata.sim-recipes]
+policy = "descriptor"
+reason = "The recipe documents explicit key, clock, binding, and optional consumption-ledger ownership."
+
+[dependencies]
+ring = "=0.17.14"
+sim-cookbook = { version = "0.3.0", path = "../sim-cookbook" }
+sim-host-core = { version = "0.1.0", path = "../sim-host-core" }
+sim-kernel = { version = "0.3.0" }
+zeroize = "=1.9.0"
+
+[build-dependencies]
+sim-cookbook-build = { version = "0.1.0", path = "../sim-cookbook-build" }
+
+[lints]
+workspace = true

@@ -2,9 +2,50 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{IndexDoc, IndexError, ProtocolResolution, UnresolvedReason};
+use crate::{
+    IndexDoc, IndexError, ProtocolResolution, SourceCompleteness, SourceReachability,
+    UnresolvedReason,
+};
 
-pub(crate) fn reject_invalid_source_facts(doc: &IndexDoc) -> Result<(), IndexError> {
+const MAX_SOURCE_REASON_BYTES: usize = 512;
+
+pub(crate) fn reject_invalid_source_facts(
+    doc: &IndexDoc,
+    allow_incomplete_reachable: bool,
+) -> Result<(), IndexError> {
+    let subjects = doc
+        .subjects
+        .iter()
+        .map(|row| row.id.as_str())
+        .collect::<BTreeSet<_>>();
+    let mut units = BTreeSet::new();
+    for unit in &doc.source_units {
+        if !subjects.contains(unit.subject.as_str())
+            || unit.path.is_empty()
+            || !units.insert((unit.subject.as_str(), unit.path.as_str()))
+            || unit.retained_bound.max_bytes == 0
+            || unit.reason.len() > MAX_SOURCE_REASON_BYTES
+            || (unit.completeness == SourceCompleteness::Complete && !unit.reason.is_empty())
+            || (unit.completeness != SourceCompleteness::Complete && unit.reason.is_empty())
+            || ((unit.completeness == SourceCompleteness::Truncated)
+                != unit.retained_bound.truncated)
+        {
+            return Err(IndexError::InvalidSourceUnit {
+                subject: unit.subject.to_string(),
+                path: unit.path.clone(),
+            });
+        }
+        if !allow_incomplete_reachable
+            && unit.reachability == SourceReachability::Reachable
+            && unit.completeness != SourceCompleteness::Complete
+        {
+            return Err(IndexError::IncompleteReachableSource {
+                subject: unit.subject.to_string(),
+                path: unit.path.clone(),
+                state: unit.completeness.as_str(),
+            });
+        }
+    }
     let anchors = doc
         .anchors
         .iter()
@@ -105,6 +146,11 @@ fn invalid_bound<T>(anchor: String, max_bytes: usize) -> Result<T, IndexError> {
 }
 
 pub(crate) fn reject_unstable_source_fact_order(doc: &IndexDoc) -> Result<(), IndexError> {
+    if !strictly_sorted(&doc.source_units) {
+        return Err(IndexError::UnstableOrdering {
+            kind: "source-unit",
+        });
+    }
     if !strictly_sorted(&doc.declarations) {
         return Err(IndexError::UnstableOrdering {
             kind: "declaration",

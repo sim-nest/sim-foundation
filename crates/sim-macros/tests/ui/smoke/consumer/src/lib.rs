@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use sim::{
     case,
-    kernel::{DefaultFactory, EagerPolicy, Lib, Symbol},
+    kernel::{DefaultFactory, EagerPolicy, HandleSeed, Lib, Symbol},
     sim_fn, sim_lib,
 };
 
@@ -32,7 +32,11 @@ fn generated_manifest_and_load_paths_work() {
     );
     assert!(consumer_smoke::__SIM_LIB_EXPANSION.contains("ConsumerSmokeLib"));
 
-    let mut cx = sim::kernel::Cx::new(Arc::new(EagerPolicy), Arc::new(DefaultFactory));
+    let mut cx = sim::kernel::Cx::new(
+        Arc::new(EagerPolicy),
+        Arc::new(DefaultFactory),
+        HandleSeed::new(0),
+    );
     cx.load_lib(&lib).unwrap();
     assert!(cx.resolve_function(&Symbol::new("negate")).is_ok());
 }

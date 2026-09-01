@@ -16,7 +16,7 @@ use crate::model::{RecipeCard, RecipeSource};
 
 /// A crate's embedded `recipes/` tree: `(path-relative-to-recipes, bytes)`.
 /// Paths use `/` separators. Produced at build time (see
-/// [`crate::generate_embed_code`]).
+/// `sim_cookbook_build::generate_embed_code`).
 pub type EmbeddedDir = &'static [(&'static str, &'static [u8])];
 
 fn index_embedded<'a>(

@@ -46,7 +46,10 @@ pub use line::{DEFAULT_MAX_LINE_BYTES, LineDecoder};
 pub use ndjson::NdjsonDecoder;
 pub use read::{CapOutcome, HeadOutcome, read_capped_line, read_head_until_double_crlf};
 pub use sse::{SseDecoder, SseEvent};
-pub use url::{UrlParts, parse_url, parse_url_for_scheme, parse_url_for_scheme_preserving_path};
+pub use url::{
+    RetrievalUri, UrlParts, normalize_retrieval_uri, parse_url, parse_url_for_scheme,
+    parse_url_for_scheme_preserving_path,
+};
 
 /// Cookbook recipes for this lib, embedded at build time.
 pub static RECIPES: sim_cookbook::EmbeddedDir =

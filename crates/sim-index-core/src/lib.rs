@@ -27,10 +27,12 @@
 
 pub mod card;
 pub mod check;
+mod check_doc;
 mod check_error;
 pub mod draft;
 pub mod key;
 pub mod model;
+pub mod rows;
 pub mod shape;
 mod source_check;
 
@@ -39,11 +41,15 @@ pub use check::{IndexError, IndexReport, check_index_doc, check_index_fragment};
 pub use key::{CanonicalFeatureKey, canonical_feature_key};
 pub use model::{
     AnchorId, DeclarationFact, DeclarationRole, DiscoveredAnchor, DiscoveredSpecimen,
-    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, IndexDoc,
-    IndexEdge, ProtocolRelation, ProtocolResolution, RouteId, RouteRecord, RouteStep,
-    SourceLocation, SpecimenId, SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason,
+    DiscoveredSurface, FeatureDraft, FeatureId, FeatureRecord, GrammarContract, HostBindingFact,
+    HostBindingKind, HostSourceRole, IndexDoc, IndexEdge, ProtocolRelation, ProtocolResolution,
+    RouteId, RouteRecord, RouteStep, SourceCompleteness, SourceLocation, SourceReachability,
+    SourceUnit, SpecimenId, SubjectId, SubjectRecord, SurfaceId, SyntaxBound, UnresolvedReason,
     Visibility,
 };
+pub use rows::{IndexMetadataRef, IndexRow, IndexRowFamily, IndexRowRef};
 
+#[cfg(test)]
+mod test_support;
 #[cfg(test)]
 mod tests;

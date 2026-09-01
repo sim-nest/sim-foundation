@@ -25,8 +25,9 @@ fn check_index(doc: &IndexDoc, allow_deferred_targets: bool) -> Result<IndexRepo
     reject_non_ascii(doc)?;
     reject_invalid_ids(doc)?;
     reject_duplicate_ids(doc)?;
-    crate::source_check::reject_invalid_source_facts(doc)?;
+    crate::source_check::reject_invalid_source_facts(doc, allow_deferred_targets)?;
     crate::source_check::reject_unstable_source_fact_order(doc)?;
+    reject_duplicate_exact_rows(doc)?;
     reject_authored_literals(doc)?;
     reject_unresolved_claims(doc, allow_deferred_targets)?;
     reject_duplicate_claims(doc)?;
@@ -34,7 +35,7 @@ fn check_index(doc: &IndexDoc, allow_deferred_targets: bool) -> Result<IndexRepo
     reject_invalid_grammar_contracts(doc)?;
     reject_unrunnable_specimen_claims(doc)?;
     reject_dead_route_steps(doc, allow_deferred_targets)?;
-    reject_dangling_doc_anchors(doc)?;
+    crate::check_doc::reject_dangling_doc_anchors(doc)?;
     Ok(IndexReport::from_doc(doc))
 }
 
@@ -49,6 +50,10 @@ fn reject_non_ascii(doc: &IndexDoc) -> Result<(), IndexError> {
     for anchor in &doc.anchors {
         check_ascii("anchor.id", anchor.id.as_str())?;
         check_ascii("anchor.kind", &anchor.kind)?;
+    }
+    for unit in &doc.source_units {
+        check_ascii("source-unit.path", &unit.path)?;
+        check_ascii("source-unit.reason", &unit.reason)?;
     }
     for fact in &doc.declarations {
         check_ascii("declaration.module_path", &fact.module_path)?;
@@ -229,6 +234,29 @@ fn duplicates<'a>(
                 kind,
                 id: id.to_owned(),
             });
+        }
+    }
+    Ok(())
+}
+
+fn reject_duplicate_exact_rows(doc: &IndexDoc) -> Result<(), IndexError> {
+    let mut seen = BTreeSet::new();
+    for row in doc.inventory().1 {
+        if matches!(
+            row,
+            crate::IndexRowRef::SourceUnit(_)
+                | crate::IndexRowRef::Declaration(_)
+                | crate::IndexRowRef::ProtocolRelation(_)
+                | crate::IndexRowRef::Edge(_)
+        ) {
+            let family = row.family();
+            let row = row.to_owned();
+            if !seen.insert(row.clone()) {
+                return Err(IndexError::DuplicateExactRow {
+                    family,
+                    row: Box::new(row),
+                });
+            }
         }
     }
     Ok(())
@@ -639,39 +667,4 @@ fn reject_dead_route_steps(doc: &IndexDoc, allow_deferred_targets: bool) -> Resu
         }
     }
     Ok(())
-}
-
-fn reject_dangling_doc_anchors(doc: &IndexDoc) -> Result<(), IndexError> {
-    let anchors = ids(doc.anchors.iter().map(|record| record.id.as_str()));
-    for specimen in &doc.specimens {
-        check_doc_anchor(&anchors, specimen.id.as_str(), specimen.doc_anchor.as_ref())?;
-    }
-    for draft in &doc.drafts {
-        check_doc_anchor(&anchors, draft.id.as_str(), draft.doc_anchor.as_ref())?;
-    }
-    for feature in &doc.features {
-        check_doc_anchor(&anchors, feature.id.as_str(), feature.doc_anchor.as_ref())?;
-    }
-    for route in &doc.routes {
-        check_doc_anchor(&anchors, route.id.as_str(), route.doc_anchor.as_ref())?;
-    }
-    Ok(())
-}
-
-fn check_doc_anchor(
-    anchors: &BTreeSet<&str>,
-    owner: &str,
-    anchor: Option<&AnchorId>,
-) -> Result<(), IndexError> {
-    let Some(anchor) = anchor else {
-        return Ok(());
-    };
-    if anchors.contains(anchor.as_str()) {
-        Ok(())
-    } else {
-        Err(IndexError::DanglingDocAnchor {
-            owner: owner.to_owned(),
-            id: anchor.to_string(),
-        })
-    }
 }
