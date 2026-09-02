@@ -1,7 +1,20 @@
 {
   "generator": "xtask crate-catalog v1",
-  "package_count": 10,
+  "package_count": 23,
   "packages": [
+    {
+      "description": "Executor-neutral hierarchical cancellation for SIM request lifetimes.",
+      "generated_readme": false,
+      "manifest": "crates/sim-cancel/Cargo.toml",
+      "name": "sim-cancel",
+      "publish": "true",
+      "readme": "crates/sim-cancel/README.md",
+      "root": "crates/sim-cancel",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ]
+    },
     {
       "description": "Table and Dir substrate for layered SIM configuration.",
       "generated_readme": false,
@@ -10,6 +23,18 @@
       "publish": "true",
       "readme": "crates/sim-config/README.md",
       "root": "crates/sim-config",
+      "target_kinds": [
+        "lib"
+      ]
+    },
+    {
+      "description": "Portable host build tool for embedding SIM cookbook recipes.",
+      "generated_readme": false,
+      "manifest": "crates/sim-cookbook-build/Cargo.toml",
+      "name": "sim-cookbook-build",
+      "publish": "true",
+      "readme": "crates/sim-cookbook-build/README.md",
+      "root": "crates/sim-cookbook-build",
       "target_kinds": [
         "lib"
       ]
@@ -27,6 +52,19 @@
       ]
     },
     {
+      "description": "Neutral host-port contracts for SIM domain libraries.",
+      "generated_readme": false,
+      "manifest": "crates/sim-host-core/Cargo.toml",
+      "name": "sim-host-core",
+      "publish": "true",
+      "readme": "crates/sim-host-core/README.md",
+      "root": "crates/sim-host-core",
+      "target_kinds": [
+        "lib",
+        "test"
+      ]
+    },
+    {
       "description": "Core records, keys, checks, and card projections for the SIM Index graph.",
       "generated_readme": false,
       "manifest": "crates/sim-index-core/Cargo.toml",
@@ -39,6 +77,19 @@
       ]
     },
     {
+      "description": "Pure, complete vault projection and exact claim certificates for the SIM Index.",
+      "generated_readme": false,
+      "manifest": "crates/sim-index-vault-core/Cargo.toml",
+      "name": "sim-index-vault-core",
+      "publish": "true",
+      "readme": "crates/sim-index-vault-core/README.md",
+      "root": "crates/sim-index-vault-core",
+      "target_kinds": [
+        "lib",
+        "test"
+      ]
+    },
+    {
       "description": "Reusable, side-effect-free HTTP/streaming parsing primitives.",
       "generated_readme": false,
       "manifest": "crates/sim-lib-net-core/Cargo.toml",
@@ -46,6 +97,45 @@
       "publish": "true",
       "readme": "crates/sim-lib-net-core/README.md",
       "root": "crates/sim-lib-net-core",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ]
+    },
+    {
+      "description": "Policy-complete blocking HTTP client for SIM capsule transports.",
+      "generated_readme": false,
+      "manifest": "crates/sim-lib-net-http/Cargo.toml",
+      "name": "sim-lib-net-http",
+      "publish": "true",
+      "readme": "crates/sim-lib-net-http/README.md",
+      "root": "crates/sim-lib-net-http",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ]
+    },
+    {
+      "description": "Bounded, binding-authenticated opaque state envelopes for SIM protocols.",
+      "generated_readme": false,
+      "manifest": "crates/sim-lib-protected-state/Cargo.toml",
+      "name": "sim-lib-protected-state",
+      "publish": "true",
+      "readme": "crates/sim-lib-protected-state/README.md",
+      "root": "crates/sim-lib-protected-state",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ]
+    },
+    {
+      "description": "Pure open search, observation, ranking-evidence, and research bundle records for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-lib-search-core/Cargo.toml",
+      "name": "sim-lib-search-core",
+      "publish": "true",
+      "readme": "crates/sim-lib-search-core/README.md",
+      "root": "crates/sim-lib-search-core",
       "target_kinds": [
         "custom-build",
         "lib"
@@ -65,6 +155,19 @@
       ]
     },
     {
+      "description": "Pure web capture, representation, selector, policy, and receipt records for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-lib-web-core/Cargo.toml",
+      "name": "sim-lib-web-core",
+      "publish": "true",
+      "readme": "crates/sim-lib-web-core/README.md",
+      "root": "crates/sim-lib-web-core",
+      "target_kinds": [
+        "custom-build",
+        "lib"
+      ]
+    },
+    {
       "description": "Proc-macro surface for authored SIM libraries.",
       "generated_readme": false,
       "manifest": "crates/sim-macros/Cargo.toml",
@@ -74,6 +177,71 @@
       "root": "crates/sim-macros",
       "target_kinds": [
         "proc-macro",
+        "test"
+      ]
+    },
+    {
+      "description": "Open relational domain, row, and canonical identity records for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-relation-core/Cargo.toml",
+      "name": "sim-relation-core",
+      "publish": "true",
+      "readme": "crates/sim-relation-core/README.md",
+      "root": "crates/sim-relation-core",
+      "target_kinds": [
+        "lib",
+        "test"
+      ]
+    },
+    {
+      "description": "Checked schema migration programs and adoption attestations for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-relation-migrate/Cargo.toml",
+      "name": "sim-relation-migrate",
+      "publish": "true",
+      "readme": "crates/sim-relation-migrate/README.md",
+      "root": "crates/sim-relation-migrate",
+      "target_kinds": [
+        "lib",
+        "test"
+      ]
+    },
+    {
+      "description": "Admission and sealed checked logical relational plans for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-relation-plan/Cargo.toml",
+      "name": "sim-relation-plan",
+      "publish": "true",
+      "readme": "crates/sim-relation-plan/README.md",
+      "root": "crates/sim-relation-plan",
+      "target_kinds": [
+        "lib",
+        "test"
+      ]
+    },
+    {
+      "description": "Validated logical and normalized physical relational schemas for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-relation-schema/Cargo.toml",
+      "name": "sim-relation-schema",
+      "publish": "true",
+      "readme": "crates/sim-relation-schema/README.md",
+      "root": "crates/sim-relation-schema",
+      "target_kinds": [
+        "lib",
+        "test"
+      ]
+    },
+    {
+      "description": "Pure canonical study identity, evidence, transition, and decision records for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-study-core/Cargo.toml",
+      "name": "sim-study-core",
+      "publish": "true",
+      "readme": "crates/sim-study-core/README.md",
+      "root": "crates/sim-study-core",
+      "target_kinds": [
+        "lib",
         "test"
       ]
     },

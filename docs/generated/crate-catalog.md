@@ -6,12 +6,25 @@ Generated from Cargo metadata by `xtask crate-catalog v1`.
 
 | Package | Publish | Targets | Description |
 | --- | --- | --- | --- |
+| `sim-cancel` | `true` | `custom-build, lib` | Executor-neutral hierarchical cancellation for SIM request lifetimes. |
 | `sim-config` | `true` | `lib` | Table and Dir substrate for layered SIM configuration. |
+| `sim-cookbook-build` | `true` | `lib` | Portable host build tool for embedding SIM cookbook recipes. |
 | `sim-cookbook` | `true` | `lib` | Cookbook engine for SIM's crate-local tutorial recipes. |
+| `sim-host-core` | `true` | `lib, test` | Neutral host-port contracts for SIM domain libraries. |
 | `sim-index-core` | `true` | `lib` | Core records, keys, checks, and card projections for the SIM Index graph. |
+| `sim-index-vault-core` | `true` | `lib, test` | Pure, complete vault projection and exact claim certificates for the SIM Index. |
 | `sim-lib-net-core` | `true` | `custom-build, lib` | Reusable, side-effect-free HTTP/streaming parsing primitives. |
+| `sim-lib-net-http` | `true` | `custom-build, lib` | Policy-complete blocking HTTP client for SIM capsule transports. |
+| `sim-lib-protected-state` | `true` | `custom-build, lib` | Bounded, binding-authenticated opaque state envelopes for SIM protocols. |
+| `sim-lib-search-core` | `true` | `custom-build, lib` | Pure open search, observation, ranking-evidence, and research bundle records for SIM. |
 | `sim-lib-surface-card` | `true` | `custom-build, lib` | Shared, plain-data surface-card spine. |
+| `sim-lib-web-core` | `true` | `custom-build, lib` | Pure web capture, representation, selector, policy, and receipt records for SIM. |
 | `sim-macros` | `true` | `proc-macro, test` | Proc-macro surface for authored SIM libraries. |
+| `sim-relation-core` | `true` | `lib, test` | Open relational domain, row, and canonical identity records for SIM. |
+| `sim-relation-migrate` | `true` | `lib, test` | Checked schema migration programs and adoption attestations for SIM. |
+| `sim-relation-plan` | `true` | `lib, test` | Admission and sealed checked logical relational plans for SIM. |
+| `sim-relation-schema` | `true` | `lib, test` | Validated logical and normalized physical relational schemas for SIM. |
+| `sim-study-core` | `true` | `lib, test` | Pure canonical study identity, evidence, transition, and decision records for SIM. |
 | `sim-table-core` | `true` | `lib, test` | Shared table substrate: path references and the table operation protocol. |
 | `sim-text` | `true` | `lib, test` | Neutral exact text values and explicit Unicode projections for SIM. |
 | `sim-value` | `true` | `lib` | Ergonomic construction and access for kernel Expr data. |

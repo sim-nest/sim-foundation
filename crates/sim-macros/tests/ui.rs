@@ -30,6 +30,11 @@ const UI_PATCHES: &[(&str, &str, &str)] = &[
     ),
     ("sim-config", "sim-foundation", "crates/sim-config"),
     ("sim-cookbook", "sim-foundation", "crates/sim-cookbook"),
+    (
+        "sim-cookbook-build",
+        "sim-foundation",
+        "crates/sim-cookbook-build",
+    ),
     ("sim-value", "sim-foundation", "crates/sim-value"),
     (
         "sim-lib-net-core",
