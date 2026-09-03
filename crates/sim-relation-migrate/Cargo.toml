@@ -1,6 +1,6 @@
 [package]
 name = "sim-relation-migrate"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MPL-2.0"
 description = "Checked schema migration programs and adoption attestations for SIM."
@@ -14,10 +14,10 @@ policy = "rustdoc"
 reason = "Migration admission specimens are checked by rustdoc and integration tests."
 
 [dependencies]
-sim-kernel = { version = "0.3.0" }
-sim-relation-core = { version = "0.1.0", path = "../sim-relation-core" }
-sim-relation-plan = { version = "0.1.0", path = "../sim-relation-plan" }
-sim-relation-schema = { version = "0.1.0", path = "../sim-relation-schema" }
+sim-kernel = { version = "0.4.0" }
+sim-relation-core = { version = "0.2.0", path = "../sim-relation-core" }
+sim-relation-plan = { version = "0.2.0", path = "../sim-relation-plan" }
+sim-relation-schema = { version = "0.2.0", path = "../sim-relation-schema" }
 
 [lints]
 workspace = true

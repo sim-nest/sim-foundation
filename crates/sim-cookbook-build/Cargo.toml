@@ -1,6 +1,6 @@
 [package]
 name = "sim-cookbook-build"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MPL-2.0"
 readme = "README.md"
@@ -14,7 +14,7 @@ policy = "rustdoc"
 reason = "This host build-tool library is documented through rustdoc and has no recipe directory because it is not product runtime code."
 
 [dependencies]
-sim-cookbook = { version = "0.3.0", path = "../sim-cookbook" }
+sim-cookbook = { version = "0.4.0", path = "../sim-cookbook" }
 
 [lints]
 workspace = true
