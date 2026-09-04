@@ -1,6 +1,6 @@
 [package]
 name = "sim-study-core"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MPL-2.0"
 description = "Pure canonical study identity, evidence, transition, and decision records for SIM."
@@ -14,7 +14,7 @@ policy = "rustdoc"
 reason = "The pure record contract is taught through rustdoc and its exhaustive conformance test."
 
 [dependencies]
-sim-kernel = { version = "0.3.0" }
+sim-kernel = { version = "0.4.0" }
 
 [lints]
 workspace = true

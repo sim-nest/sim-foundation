@@ -1,6 +1,6 @@
 [package]
 name = "sim-lib-web-core"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MPL-2.0"
 description = "Pure web capture, representation, selector, policy, and receipt records for SIM."
@@ -14,12 +14,12 @@ policy = "descriptor"
 reason = "The network-free selector specimen is a sandbox descriptor backed by conformance tests."
 
 [dependencies]
-sim-kernel = { version = "0.3.0" }
-sim-lib-net-core = { version = "0.3.0", path = "../sim-lib-net-core" }
-sim-cookbook = { version = "0.3.0", path = "../sim-cookbook" }
+sim-kernel = { version = "0.4.0" }
+sim-lib-net-core = { version = "0.4.0", path = "../sim-lib-net-core" }
+sim-cookbook = { version = "0.4.0", path = "../sim-cookbook" }
 
 [build-dependencies]
-sim-cookbook-build = { version = "0.1.0", path = "../sim-cookbook-build" }
+sim-cookbook-build = { version = "0.2.0", path = "../sim-cookbook-build" }
 
 [lints]
 workspace = true
