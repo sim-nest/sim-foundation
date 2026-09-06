@@ -14,6 +14,8 @@ mod digest;
 mod fake;
 mod graph;
 mod identity;
+mod qualification;
+mod receipt;
 
 pub use binding::*;
 pub use checker::*;
@@ -21,3 +23,5 @@ pub use digest::*;
 pub use fake::*;
 pub use graph::*;
 pub use identity::*;
+pub use qualification::*;
+pub use receipt::*;

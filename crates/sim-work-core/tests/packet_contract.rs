@@ -9,12 +9,7 @@ fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
 }
 
 fn command(value: &str) -> OwnerCommand {
-    OwnerCommand {
-        id: sid(value),
-        cwd: "repo".into(),
-        argv: vec![value.into()],
-        environment: "sealed".into(),
-    }
+    OwnerCommand::new("repo".into(), vec![value.into()], "sealed".into()).unwrap()
 }
 
 fn binding() -> OwnerBinding {
@@ -155,7 +150,7 @@ fn deterministic_packet_accepts_qualified_dependency_and_planned_target() {
     .unwrap();
     assert_eq!(first.id(), second.id());
     assert_eq!(
-        first.funded_targets,
+        first.funded_targets(),
         [SurfaceKey::new("api/projection").unwrap()]
     );
 }

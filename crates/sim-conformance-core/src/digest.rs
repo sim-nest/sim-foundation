@@ -113,25 +113,25 @@ impl ConstructionDisposition {
 pub struct DigestConstruction {
     id: DigestConstructionId,
     /// Stable register key.
-    pub key: String,
+    key: String,
     /// Owning architecture binding.
-    pub owner: OwnerBindingId,
+    owner: OwnerBindingId,
     /// Exact implementation symbol.
-    pub symbol: String,
+    symbol: String,
     /// Source identity of the constructor definition.
-    pub constructor: CheckedSubjectId,
+    constructor: CheckedSubjectId,
     /// Source identities of all reached callers.
-    pub call_sites: Vec<CheckedSubjectId>,
+    call_sites: Vec<CheckedSubjectId>,
     /// Rust or wire result role.
-    pub result_type: String,
+    result_type: String,
     /// Complete preimage law.
-    pub preimage: String,
+    preimage: String,
     /// Actual authority role.
-    pub use_role: IdentityRole,
+    use_role: IdentityRole,
     /// Dataflow or exclusion witness.
-    pub reachability: CheckedSubjectId,
+    reachability: CheckedSubjectId,
     /// Funded resolution.
-    pub disposition: ConstructionDisposition,
+    disposition: ConstructionDisposition,
 }
 
 impl DigestConstruction {
@@ -190,6 +190,56 @@ impl DigestConstruction {
     pub const fn id(&self) -> &DigestConstructionId {
         &self.id
     }
+
+    /// Returns the stable register key.
+    pub fn key(&self) -> &str {
+        &self.key
+    }
+
+    /// Returns the architecture binding that owns this construction.
+    pub const fn owner(&self) -> &OwnerBindingId {
+        &self.owner
+    }
+
+    /// Returns the exact implementation symbol.
+    pub fn symbol(&self) -> &str {
+        &self.symbol
+    }
+
+    /// Returns the source identity of the constructor definition.
+    pub const fn constructor(&self) -> &CheckedSubjectId {
+        &self.constructor
+    }
+
+    /// Returns all reached callers in canonical identity order.
+    pub fn call_sites(&self) -> &[CheckedSubjectId] {
+        &self.call_sites
+    }
+
+    /// Returns the Rust or wire result role.
+    pub fn result_type(&self) -> &str {
+        &self.result_type
+    }
+
+    /// Returns the complete preimage law.
+    pub fn preimage(&self) -> &str {
+        &self.preimage
+    }
+
+    /// Returns the authority role of this construction.
+    pub const fn use_role(&self) -> IdentityRole {
+        self.use_role
+    }
+
+    /// Returns the dataflow or exclusion witness.
+    pub const fn reachability(&self) -> &CheckedSubjectId {
+        &self.reachability
+    }
+
+    /// Returns the funded resolution.
+    pub const fn disposition(&self) -> &ConstructionDisposition {
+        &self.disposition
+    }
 }
 
 /// Complete, uniquely keyed digest-construction register.
@@ -197,7 +247,7 @@ impl DigestConstruction {
 pub struct DigestConstructionRegister {
     id: DigestConstructionRegisterId,
     /// Sorted construction rows.
-    pub constructions: Vec<DigestConstruction>,
+    constructions: Vec<DigestConstruction>,
 }
 
 impl DigestConstructionRegister {
@@ -224,5 +274,10 @@ impl DigestConstructionRegister {
     /// Returns the register identity.
     pub const fn id(&self) -> &DigestConstructionRegisterId {
         &self.id
+    }
+
+    /// Returns every construction in canonical key order.
+    pub fn constructions(&self) -> &[DigestConstruction] {
+        &self.constructions
     }
 }

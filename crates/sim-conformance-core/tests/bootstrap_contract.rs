@@ -10,12 +10,31 @@ fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
 }
 
 fn command(value: &str) -> OwnerCommand {
-    OwnerCommand {
-        id: sid(value),
-        cwd: "repo".into(),
-        argv: vec![value.into()],
-        environment: "sealed".into(),
-    }
+    OwnerCommand::new("repo".into(), vec![value.into()], "sealed".into()).unwrap()
+}
+
+#[test]
+fn owner_command_identity_covers_cwd_argv_and_environment() {
+    let baseline = command("validate");
+    assert_eq!(baseline, command("validate"));
+    assert_ne!(
+        baseline.id(),
+        OwnerCommand::new("other".into(), vec!["validate".into()], "sealed".into())
+            .unwrap()
+            .id()
+    );
+    assert_ne!(
+        baseline.id(),
+        OwnerCommand::new("repo".into(), vec!["docs".into()], "sealed".into())
+            .unwrap()
+            .id()
+    );
+    assert_ne!(
+        baseline.id(),
+        OwnerCommand::new("repo".into(), vec!["validate".into()], "networked".into())
+            .unwrap()
+            .id()
+    );
 }
 
 fn owner_binding() -> OwnerBinding {
@@ -217,22 +236,21 @@ fn templates_and_support_graphs_reject_cycles_before_dispatch() {
 #[test]
 fn activation_scope_cannot_resolve_a_planned_surface() {
     let binding = owner_binding();
-    let receipt = BindingQualificationReceipt {
-        binding: binding.id().clone(),
-        scope: QualificationScope::Activation {
-            map: sid("activation/map"),
-        },
-        resolved: vec![CheckedSurfaceRef {
-            key: SurfaceKey::new("api/demo").unwrap(),
-            source: sid("source/demo"),
-            package: sid("package/demo"),
-            receipt: sid("receipt/demo"),
-        }],
-        subject: sid("subject/activation"),
-        checks: vec![sid("receipt/ownership")],
-    };
     assert_eq!(
-        receipt.verify(&binding),
+        BindingQualificationReceipt::new(
+            &binding,
+            QualificationScope::Activation {
+                map: sid("activation/map"),
+            },
+            vec![CheckedSurfaceRef {
+                key: SurfaceKey::new("api/demo").unwrap(),
+                source: sid("source/demo"),
+                package: sid("package/demo"),
+                receipt: sid("receipt/demo"),
+            }],
+            sid("subject/activation"),
+            vec![sid("receipt/ownership")],
+        ),
         Err(ConformanceError::ActivationIsNotProductionEvidence)
     );
 }

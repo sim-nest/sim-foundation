@@ -161,19 +161,39 @@ pub struct PacketDraft {
 pub struct ImplementationPacket {
     id: PacketId,
     /// Packet fields independent of source location.
-    pub draft: PacketDraft,
+    draft: PacketDraft,
     /// Verified exact sources.
-    pub inputs: Vec<PacketInput>,
+    inputs: Vec<PacketInput>,
     /// Declared dependencies and funded targets.
-    pub dependency_uses: sim_conformance_core::DependencyUseSetId,
+    dependency_uses: sim_conformance_core::DependencyUseSetId,
     /// Exact funded-target set.
-    pub funded_targets: Vec<SurfaceKey>,
+    funded_targets: Vec<SurfaceKey>,
 }
 
 impl ImplementationPacket {
     /// Returns the location-independent packet identity.
     pub const fn id(&self) -> &PacketId {
         &self.id
+    }
+
+    /// Returns the packet fields independent of source location.
+    pub const fn draft(&self) -> &PacketDraft {
+        &self.draft
+    }
+
+    /// Returns the verified exact sources.
+    pub fn inputs(&self) -> &[PacketInput] {
+        &self.inputs
+    }
+
+    /// Returns the declared dependency-use identity.
+    pub const fn dependency_uses(&self) -> &sim_conformance_core::DependencyUseSetId {
+        &self.dependency_uses
+    }
+
+    /// Returns the exact funded-target set.
+    pub fn funded_targets(&self) -> &[SurfaceKey] {
+        &self.funded_targets
     }
 }
 
@@ -190,10 +210,10 @@ impl PacketBuilder {
         mut input_specs: Vec<PacketInputSpec>,
         input_port: &mut dyn InputPort,
     ) -> Result<ImplementationPacket, WorkError> {
-        if &draft.owner != binding.id() || &uses.owner != binding.id() {
+        if &draft.owner != binding.id() || uses.owner() != binding.id() {
             return Err(WorkError::Qualification("wrong-owner".into()));
         }
-        if draft.phase.is_empty() || draft.phase != uses.phase {
+        if draft.phase.is_empty() || draft.phase != uses.phase() {
             return Err(WorkError::InvalidPacket("phase"));
         }
         draft.descent.verify()?;
@@ -210,7 +230,7 @@ impl PacketBuilder {
             return Err(WorkError::InvalidPacket("duplicate input"));
         }
         let declared = uses
-            .uses
+            .uses()
             .iter()
             .map(|item| &item.surface)
             .collect::<BTreeSet<_>>();
@@ -259,7 +279,7 @@ impl PacketBuilder {
             return Err(WorkError::TokenBudget);
         }
         let funded_targets = uses
-            .uses
+            .uses()
             .iter()
             .filter(|item| item.role == SurfaceUseRole::FundedTarget)
             .map(|item| item.surface.clone())
@@ -276,46 +296,6 @@ impl PacketBuilder {
     }
 }
 
-/// Immutable result of hostile-return decoding and pure facet checks.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CheckedProposal {
-    /// Packet that bounded the proposal.
-    pub packet: PacketId,
-    /// Raw opaque return bytes.
-    pub raw: StorageId,
-    /// Decoded checked value.
-    pub decoded: Datum,
-    /// Pure facet plan identity.
-    pub facet_plan: FacetPlanId,
-    /// Supporting pure receipts.
-    pub receipts: Vec<ReceiptId>,
-}
-
-/// Decodes hostile bytes under a caller-supplied parser and exact Shape predicate.
-pub fn decode_proposal(
-    packet: &ImplementationPacket,
-    bytes: &[u8],
-    decode: impl FnOnce(&[u8]) -> Result<Datum, String>,
-    shape_matches: impl FnOnce(&Datum, &OutputContractId) -> Result<(), String>,
-    facet_plan: FacetPlanId,
-    receipts: Vec<ReceiptId>,
-) -> Result<CheckedProposal, WorkError> {
-    if bytes.len() as u64 > packet.draft.input_budget.output_bytes {
-        return Err(WorkError::OutputBudget);
-    }
-    let raw = StorageId::for_bytes(bytes);
-    let decoded = decode(bytes).map_err(|error| WorkError::MalformedReturn(vec![error]))?;
-    shape_matches(&decoded, &packet.draft.output_contract)
-        .map_err(|error| WorkError::MalformedReturn(vec![error]))?;
-    Ok(CheckedProposal {
-        packet: packet.id.clone(),
-        raw,
-        decoded,
-        facet_plan,
-        receipts,
-    })
-}
-
 fn validate_uses(
     binding: &OwnerBinding,
     uses: &DependencyUseSet,
@@ -328,7 +308,7 @@ fn validate_uses(
     if catalog.len() != evidence.len() {
         return Err(ConformanceError::DuplicateField("surface evidence".into()));
     }
-    for item in &uses.uses {
+    for item in uses.uses() {
         let Some(observed) = catalog.get(&item.surface) else {
             return Err(ConformanceError::MissingSurface(
                 item.surface.as_str().into(),
@@ -364,7 +344,7 @@ fn validate_uses(
                         SurfaceEvidenceState::Planned {
                             producing_phase: seen,
                         },
-                    ) if producing_phase == &uses.phase && seen == &uses.phase => {}
+                    ) if producing_phase == uses.phase() && seen == uses.phase() => {}
                     (SurfaceStatus::Existing, _) => {
                         return Err(ConformanceError::WrongProducingPhase);
                     }
