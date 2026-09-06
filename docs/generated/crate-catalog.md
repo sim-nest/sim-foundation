@@ -8,6 +8,7 @@ Generated from Cargo metadata by `xtask crate-catalog v1`.
 | --- | --- | --- | --- |
 | `sim-cancel` | `true` | `custom-build, lib` | Executor-neutral hierarchical cancellation for SIM request lifetimes. |
 | `sim-config` | `true` | `lib` | Table and Dir substrate for layered SIM configuration. |
+| `sim-conformance-core` | `true` | `lib, test` | Canonical bindings, checker invocations, receipts, and identity accountability for SIM conformance. |
 | `sim-cookbook-build` | `true` | `lib` | Portable host build tool for embedding SIM cookbook recipes. |
 | `sim-cookbook` | `true` | `lib` | Cookbook engine for SIM's crate-local tutorial recipes. |
 | `sim-host-core` | `true` | `lib, test` | Neutral host-port contracts for SIM domain libraries. |
@@ -28,4 +29,5 @@ Generated from Cargo metadata by `xtask crate-catalog v1`.
 | `sim-table-core` | `true` | `lib, test` | Shared table substrate: path references and the table operation protocol. |
 | `sim-text` | `true` | `lib, test` | Neutral exact text values and explicit Unicode projections for SIM. |
 | `sim-value` | `true` | `lib` | Ergonomic construction and access for kernel Expr data. |
+| `sim-work-core` | `true` | `lib, test` | Pure bounded-work envelopes and hostile implementation-proposal admission for SIM. |
 | `xtask` | `false` | `bin` | SIM workspace package for xtask. |

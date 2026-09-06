@@ -1,6 +1,6 @@
 {
   "generator": "xtask crate-catalog v1",
-  "package_count": 23,
+  "package_count": 25,
   "packages": [
     {
       "description": "Executor-neutral hierarchical cancellation for SIM request lifetimes.",
@@ -25,6 +25,19 @@
       "root": "crates/sim-config",
       "target_kinds": [
         "lib"
+      ]
+    },
+    {
+      "description": "Canonical bindings, checker invocations, receipts, and identity accountability for SIM conformance.",
+      "generated_readme": false,
+      "manifest": "crates/sim-conformance-core/Cargo.toml",
+      "name": "sim-conformance-core",
+      "publish": "true",
+      "readme": "crates/sim-conformance-core/README.md",
+      "root": "crates/sim-conformance-core",
+      "target_kinds": [
+        "lib",
+        "test"
       ]
     },
     {
@@ -281,6 +294,19 @@
       "root": "crates/sim-value",
       "target_kinds": [
         "lib"
+      ]
+    },
+    {
+      "description": "Pure bounded-work envelopes and hostile implementation-proposal admission for SIM.",
+      "generated_readme": false,
+      "manifest": "crates/sim-work-core/Cargo.toml",
+      "name": "sim-work-core",
+      "publish": "true",
+      "readme": "crates/sim-work-core/README.md",
+      "root": "crates/sim-work-core",
+      "target_kinds": [
+        "lib",
+        "test"
       ]
     },
     {

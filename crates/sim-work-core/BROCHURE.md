@@ -4,7 +4,7 @@ In one line: Turn a bounded change request into deterministic work whose inputs,
 
 ## What it gives you
 
-`sim-work-core` gives orchestrators one precise envelope for local code work, model work, and other bounded tasks. It verifies exact declared inputs, keeps future targets distinct from trusted dependencies, measures full input before dispatch, and records what counts as completion. Host authority stays outside the envelope, so an implementation proposal remains reviewable data until an authorized adapter acts on it.
+`sim-work-core` gives orchestrators one precise envelope for local code work, model work, and other bounded tasks. It verifies exact declared inputs, keeps intended targets distinct from trusted dependencies, measures full input before dispatch, and records what counts as completion. Host authority stays outside the envelope, so an implementation proposal remains reviewable data until an authorized adapter acts on it.
 
 ## Why you will be glad
 
@@ -14,4 +14,4 @@ In one line: Turn a bounded change request into deterministic work whose inputs,
 
 ## Where it fits
 
-Within SIM, sim-work-core sits below maintenance tooling and agent adapters. It shares neutral conformance identities while leaving model selection, roadmap policy, process execution, and persistence to their owning libraries.
+Within SIM, sim-work-core sits below maintenance tooling and agent adapters. It shares neutral conformance identities while leaving model selection, execution policy, process control, and persistence to their owning libraries.
