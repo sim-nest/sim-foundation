@@ -9,7 +9,7 @@ In one line: Keep every conformance claim tied to its exact owner, subject, scop
 ## Why you will be glad
 
 - Reviewers can trace a result to one declaration, one subject, one scope, and one exact invocation.
-- Planned capabilities stay visibly unavailable until their own evidence exists.
+- Declared capabilities stay visibly unavailable until their own evidence exists.
 - Revocation and support relationships fail closed instead of silently trusting stale results.
 
 ## Where it fits
