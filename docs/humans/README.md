@@ -328,22 +328,21 @@ fn templates_and_support_graphs_reject_cycles_before_dispatch() {
 #[test]
 fn activation_scope_cannot_resolve_a_planned_surface() {
     let binding = owner_binding();
-    let receipt = BindingQualificationReceipt {
-        binding: binding.id().clone(),
-        scope: QualificationScope::Activation {
-            map: sid("activation/map"),
-        },
-        resolved: vec![CheckedSurfaceRef {
-            key: SurfaceKey::new("api/demo").unwrap(),
-            source: sid("source/demo"),
-            package: sid("package/demo"),
-            receipt: sid("receipt/demo"),
-        }],
-        subject: sid("subject/activation"),
-        checks: vec![sid("receipt/ownership")],
-    };
     assert_eq!(
-        receipt.verify(&binding),
+        BindingQualificationReceipt::new(
+            &binding,
+            QualificationScope::Activation {
+                map: sid("activation/map"),
+            },
+            vec![CheckedSurfaceRef {
+                key: SurfaceKey::new("api/demo").unwrap(),
+                source: sid("source/demo"),
+                package: sid("package/demo"),
+                receipt: sid("receipt/demo"),
+            }],
+            sid("subject/activation"),
+            vec![sid("receipt/ownership")],
+        ),
         Err(ConformanceError::ActivationIsNotProductionEvidence)
     );
 }
@@ -513,7 +512,7 @@ fn deterministic_packet_accepts_qualified_dependency_and_planned_target() {
     .unwrap();
     assert_eq!(first.id(), second.id());
     assert_eq!(
-        first.funded_targets,
+        first.funded_targets(),
         [SurfaceKey::new("api/projection").unwrap()]
     );
 }

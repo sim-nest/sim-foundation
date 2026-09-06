@@ -94,7 +94,7 @@ dependencies = [
 
 [[package]]
 name = "sim-citizen"
-version = "0.2.0"
+version = "0.4.0"
 dependencies = [
  "inventory",
  "sim-kernel",
@@ -103,7 +103,7 @@ dependencies = [
 
 [[package]]
 name = "sim-citizen-derive"
-version = "0.2.0"
+version = "0.4.0"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -113,11 +113,12 @@ dependencies = [
 
 [[package]]
 name = "sim-codec"
-version = "0.1.8"
+version = "0.3.0"
 dependencies = [
  "sim-citizen",
  "sim-citizen-derive",
  "sim-cookbook",
+ "sim-cookbook-build",
  "sim-kernel",
  "sim-lib-net-core",
  "sim-shape",
@@ -125,17 +126,18 @@ dependencies = [
 
 [[package]]
 name = "sim-codec-binary"
-version = "0.2.1"
+version = "0.4.0"
 dependencies = [
  "sim-codec",
  "sim-cookbook",
+ "sim-cookbook-build",
  "sim-kernel",
  "sim-value",
 ]
 
 [[package]]
 name = "sim-config"
-version = "0.1.4"
+version = "0.3.0"
 dependencies = [
  "sim-kernel",
  "sim-table-core",
@@ -144,7 +146,7 @@ dependencies = [
 
 [[package]]
 name = "sim-cookbook"
-version = "0.2.1"
+version = "0.4.0"
 dependencies = [
  "sim-config",
  "sim-kernel",
@@ -152,18 +154,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "sim-cookbook-build"
+version = "0.2.0"
+dependencies = [
+ "sim-cookbook",
+]
+
+[[package]]
 name = "sim-kernel"
-version = "0.2.1"
+version = "0.4.0"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "sim-lib-core"
-version = "0.2.0"
+version = "0.4.0"
 dependencies = [
  "sim-codec",
  "sim-cookbook",
+ "sim-cookbook-build",
  "sim-kernel",
  "sim-shape",
  "sim-value",
@@ -171,14 +181,15 @@ dependencies = [
 
 [[package]]
 name = "sim-lib-net-core"
-version = "0.2.1"
+version = "0.4.0"
 dependencies = [
  "sim-cookbook",
+ "sim-cookbook-build",
 ]
 
 [[package]]
 name = "sim-macros"
-version = "0.2.2"
+version = "0.4.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -194,7 +205,7 @@ dependencies = [
 
 [[package]]
 name = "sim-nest"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "sim-codec",
  "sim-codec-binary",
@@ -208,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "sim-run-loaders"
-version = "0.2.0"
+version = "0.4.0"
 dependencies = [
  "sim-codec-binary",
  "sim-kernel",
@@ -218,7 +229,7 @@ dependencies = [
 
 [[package]]
 name = "sim-shape"
-version = "0.2.4"
+version = "0.4.1"
 dependencies = [
  "sim-citizen",
  "sim-citizen-derive",
@@ -227,7 +238,7 @@ dependencies = [
 
 [[package]]
 name = "sim-table-core"
-version = "0.1.4"
+version = "0.3.0"
 dependencies = [
  "sim-kernel",
  "sim-value",
@@ -235,7 +246,7 @@ dependencies = [
 
 [[package]]
 name = "sim-value"
-version = "0.2.0"
+version = "0.4.0"
 dependencies = [
  "sim-kernel",
 ]

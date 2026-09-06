@@ -6,6 +6,10 @@ separately scoped qualification, typed checker templates, exact invocations,
 receipts, revocation state, digest-construction accountability, acyclic support
 graphs, and deterministic fake ports.
 
+Records that cache a semantic identity keep every identity-bearing field private
+and expose read-only accessors. Once constructed, a record's visible meaning
+therefore cannot drift away from its id.
+
 The crate performs no filesystem, process, Git, network, release, or approval
 operation. A checker result gains authority only when its binding, code, pack,
 subject, scope, call, policy, provenance, support, and revocation source agree.

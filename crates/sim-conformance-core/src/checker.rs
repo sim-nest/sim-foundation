@@ -6,9 +6,8 @@ use sim_kernel::Datum;
 
 use crate::{
     CheckInputClosureId, CheckInvocationId, CheckScopeId, CheckTemplateId, CheckedSubjectId,
-    CheckerBindingId, CheckerReceiptId, CheckerResultId, CommandId, ConformanceError,
-    ConformancePackId, EnvironmentPolicyId, EvidenceProvenanceId, EvidenceSetId, ExactCheckCallId,
-    OutputShapeId, OwnerBindingId, PolicyId, ProofCodeId, RevocationSourceId, SemanticId,
+    CheckerBindingId, CommandId, ConformanceError, ConformancePackId, EnvironmentPolicyId,
+    ExactCheckCallId, OutputShapeId, OwnerBindingId, ProofCodeId, RevocationSourceId, SemanticId,
     WorkingDirectoryPolicyId, field, ids, qualified, strings, text,
 };
 
@@ -45,15 +44,15 @@ impl CheckArgument {
 pub struct CheckTemplate {
     id: CheckTemplateId,
     /// Stable callable entrypoint.
-    pub entrypoint: String,
+    entrypoint: String,
     /// Ordered literal and typed slot arguments.
-    pub arguments: Vec<CheckArgument>,
+    arguments: Vec<CheckArgument>,
     /// Exact working-directory policy.
-    pub cwd: WorkingDirectoryPolicyId,
+    cwd: WorkingDirectoryPolicyId,
     /// Exact environment policy.
-    pub environment: EnvironmentPolicyId,
+    environment: EnvironmentPolicyId,
     /// Expected result Shape.
-    pub output_shape: OutputShapeId,
+    output_shape: OutputShapeId,
 }
 
 impl CheckTemplate {
@@ -125,6 +124,31 @@ impl CheckTemplate {
         &self.id
     }
 
+    /// Returns the stable callable entrypoint.
+    pub fn entrypoint(&self) -> &str {
+        &self.entrypoint
+    }
+
+    /// Returns the ordered literal and typed-slot arguments.
+    pub fn arguments(&self) -> &[CheckArgument] {
+        &self.arguments
+    }
+
+    /// Returns the working-directory policy.
+    pub const fn cwd(&self) -> &WorkingDirectoryPolicyId {
+        &self.cwd
+    }
+
+    /// Returns the sealed environment policy.
+    pub const fn environment(&self) -> &EnvironmentPolicyId {
+        &self.environment
+    }
+
+    /// Returns the expected output Shape.
+    pub const fn output_shape(&self) -> &OutputShapeId {
+        &self.output_shape
+    }
+
     fn instantiate(
         &self,
         binding: &CheckerBindingId,
@@ -156,15 +180,15 @@ impl CheckTemplate {
 pub struct ExactCheckCall {
     id: ExactCheckCallId,
     /// Entrypoint name.
-    pub entrypoint: String,
+    entrypoint: String,
     /// Fully substituted arguments.
-    pub arguments: Vec<String>,
+    arguments: Vec<String>,
     /// Working-directory policy.
-    pub cwd: WorkingDirectoryPolicyId,
+    cwd: WorkingDirectoryPolicyId,
     /// Environment policy.
-    pub environment: EnvironmentPolicyId,
+    environment: EnvironmentPolicyId,
     /// Expected output Shape.
-    pub output_shape: OutputShapeId,
+    output_shape: OutputShapeId,
 }
 
 impl ExactCheckCall {
@@ -196,6 +220,31 @@ impl ExactCheckCall {
     pub const fn id(&self) -> &ExactCheckCallId {
         &self.id
     }
+
+    /// Returns the exact entrypoint.
+    pub fn entrypoint(&self) -> &str {
+        &self.entrypoint
+    }
+
+    /// Returns the fully substituted argument vector.
+    pub fn arguments(&self) -> &[String] {
+        &self.arguments
+    }
+
+    /// Returns the working-directory policy.
+    pub const fn cwd(&self) -> &WorkingDirectoryPolicyId {
+        &self.cwd
+    }
+
+    /// Returns the sealed environment policy.
+    pub const fn environment(&self) -> &EnvironmentPolicyId {
+        &self.environment
+    }
+
+    /// Returns the expected output Shape.
+    pub const fn output_shape(&self) -> &OutputShapeId {
+        &self.output_shape
+    }
 }
 
 /// Immutable declaration for one checker and its allowed scopes.
@@ -203,25 +252,25 @@ impl ExactCheckCall {
 pub struct CheckerBinding {
     id: CheckerBindingId,
     /// Stable checker name.
-    pub checker: String,
+    checker: String,
     /// Owning module binding.
-    pub owner: OwnerBindingId,
+    owner: OwnerBindingId,
     /// Stable public symbol.
-    pub symbol: String,
+    symbol: String,
     /// Allowed conformance packs.
-    pub packs: Vec<ConformancePackId>,
+    packs: Vec<ConformancePackId>,
     /// Receipt Shape.
-    pub receipt_shape: OutputShapeId,
+    receipt_shape: OutputShapeId,
     /// Canonical revocation source.
-    pub revocation_source: RevocationSourceId,
+    revocation_source: RevocationSourceId,
     /// Exact owner validation command.
-    pub owner_validation: CommandId,
+    owner_validation: CommandId,
     /// Exact owner docs command.
-    pub owner_docs: CommandId,
+    owner_docs: CommandId,
     /// Exact allowed scopes.
-    pub allowed_scopes: BTreeSet<CheckScopeId>,
+    allowed_scopes: BTreeSet<CheckScopeId>,
     /// Reusable typed invocation template.
-    pub template: CheckTemplate,
+    template: CheckTemplate,
 }
 
 impl CheckerBinding {
@@ -278,6 +327,56 @@ impl CheckerBinding {
         &self.id
     }
 
+    /// Returns the stable checker name.
+    pub fn checker(&self) -> &str {
+        &self.checker
+    }
+
+    /// Returns the owning module binding.
+    pub const fn owner(&self) -> &OwnerBindingId {
+        &self.owner
+    }
+
+    /// Returns the public checker symbol.
+    pub fn symbol(&self) -> &str {
+        &self.symbol
+    }
+
+    /// Returns every allowed pack identity.
+    pub fn packs(&self) -> &[ConformancePackId] {
+        &self.packs
+    }
+
+    /// Returns the receipt Shape identity.
+    pub const fn receipt_shape(&self) -> &OutputShapeId {
+        &self.receipt_shape
+    }
+
+    /// Returns the canonical revocation source.
+    pub const fn revocation_source(&self) -> &RevocationSourceId {
+        &self.revocation_source
+    }
+
+    /// Returns the exact owner validation command identity.
+    pub const fn owner_validation(&self) -> &CommandId {
+        &self.owner_validation
+    }
+
+    /// Returns the exact owner documentation command identity.
+    pub const fn owner_docs(&self) -> &CommandId {
+        &self.owner_docs
+    }
+
+    /// Returns every allowed checker scope.
+    pub const fn allowed_scopes(&self) -> &BTreeSet<CheckScopeId> {
+        &self.allowed_scopes
+    }
+
+    /// Returns the reusable invocation template.
+    pub const fn template(&self) -> &CheckTemplate {
+        &self.template
+    }
+
     /// Instantiates the exact call only after subject and scope exist.
     pub fn instantiate(
         &self,
@@ -321,19 +420,19 @@ impl CheckerBinding {
 pub struct CheckInvocation {
     id: CheckInvocationId,
     /// Static checker binding.
-    pub binding: CheckerBindingId,
+    binding: CheckerBindingId,
     /// Exact checker code.
-    pub checker_code: ProofCodeId,
+    checker_code: ProofCodeId,
     /// Selected pack.
-    pub pack: ConformancePackId,
+    pack: ConformancePackId,
     /// Checked subject.
-    pub subject: CheckedSubjectId,
+    subject: CheckedSubjectId,
     /// Exact allowed scope.
-    pub scope: CheckScopeId,
+    scope: CheckScopeId,
     /// Fully instantiated call.
-    pub execution: ExactCheckCall,
+    execution: ExactCheckCall,
     /// Exact input closure.
-    pub input_closure: CheckInputClosureId,
+    input_closure: CheckInputClosureId,
 }
 
 impl CheckInvocation {
@@ -341,145 +440,40 @@ impl CheckInvocation {
     pub const fn id(&self) -> &CheckInvocationId {
         &self.id
     }
-}
 
-/// Strength of one immutable checker result.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum EvidenceGrade {
-    /// Deterministic local bootstrap evidence without cross-world reuse authority.
-    Bootstrap,
-    /// Independently checked reproducible evidence.
-    Reproducible,
-    /// Evidence accepted for release.
-    Release,
-}
-
-impl EvidenceGrade {
-    fn datum(self) -> Datum {
-        text(match self {
-            Self::Bootstrap => "bootstrap",
-            Self::Reproducible => "reproducible",
-            Self::Release => "release",
-        })
-    }
-}
-
-/// Canonical revocation state supplied by the checker's owner policy.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum RevocationStatus {
-    /// No authoritative revocation state was available.
-    Unknown,
-    /// The exact checker code and pack version remain current.
-    Current,
-    /// The result is revoked.
-    Revoked,
-}
-
-/// Immutable receipt tied to one exact invocation.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CheckerReceipt {
-    id: CheckerReceiptId,
-    /// Static binding.
-    pub binding: CheckerBindingId,
-    /// Exact invocation.
-    pub invocation: CheckInvocationId,
-    /// Exact checker code.
-    pub checker_code: ProofCodeId,
-    /// Pack identity.
-    pub pack: ConformancePackId,
-    /// Scope identity.
-    pub scope: CheckScopeId,
-    /// Checked subject.
-    pub subject: CheckedSubjectId,
-    /// Typed passing result.
-    pub result: CheckerResultId,
-    /// Evidence grade.
-    pub grade: EvidenceGrade,
-    /// Execution provenance.
-    pub provenance: EvidenceProvenanceId,
-    /// Checker-owner policy.
-    pub policy: PolicyId,
-    /// Acyclic supporting evidence.
-    pub support: EvidenceSetId,
-}
-
-impl CheckerReceipt {
-    /// Constructs and verifies a receipt against its exact invocation.
-    #[allow(clippy::too_many_arguments)]
-    pub fn passing(
-        invocation: &CheckInvocation,
-        result: CheckerResultId,
-        grade: EvidenceGrade,
-        provenance: EvidenceProvenanceId,
-        policy: PolicyId,
-        support: EvidenceSetId,
-        revocation: RevocationStatus,
-    ) -> Result<Self, ConformanceError> {
-        if revocation != RevocationStatus::Current {
-            return Err(ConformanceError::RevocationUnknownOrActive);
-        }
-        let id = SemanticId::from_fields(vec![
-            field("binding", invocation.binding.to_datum())?,
-            field("invocation", invocation.id.to_datum())?,
-            field("checker-code", invocation.checker_code.to_datum())?,
-            field("pack", invocation.pack.to_datum())?,
-            field("scope", invocation.scope.to_datum())?,
-            field("subject", invocation.subject.to_datum())?,
-            field("result", result.to_datum())?,
-            field("grade", grade.datum())?,
-            field("provenance", provenance.to_datum())?,
-            field("policy", policy.to_datum())?,
-            field("support", support.to_datum())?,
-        ])?;
-        Ok(Self {
-            id,
-            binding: invocation.binding.clone(),
-            invocation: invocation.id.clone(),
-            checker_code: invocation.checker_code.clone(),
-            pack: invocation.pack.clone(),
-            scope: invocation.scope.clone(),
-            subject: invocation.subject.clone(),
-            result,
-            grade,
-            provenance,
-            policy,
-            support,
-        })
+    /// Returns the static binding identity.
+    pub const fn binding(&self) -> &CheckerBindingId {
+        &self.binding
     }
 
-    /// Verifies every copied invocation field and exact scope.
-    pub fn verify(
-        &self,
-        binding: &CheckerBinding,
-        invocation: &CheckInvocation,
-        revocation: RevocationStatus,
-    ) -> Result<(), ConformanceError> {
-        if revocation != RevocationStatus::Current {
-            return Err(ConformanceError::RevocationUnknownOrActive);
-        }
-        if &self.binding != binding.id() || &self.invocation != invocation.id() {
-            return Err(ConformanceError::InvocationMismatch(
-                "binding or invocation",
-            ));
-        }
-        if self.checker_code != invocation.checker_code
-            || self.pack != invocation.pack
-            || self.scope != invocation.scope
-            || self.subject != invocation.subject
-        {
-            return Err(ConformanceError::InvocationMismatch(
-                "copied invocation fields",
-            ));
-        }
-        if !binding.allowed_scopes.contains(&self.scope) {
-            return Err(ConformanceError::UnauthorizedScope);
-        }
-        Ok(())
+    /// Returns the exact checker code identity.
+    pub const fn checker_code(&self) -> &ProofCodeId {
+        &self.checker_code
     }
 
-    /// Returns the receipt identity.
-    pub const fn id(&self) -> &CheckerReceiptId {
-        &self.id
+    /// Returns the selected pack identity.
+    pub const fn pack(&self) -> &ConformancePackId {
+        &self.pack
+    }
+
+    /// Returns the checked subject identity.
+    pub const fn subject(&self) -> &CheckedSubjectId {
+        &self.subject
+    }
+
+    /// Returns the exact allowed scope.
+    pub const fn scope(&self) -> &CheckScopeId {
+        &self.scope
+    }
+
+    /// Returns the fully instantiated call.
+    pub const fn execution(&self) -> &ExactCheckCall {
+        &self.execution
+    }
+
+    /// Returns the exact input closure.
+    pub const fn input_closure(&self) -> &CheckInputClosureId {
+        &self.input_closure
     }
 }
 

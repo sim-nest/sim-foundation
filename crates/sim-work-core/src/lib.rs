@@ -8,7 +8,9 @@
 #![deny(missing_docs)]
 
 mod packet;
+mod proposal;
 mod work;
 
 pub use packet::*;
+pub use proposal::*;
 pub use work::*;

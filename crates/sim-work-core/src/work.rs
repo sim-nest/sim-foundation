@@ -1,7 +1,7 @@
 //! General bounded-work values.
 
-use sim_conformance_core::{EvidenceSetId, IdKind, SemanticId, StorageId};
-use sim_kernel::{Datum, Symbol};
+use sim_conformance_core::{ConformanceError, EvidenceSetId, IdKind, SemanticId, StorageId};
+use sim_kernel::{Datum, NumberLiteral, Symbol};
 
 /// Semantic work identity kind.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -101,23 +101,161 @@ impl DescentCertificate {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WorkEnvelope {
     /// Canonical work identity.
-    pub id: WorkId,
+    id: WorkId,
     /// Exact semantic inputs.
-    pub semantic_inputs: Vec<SemanticInputId>,
+    semantic_inputs: Vec<SemanticInputId>,
     /// Input/output ceilings.
-    pub input_budget: InputBudget,
+    input_budget: InputBudget,
     /// Output Shape identity.
-    pub output_shape: sim_conformance_core::OutputShapeId,
+    output_shape: sim_conformance_core::OutputShapeId,
     /// Explicit resources.
-    pub resources: Vec<ResourceNeed>,
+    resources: Vec<ResourceNeed>,
     /// Explicit capability grant.
-    pub effects: CapabilityGrant,
+    effects: CapabilityGrant,
     /// Progress contract.
-    pub progress: ProgressContract,
+    progress: ProgressContract,
     /// Attempt policy.
-    pub attempts: AttemptPolicy,
+    attempts: AttemptPolicy,
     /// Strict descent evidence.
-    pub descent: DescentCertificate,
+    descent: DescentCertificate,
+}
+
+impl WorkEnvelope {
+    /// Validates and identifies one bounded work declaration.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        semantic_inputs: Vec<SemanticInputId>,
+        input_budget: InputBudget,
+        output_shape: sim_conformance_core::OutputShapeId,
+        resources: Vec<ResourceNeed>,
+        effects: CapabilityGrant,
+        progress: ProgressContract,
+        attempts: AttemptPolicy,
+        descent: DescentCertificate,
+    ) -> Result<Self, WorkError> {
+        if input_budget.output_bytes == 0
+            || progress.beat_work_units == 0
+            || progress.max_beats == 0
+            || attempts.max_attempts == 0
+        {
+            return Err(WorkError::InvalidPacket("work bounds"));
+        }
+        if effects
+            .capabilities
+            .windows(2)
+            .any(|pair| pair[0] >= pair[1])
+        {
+            return Err(WorkError::InvalidPacket("capability order"));
+        }
+        descent.verify()?;
+        let id = SemanticId::from_fields(vec![
+            wfield(
+                "semantic-inputs",
+                Datum::Vector(semantic_inputs.iter().map(SemanticId::to_datum).collect()),
+            )?,
+            wfield("input-budget", budget_datum(input_budget))?,
+            wfield("output-shape", output_shape.to_datum())?,
+            wfield(
+                "resources",
+                Datum::Vector(
+                    resources
+                        .iter()
+                        .map(resource_datum)
+                        .collect::<Result<_, _>>()?,
+                ),
+            )?,
+            wfield(
+                "effects",
+                Datum::Vector(
+                    effects
+                        .capabilities
+                        .iter()
+                        .cloned()
+                        .map(Datum::Symbol)
+                        .collect(),
+                ),
+            )?,
+            wfield(
+                "progress",
+                Datum::Vector(vec![
+                    number(progress.beat_work_units),
+                    number(u64::from(progress.max_beats)),
+                ]),
+            )?,
+            wfield(
+                "attempts",
+                Datum::Vector(vec![
+                    number(u64::from(attempts.max_attempts)),
+                    Datum::Bool(attempts.retry_malformed_once),
+                ]),
+            )?,
+            wfield(
+                "descent",
+                Datum::Vector(vec![
+                    Datum::Symbol(descent.measure.clone()),
+                    number(descent.before),
+                    number(descent.after),
+                ]),
+            )?,
+        ])
+        .map_err(map_conformance)?;
+        Ok(Self {
+            id,
+            semantic_inputs,
+            input_budget,
+            output_shape,
+            resources,
+            effects,
+            progress,
+            attempts,
+            descent,
+        })
+    }
+
+    /// Returns the canonical work identity.
+    pub const fn id(&self) -> &WorkId {
+        &self.id
+    }
+
+    /// Returns the exact semantic inputs in identity-bearing order.
+    pub fn semantic_inputs(&self) -> &[SemanticInputId] {
+        &self.semantic_inputs
+    }
+
+    /// Returns the input and output ceilings.
+    pub const fn input_budget(&self) -> InputBudget {
+        self.input_budget
+    }
+
+    /// Returns the output Shape identity.
+    pub const fn output_shape(&self) -> &sim_conformance_core::OutputShapeId {
+        &self.output_shape
+    }
+
+    /// Returns the explicit resource prerequisites.
+    pub fn resources(&self) -> &[ResourceNeed] {
+        &self.resources
+    }
+
+    /// Returns the explicit capability grant.
+    pub const fn effects(&self) -> &CapabilityGrant {
+        &self.effects
+    }
+
+    /// Returns the progress publication contract.
+    pub const fn progress(&self) -> ProgressContract {
+        self.progress
+    }
+
+    /// Returns the bounded attempt policy.
+    pub const fn attempts(&self) -> AttemptPolicy {
+        self.attempts
+    }
+
+    /// Returns the strict descent evidence.
+    pub const fn descent(&self) -> &DescentCertificate {
+        &self.descent
+    }
 }
 
 /// Typed outcome of bounded work.
@@ -177,3 +315,39 @@ impl std::fmt::Display for WorkError {
     }
 }
 impl std::error::Error for WorkError {}
+
+fn resource_datum(value: &ResourceNeed) -> Result<Datum, WorkError> {
+    Ok(Datum::Node {
+        tag: Symbol::qualified("work", "resource-need-v1"),
+        fields: vec![
+            wfield("kind", Datum::Symbol(value.kind.clone()))?,
+            wfield("requirement", value.requirement.clone())?,
+        ],
+    })
+}
+
+fn budget_datum(value: InputBudget) -> Datum {
+    Datum::Vector(vec![
+        number(value.bytes),
+        number(u64::from(value.files)),
+        number(value.tokens),
+        number(value.output_bytes),
+    ])
+}
+
+fn number(value: u64) -> Datum {
+    Datum::Number(NumberLiteral {
+        domain: Symbol::qualified("numbers", "u64"),
+        canonical: value.to_string(),
+    })
+}
+
+fn wfield(name: &str, value: Datum) -> Result<(Symbol, Datum), WorkError> {
+    Symbol::checked(name)
+        .map(|name| (Symbol::qualified("work", name.name), value))
+        .map_err(|_| WorkError::InvalidPacket("work identity field"))
+}
+
+fn map_conformance(error: ConformanceError) -> WorkError {
+    WorkError::Qualification(error.to_string())
+}

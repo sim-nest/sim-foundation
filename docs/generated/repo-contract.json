@@ -1223,6 +1223,16 @@
           ],
           "name": "packet_contract",
           "src": "crates/sim-work-core/tests/packet_contract.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "test"
+          ],
+          "name": "work_envelope",
+          "src": "crates/sim-work-core/tests/work_envelope.rs"
         }
       ]
     },
@@ -1259,10 +1269,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "fd9563d9248d95c88ce232c33a159111d4dc57c7",
+    "git_commit": "06b44123013dbed42e96c999995452b9c52be2c8",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "fd9563d9248d95c88ce232c33a159111d4dc57c7",
+    "source_commit": "06b44123013dbed42e96c999995452b9c52be2c8",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -1275,9 +1285,9 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "2c31820f206e615c",
+    "workspace_hash": "8a73014fa6188de5",
     "workspace_hash_algorithm": "fnv1a64",
-    "workspace_hash_input_count": 228,
+    "workspace_hash_input_count": 232,
     "workspace_hash_inputs": [
       "Cargo.toml",
       "crates/sim-cancel/Cargo.toml",
@@ -1307,6 +1317,8 @@
       "crates/sim-conformance-core/src/graph.rs",
       "crates/sim-conformance-core/src/identity.rs",
       "crates/sim-conformance-core/src/lib.rs",
+      "crates/sim-conformance-core/src/qualification.rs",
+      "crates/sim-conformance-core/src/receipt.rs",
       "crates/sim-conformance-core/tests/bootstrap_contract.rs",
       "crates/sim-cookbook/Cargo.toml",
       "crates/sim-cookbook/src/config.rs",
@@ -1503,8 +1515,10 @@
       "crates/sim-work-core/recipes/book.toml",
       "crates/sim-work-core/src/lib.rs",
       "crates/sim-work-core/src/packet.rs",
+      "crates/sim-work-core/src/proposal.rs",
       "crates/sim-work-core/src/work.rs",
       "crates/sim-work-core/tests/packet_contract.rs",
+      "crates/sim-work-core/tests/work_envelope.rs",
       "features.toml",
       "xtask/Cargo.toml"
     ]

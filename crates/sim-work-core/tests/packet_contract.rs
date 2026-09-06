@@ -155,7 +155,7 @@ fn deterministic_packet_accepts_qualified_dependency_and_planned_target() {
     .unwrap();
     assert_eq!(first.id(), second.id());
     assert_eq!(
-        first.funded_targets,
+        first.funded_targets(),
         [SurfaceKey::new("api/projection").unwrap()]
     );
 }
