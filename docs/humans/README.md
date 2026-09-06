@@ -121,12 +121,31 @@ fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
 }
 
 fn command(value: &str) -> OwnerCommand {
-    OwnerCommand {
-        id: sid(value),
-        cwd: "repo".into(),
-        argv: vec![value.into()],
-        environment: "sealed".into(),
-    }
+    OwnerCommand::new("repo".into(), vec![value.into()], "sealed".into()).unwrap()
+}
+
+#[test]
+fn owner_command_identity_covers_cwd_argv_and_environment() {
+    let baseline = command("validate");
+    assert_eq!(baseline, command("validate"));
+    assert_ne!(
+        baseline.id(),
+        OwnerCommand::new("other".into(), vec!["validate".into()], "sealed".into())
+            .unwrap()
+            .id()
+    );
+    assert_ne!(
+        baseline.id(),
+        OwnerCommand::new("repo".into(), vec!["docs".into()], "sealed".into())
+            .unwrap()
+            .id()
+    );
+    assert_ne!(
+        baseline.id(),
+        OwnerCommand::new("repo".into(), vec!["validate".into()], "networked".into())
+            .unwrap()
+            .id()
+    );
 }
 
 fn owner_binding() -> OwnerBinding {
@@ -366,12 +385,7 @@ fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
 }
 
 fn command(value: &str) -> OwnerCommand {
-    OwnerCommand {
-        id: sid(value),
-        cwd: "repo".into(),
-        argv: vec![value.into()],
-        environment: "sealed".into(),
-    }
+    OwnerCommand::new("repo".into(), vec![value.into()], "sealed".into()).unwrap()
 }
 
 fn binding() -> OwnerBinding {

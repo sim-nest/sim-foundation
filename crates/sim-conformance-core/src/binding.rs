@@ -33,13 +33,61 @@ impl SurfaceKey {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OwnerCommand {
     /// Semantic command identity.
-    pub id: CommandId,
+    id: CommandId,
     /// Repository-relative working directory policy.
-    pub cwd: String,
+    cwd: String,
     /// Exact argument vector; no shell reinterpretation is implied.
-    pub argv: Vec<String>,
+    argv: Vec<String>,
     /// Environment policy identity.
-    pub environment: String,
+    environment: String,
+}
+
+impl OwnerCommand {
+    /// Validates and identifies an exact argument-vector command.
+    pub fn new(
+        cwd: String,
+        argv: Vec<String>,
+        environment: String,
+    ) -> Result<Self, ConformanceError> {
+        if cwd.is_empty()
+            || argv.is_empty()
+            || argv.iter().any(String::is_empty)
+            || environment.is_empty()
+        {
+            return Err(ConformanceError::UnresolvedBinding);
+        }
+        let id = SemanticId::from_fields(vec![
+            field("cwd", text(cwd.clone()))?,
+            field("argv", strings(argv.clone()))?,
+            field("environment", text(environment.clone()))?,
+        ])?;
+        Ok(Self {
+            id,
+            cwd,
+            argv,
+            environment,
+        })
+    }
+
+    /// Returns the semantic command identity.
+    pub const fn id(&self) -> &CommandId {
+        &self.id
+    }
+
+    /// Returns the repository-relative working directory policy.
+    pub fn cwd(&self) -> &str {
+        &self.cwd
+    }
+
+    /// Returns the exact argument vector.
+    pub fn argv(&self) -> &[String] {
+        &self.argv
+    }
+
+    /// Returns the environment policy identity.
+    pub fn environment(&self) -> &str {
+        &self.environment
+    }
 }
 
 /// Whether activation extends an owner, extracts a reusable owner, or adds a product.
@@ -180,8 +228,8 @@ impl OwnerBinding {
             field("dependency-direction", text(dependency_direction.clone()))?,
             field("route", text(route.0.clone()))?,
             field("specimen", text(specimen.0.clone()))?,
-            field("validation", validation.id.to_datum())?,
-            field("docs", docs.id.to_datum())?,
+            field("validation", validation.id().to_datum())?,
+            field("docs", docs.id().to_datum())?,
         ];
         Ok(Self {
             id: SemanticId::from_fields(fields)?,

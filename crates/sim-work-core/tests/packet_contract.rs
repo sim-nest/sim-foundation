@@ -9,12 +9,7 @@ fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
 }
 
 fn command(value: &str) -> OwnerCommand {
-    OwnerCommand {
-        id: sid(value),
-        cwd: "repo".into(),
-        argv: vec![value.into()],
-        environment: "sealed".into(),
-    }
+    OwnerCommand::new("repo".into(), vec![value.into()], "sealed".into()).unwrap()
 }
 
 fn binding() -> OwnerBinding {
