@@ -4,6 +4,11 @@
 {"kind":"recipe","path":"crates/sim-cancel/recipes/01-basics/request-lifetime/recipe.toml"}
 {"kind":"recipe","path":"crates/sim-cancel/recipes/01-basics/request-lifetime/setup.siml"}
 {"kind":"recipe","path":"crates/sim-cancel/recipes/book.toml"}
+{"kind":"recipe","path":"crates/sim-conformance-core/recipes/01-basics/chapter.toml"}
+{"kind":"recipe","path":"crates/sim-conformance-core/recipes/01-basics/scoped-receipt/purpose.md"}
+{"kind":"recipe","path":"crates/sim-conformance-core/recipes/01-basics/scoped-receipt/recipe.toml"}
+{"kind":"recipe","path":"crates/sim-conformance-core/recipes/01-basics/scoped-receipt/setup.siml"}
+{"kind":"recipe","path":"crates/sim-conformance-core/recipes/book.toml"}
 {"kind":"recipe","path":"crates/sim-lib-net-core/recipes/01-basics/chapter.toml"}
 {"kind":"recipe","path":"crates/sim-lib-net-core/recipes/01-basics/response-head/purpose.md"}
 {"kind":"recipe","path":"crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml"}
@@ -36,3 +41,8 @@
 {"kind":"recipe","path":"crates/sim-lib-web-core/recipes/01-basics/exact-selector/recipe.toml"}
 {"kind":"recipe","path":"crates/sim-lib-web-core/recipes/01-basics/exact-selector/setup.siml"}
 {"kind":"recipe","path":"crates/sim-lib-web-core/recipes/book.toml"}
+{"kind":"recipe","path":"crates/sim-work-core/recipes/01-basics/bounded-packet/purpose.md"}
+{"kind":"recipe","path":"crates/sim-work-core/recipes/01-basics/bounded-packet/recipe.toml"}
+{"kind":"recipe","path":"crates/sim-work-core/recipes/01-basics/bounded-packet/setup.siml"}
+{"kind":"recipe","path":"crates/sim-work-core/recipes/01-basics/chapter.toml"}
+{"kind":"recipe","path":"crates/sim-work-core/recipes/book.toml"}

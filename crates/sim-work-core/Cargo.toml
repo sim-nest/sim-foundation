@@ -1,0 +1,21 @@
+[package]
+name = "sim-work-core"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Pure bounded-work envelopes and hostile implementation-proposal admission for SIM."
+readme = "README.md"
+publish = true
+repository.workspace = true
+homepage.workspace = true
+
+[package.metadata.sim-recipes]
+policy = "descriptor"
+reason = "The recipe is a machine-indexed description of a pure bounded-work contract."
+
+[dependencies]
+sim-conformance-core = { version = "0.1.0", path = "../sim-conformance-core" }
+sim-kernel = { version = "0.4.0" }
+
+[lints]
+workspace = true

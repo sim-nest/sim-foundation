@@ -1,0 +1,5 @@
+book = "work-core"
+title = "Bounded work"
+summary = "Deterministic work-envelope and implementation-packet descriptors."
+order = 355
+chapters = ["01-basics"]

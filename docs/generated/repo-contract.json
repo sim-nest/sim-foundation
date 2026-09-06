@@ -1,5 +1,5 @@
 {
-  "card_count": 9,
+  "card_count": 11,
   "cards": [
     {
       "id": "browse/catalog",
@@ -12,6 +12,12 @@
       "kind": "cookbook-recipe",
       "owner": "sim-cancel",
       "summary": "Executor-neutral request lifetime composition."
+    },
+    {
+      "id": "cookbook/conformance-core",
+      "kind": "cookbook-recipe",
+      "owner": "sim-conformance-core",
+      "summary": "Immutable ownership, scope, invocation, and receipt descriptors."
     },
     {
       "id": "cookbook/net-core",
@@ -50,6 +56,12 @@
       "summary": "Network-free immutable representation and selector descriptors."
     },
     {
+      "id": "cookbook/work-core",
+      "kind": "cookbook-recipe",
+      "owner": "sim-work-core",
+      "summary": "Deterministic work-envelope and implementation-packet descriptors."
+    },
+    {
       "id": "registry/catalog",
       "kind": "browse-registry",
       "owner": "workspace",
@@ -67,6 +79,7 @@
     "workspace": [
       "sim-cancel",
       "sim-config",
+      "sim-conformance-core",
       "sim-cookbook",
       "sim-cookbook-build",
       "sim-host-core",
@@ -87,12 +100,13 @@
       "sim-table-core",
       "sim-text",
       "sim-value",
+      "sim-work-core",
       "xtask"
     ]
   },
   "non_citizen_exemption_count": 0,
   "non_citizen_exemptions": [],
-  "package_count": 23,
+  "package_count": 25,
   "packages": [
     {
       "crate_name": "sim_cancel",
@@ -186,6 +200,44 @@
           ],
           "name": "sim_config",
           "src": "crates/sim-config/src/lib.rs"
+        }
+      ]
+    },
+    {
+      "crate_name": "sim_conformance_core",
+      "dependencies": [],
+      "description": "Canonical bindings, checker invocations, receipts, and identity accountability for SIM conformance.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-conformance-core/Cargo.toml",
+      "name": "sim-conformance-core",
+      "publish": "true",
+      "root": "crates/sim-conformance-core",
+      "rustdoc_summary": "Neutral, effect-free conformance records for SIM.",
+      "target_kinds": [
+        "lib",
+        "test"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_conformance_core",
+          "src": "crates/sim-conformance-core/src/lib.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "test"
+          ],
+          "name": "bootstrap_contract",
+          "src": "crates/sim-conformance-core/tests/bootstrap_contract.rs"
         }
       ]
     },
@@ -1129,6 +1181,52 @@
       ]
     },
     {
+      "crate_name": "sim_work_core",
+      "dependencies": [
+        {
+          "kind": "normal",
+          "optional": false,
+          "package": "sim-conformance-core",
+          "rename": null,
+          "target": null
+        }
+      ],
+      "description": "Pure bounded-work envelopes and hostile implementation-proposal admission for SIM.",
+      "features": [],
+      "group": "workspace",
+      "manifest": "crates/sim-work-core/Cargo.toml",
+      "name": "sim-work-core",
+      "publish": "true",
+      "root": "crates/sim-work-core",
+      "rustdoc_summary": "Pure bounded-work and implementation-packet contracts.",
+      "target_kinds": [
+        "lib",
+        "test"
+      ],
+      "targets": [
+        {
+          "crate_types": [
+            "lib"
+          ],
+          "kind": [
+            "lib"
+          ],
+          "name": "sim_work_core",
+          "src": "crates/sim-work-core/src/lib.rs"
+        },
+        {
+          "crate_types": [
+            "bin"
+          ],
+          "kind": [
+            "test"
+          ],
+          "name": "packet_contract",
+          "src": "crates/sim-work-core/tests/packet_contract.rs"
+        }
+      ]
+    },
+    {
       "crate_name": "xtask",
       "dependencies": [],
       "description": "SIM workspace package for xtask.",
@@ -1161,10 +1259,10 @@
     "generated_by": "cargo run -p xtask -- simdoc",
     "generation_timestamp": "2026-07-15T21:29:31+02:00",
     "generator": "xtask repo-contract v1",
-    "git_commit": "da5c32f5239b2564f7bb6a883e9cd1bdf42d0fd7",
+    "git_commit": "fd9563d9248d95c88ce232c33a159111d4dc57c7",
     "repo": "sim-foundation",
     "schema": "sim.provenance.v1",
-    "source_commit": "da5c32f5239b2564f7bb6a883e9cd1bdf42d0fd7",
+    "source_commit": "fd9563d9248d95c88ce232c33a159111d4dc57c7",
     "source_remote": "https://github.com/sim-nest/sim-foundation",
     "validation_commands": [
       "cargo fmt --all --check",
@@ -1177,9 +1275,9 @@
       "cargo run -p xtask -- validation-matrix --check --repo .",
       "cargo run -p xtask -- crate-catalog --check --repo ."
     ],
-    "workspace_hash": "4f3b3c7d91fe9cd3",
+    "workspace_hash": "2c31820f206e615c",
     "workspace_hash_algorithm": "fnv1a64",
-    "workspace_hash_input_count": 210,
+    "workspace_hash_input_count": 228,
     "workspace_hash_inputs": [
       "Cargo.toml",
       "crates/sim-cancel/Cargo.toml",
@@ -1199,6 +1297,17 @@
       "crates/sim-config/src/source.rs",
       "crates/sim-config/src/table.rs",
       "crates/sim-config/src/view.rs",
+      "crates/sim-conformance-core/Cargo.toml",
+      "crates/sim-conformance-core/recipes/01-basics/scoped-receipt/recipe.toml",
+      "crates/sim-conformance-core/recipes/book.toml",
+      "crates/sim-conformance-core/src/binding.rs",
+      "crates/sim-conformance-core/src/checker.rs",
+      "crates/sim-conformance-core/src/digest.rs",
+      "crates/sim-conformance-core/src/fake.rs",
+      "crates/sim-conformance-core/src/graph.rs",
+      "crates/sim-conformance-core/src/identity.rs",
+      "crates/sim-conformance-core/src/lib.rs",
+      "crates/sim-conformance-core/tests/bootstrap_contract.rs",
       "crates/sim-cookbook/Cargo.toml",
       "crates/sim-cookbook/src/config.rs",
       "crates/sim-cookbook/src/digest.rs",
@@ -1389,11 +1498,18 @@
       "crates/sim-value/src/lib.rs",
       "crates/sim-value/src/path.rs",
       "crates/sim-value/src/tests.rs",
+      "crates/sim-work-core/Cargo.toml",
+      "crates/sim-work-core/recipes/01-basics/bounded-packet/recipe.toml",
+      "crates/sim-work-core/recipes/book.toml",
+      "crates/sim-work-core/src/lib.rs",
+      "crates/sim-work-core/src/packet.rs",
+      "crates/sim-work-core/src/work.rs",
+      "crates/sim-work-core/tests/packet_contract.rs",
       "features.toml",
       "xtask/Cargo.toml"
     ]
   },
-  "recipe_book_count": 7,
+  "recipe_book_count": 9,
   "recipes": [
     {
       "book": "cancel",
@@ -1414,6 +1530,26 @@
       ],
       "summary": "Executor-neutral request lifetime composition.",
       "title": "Explicit cancellation"
+    },
+    {
+      "book": "conformance-core",
+      "book_toml": "crates/sim-conformance-core/recipes/book.toml",
+      "card_id": "cookbook/conformance-core",
+      "group": "workspace",
+      "package": "sim-conformance-core",
+      "recipe_count": 1,
+      "recipes": [
+        {
+          "card_id": "conformance-core/01-basics/scoped-receipt",
+          "codec": "lisp",
+          "id": "scoped-receipt",
+          "package": "sim-conformance-core",
+          "recipe_toml": "crates/sim-conformance-core/recipes/01-basics/scoped-receipt/recipe.toml",
+          "title": "Scoped checker receipt descriptor"
+        }
+      ],
+      "summary": "Immutable ownership, scope, invocation, and receipt descriptors.",
+      "title": "Conformance core"
     },
     {
       "book": "net-core",
@@ -1534,6 +1670,26 @@
       ],
       "summary": "Network-free immutable representation and selector descriptors.",
       "title": "Web Evidence Core"
+    },
+    {
+      "book": "work-core",
+      "book_toml": "crates/sim-work-core/recipes/book.toml",
+      "card_id": "cookbook/work-core",
+      "group": "workspace",
+      "package": "sim-work-core",
+      "recipe_count": 1,
+      "recipes": [
+        {
+          "card_id": "work-core/01-basics/bounded-packet",
+          "codec": "lisp",
+          "id": "bounded-packet",
+          "package": "sim-work-core",
+          "recipe_toml": "crates/sim-work-core/recipes/01-basics/bounded-packet/recipe.toml",
+          "title": "Bounded implementation packet descriptor"
+        }
+      ],
+      "summary": "Deterministic work-envelope and implementation-packet descriptors.",
+      "title": "Bounded work"
     }
   ]
 }

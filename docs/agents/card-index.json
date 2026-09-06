@@ -7,6 +7,11 @@
     "crates/sim-cancel/recipes/01-basics/request-lifetime/recipe.toml",
     "crates/sim-cancel/recipes/01-basics/request-lifetime/setup.siml",
     "crates/sim-cancel/recipes/book.toml",
+    "crates/sim-conformance-core/recipes/01-basics/chapter.toml",
+    "crates/sim-conformance-core/recipes/01-basics/scoped-receipt/purpose.md",
+    "crates/sim-conformance-core/recipes/01-basics/scoped-receipt/recipe.toml",
+    "crates/sim-conformance-core/recipes/01-basics/scoped-receipt/setup.siml",
+    "crates/sim-conformance-core/recipes/book.toml",
     "crates/sim-lib-net-core/recipes/01-basics/chapter.toml",
     "crates/sim-lib-net-core/recipes/01-basics/response-head/purpose.md",
     "crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml",
@@ -38,6 +43,11 @@
     "crates/sim-lib-web-core/recipes/01-basics/exact-selector/purpose.md",
     "crates/sim-lib-web-core/recipes/01-basics/exact-selector/recipe.toml",
     "crates/sim-lib-web-core/recipes/01-basics/exact-selector/setup.siml",
-    "crates/sim-lib-web-core/recipes/book.toml"
+    "crates/sim-lib-web-core/recipes/book.toml",
+    "crates/sim-work-core/recipes/01-basics/bounded-packet/purpose.md",
+    "crates/sim-work-core/recipes/01-basics/bounded-packet/recipe.toml",
+    "crates/sim-work-core/recipes/01-basics/bounded-packet/setup.siml",
+    "crates/sim-work-core/recipes/01-basics/chapter.toml",
+    "crates/sim-work-core/recipes/book.toml"
   ]
 }

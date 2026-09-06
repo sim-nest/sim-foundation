@@ -17,6 +17,8 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 
 | Feature | Subject | Specimens | Summary |
 | --- | --- | ---: | --- |
+| `feature/sim-foundation/conformance-core` | `crate/sim-conformance-core` | 1 | Bind ownership, checker code, subjects, scopes, calls, evidence, and revocation into canonical acyclic records without acquiring host authority. |
+| `feature/sim-foundation/bounded-work-core` | `crate/sim-work-core` | 1 | Materialize exact declared source into deterministic packets with hard byte, file, token, output, dependency, descent, and stop contracts. |
 | `feature/sim-foundation/web-evidence-core` | `crate/sim-lib-web-core` | 1 | Separate raw capture and normalized representation identities, exact Unicode-scalar selectors, and complete fail-closed web policy receipts. |
 | `feature/sim-foundation/search-evidence-core` | `crate/sim-lib-search-core` | 1 | Define queries, sites, provider claims, observations, pages, notices, alias evidence, rank contributions, runs, checked citations, bundles, and a pure wire-codec boundary. |
 | `feature/sim-foundation/study-core` | `crate/sim-study-core` | 1 | Define canonical subject, coordinate, attempt, outcome, estimate, decision, selection, evidence, and privacy records without storage, arithmetic, runtime, or AI behavior. |
@@ -55,6 +57,11 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 - `crates/sim-cancel/recipes/01-basics/request-lifetime/recipe.toml`
 - `crates/sim-cancel/recipes/01-basics/request-lifetime/setup.siml`
 - `crates/sim-cancel/recipes/book.toml`
+- `crates/sim-conformance-core/recipes/01-basics/chapter.toml`
+- `crates/sim-conformance-core/recipes/01-basics/scoped-receipt/purpose.md`
+- `crates/sim-conformance-core/recipes/01-basics/scoped-receipt/recipe.toml`
+- `crates/sim-conformance-core/recipes/01-basics/scoped-receipt/setup.siml`
+- `crates/sim-conformance-core/recipes/book.toml`
 - `crates/sim-lib-net-core/recipes/01-basics/chapter.toml`
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/purpose.md`
 - `crates/sim-lib-net-core/recipes/01-basics/response-head/recipe.toml`
@@ -87,8 +94,552 @@ This generated lane consumes `docs/generated/sim-index-fragment.sx`. Global inde
 - `crates/sim-lib-web-core/recipes/01-basics/exact-selector/recipe.toml`
 - `crates/sim-lib-web-core/recipes/01-basics/exact-selector/setup.siml`
 - `crates/sim-lib-web-core/recipes/book.toml`
+- `crates/sim-work-core/recipes/01-basics/bounded-packet/purpose.md`
+- `crates/sim-work-core/recipes/01-basics/bounded-packet/recipe.toml`
+- `crates/sim-work-core/recipes/01-basics/bounded-packet/setup.siml`
+- `crates/sim-work-core/recipes/01-basics/chapter.toml`
+- `crates/sim-work-core/recipes/book.toml`
 
 ## Worked Examples
+
+### `feature/sim-foundation/conformance-core`
+
+Specimen `spec-test/sim-foundation/crates/sim-conformance-core/tests/bootstrap_contract` is checked by `cargo test`.
+
+Source `crates/sim-conformance-core/tests/bootstrap_contract.rs`:
+
+```rust
+use std::collections::BTreeSet;
+
+// conformance: neutral checker binding, identity, support graph, and receipt contract.
+
+use sim_conformance_core::*;
+use sim_kernel::{Datum, NumberLiteral, Symbol};
+
+fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
+    SemanticId::from_text(value).unwrap()
+}
+
+fn command(value: &str) -> OwnerCommand {
+    OwnerCommand {
+        id: sid(value),
+        cwd: "repo".into(),
+        argv: vec![value.into()],
+        environment: "sealed".into(),
+    }
+}
+
+fn owner_binding() -> OwnerBinding {
+    OwnerBinding::new(
+        "law/demo".into(),
+        OwnerDisposition::ExtractReusable,
+        vec!["sim-demo-core".into()],
+        vec![BoundSurface {
+            key: SurfaceKey::new("api/demo").unwrap(),
+            public_name: "demo::Api".into(),
+            status: SurfaceStatus::Planned {
+                producing_phase: "P2".into(),
+            },
+        }],
+        vec!["consumer-a".into(), "consumer-b".into()],
+        "consumer -> demo -> kernel".into(),
+        SurfaceKey::new("route/demo").unwrap(),
+        SurfaceKey::new("specimen/demo").unwrap(),
+        command("validate"),
+        command("docs"),
+    )
+    .unwrap()
+}
+
+fn checker_binding(owner: OwnerBindingId) -> CheckerBinding {
+    let scope_x: CheckScopeId = sid("scope/x");
+    let scope_y: CheckScopeId = sid("scope/y");
+    let template = CheckTemplate::new(
+        "check".into(),
+        vec![
+            CheckArgument::Literal("--binding".into()),
+            CheckArgument::BindingSlot,
+            CheckArgument::Literal("--subject".into()),
+            CheckArgument::SubjectSlot,
+            CheckArgument::Literal("--scope".into()),
+            CheckArgument::ScopeSlot,
+        ],
+        sid("cwd/repo"),
+        sid("env/sealed"),
+        sid("shape/result"),
+    )
+    .unwrap();
+    CheckerBinding::new(
+        "C-DEMO".into(),
+        owner,
+        "demo::check".into(),
+        vec![sid("pack/demo")],
+        sid("shape/receipt"),
+        sid("revocation/demo"),
+        sid("command/validation"),
+        sid("command/docs"),
+        [scope_x, scope_y].into_iter().collect(),
+        template,
+    )
+    .unwrap()
+}
+
+#[test]
+fn semantic_vector_is_canonical_and_storage_is_a_distinct_role() {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    struct VectorKind;
+    impl IdKind for VectorKind {
+        const DOMAIN: &'static str = "test/vector-v1";
+    }
+    let id = SemanticId::<VectorKind>::from_fields(vec![(
+        Symbol::qualified("vector", "answer"),
+        Datum::Number(NumberLiteral {
+            domain: Symbol::qualified("numbers", "u64"),
+            canonical: "42".into(),
+        }),
+    )])
+    .unwrap();
+    let actual = id
+        .content_id()
+        .bytes
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect::<String>();
+    assert_eq!(
+        actual,
+        "c13d17c133a40252864f27f34aeadaeb273a83dadd2f9726754d31a2e02d6e68"
+    );
+
+    let bytes = b"same semantic transport";
+    let location = StorageId::for_bytes(bytes);
+    assert!(location.verify(bytes).is_ok());
+    assert_eq!(
+        location.verify(b"different"),
+        Err(ConformanceError::StorageDigestMismatch)
+    );
+}
+
+#[test]
+fn one_binding_instantiates_four_distinct_calls_without_changing() {
+    let owner = owner_binding();
+    let binding = checker_binding(owner.id().clone());
+    let original = binding.id().clone();
+    let code: ProofCodeId = sid("code/v1");
+    let pack: ConformancePackId = sid("pack/demo");
+    let closure: CheckInputClosureId = sid("closure/one");
+    let subjects: [CheckedSubjectId; 2] = [sid("subject/a"), sid("subject/b")];
+    let scopes: [CheckScopeId; 2] = [sid("scope/x"), sid("scope/y")];
+    let mut ids = BTreeSet::new();
+    for subject in subjects {
+        for scope in scopes.clone() {
+            let invocation = binding
+                .instantiate(
+                    code.clone(),
+                    pack.clone(),
+                    subject.clone(),
+                    scope,
+                    closure.clone(),
+                )
+                .unwrap();
+            ids.insert(invocation.id().clone());
+        }
+    }
+    assert_eq!(ids.len(), 4);
+    assert_eq!(binding.id(), &original);
+}
+
+#[test]
+fn wrong_scope_substitution_and_unknown_revocation_fail_closed() {
+    let owner = owner_binding();
+    let binding = checker_binding(owner.id().clone());
+    let build = |subject: &str, scope: &str| {
+        binding
+            .instantiate(
+                sid("code/v1"),
+                sid("pack/demo"),
+                sid(subject),
+                sid(scope),
+                sid("closure/one"),
+            )
+            .unwrap()
+    };
+    assert_eq!(
+        binding.instantiate(
+            sid("code/v1"),
+            sid("pack/demo"),
+            sid("subject/a"),
+            sid("scope/not-allowed"),
+            sid("closure/one"),
+        ),
+        Err(ConformanceError::UnauthorizedScope)
+    );
+    let invocation_a = build("subject/a", "scope/x");
+    let invocation_b = build("subject/b", "scope/x");
+    let receipt = CheckerReceipt::passing(
+        &invocation_a,
+        sid("result/pass"),
+        EvidenceGrade::Bootstrap,
+        sid("provenance/local"),
+        sid("policy/v1"),
+        sid("support/empty"),
+        RevocationStatus::Current,
+    )
+    .unwrap();
+    assert_eq!(
+        receipt.verify(&binding, &invocation_b, RevocationStatus::Current),
+        Err(ConformanceError::InvocationMismatch(
+            "binding or invocation"
+        ))
+    );
+    assert_eq!(
+        receipt.verify(&binding, &invocation_a, RevocationStatus::Unknown),
+        Err(ConformanceError::RevocationUnknownOrActive)
+    );
+}
+
+#[test]
+fn templates_and_support_graphs_reject_cycles_before_dispatch() {
+    assert_eq!(
+        CheckTemplate::new(
+            "check".into(),
+            vec![CheckArgument::BindingSlot, CheckArgument::SubjectSlot],
+            sid("cwd/repo"),
+            sid("env/sealed"),
+            sid("shape/result"),
+        ),
+        Err(ConformanceError::InvalidTemplate("scope slot"))
+    );
+    let mut graph = SupportGraph::default();
+    graph
+        .add_support(SupportNode("binding".into()), SupportNode("command".into()))
+        .unwrap();
+    graph
+        .add_support(SupportNode("command".into()), SupportNode("receipt".into()))
+        .unwrap();
+    graph
+        .add_support(SupportNode("receipt".into()), SupportNode("binding".into()))
+        .unwrap();
+    assert!(matches!(
+        graph.validate(),
+        Err(ConformanceError::SupportCycle(_))
+    ));
+}
+
+#[test]
+fn activation_scope_cannot_resolve_a_planned_surface() {
+    let binding = owner_binding();
+    let receipt = BindingQualificationReceipt {
+        binding: binding.id().clone(),
+        scope: QualificationScope::Activation {
+            map: sid("activation/map"),
+        },
+        resolved: vec![CheckedSurfaceRef {
+            key: SurfaceKey::new("api/demo").unwrap(),
+            source: sid("source/demo"),
+            package: sid("package/demo"),
+            receipt: sid("receipt/demo"),
+        }],
+        subject: sid("subject/activation"),
+        checks: vec![sid("receipt/ownership")],
+    };
+    assert_eq!(
+        receipt.verify(&binding),
+        Err(ConformanceError::ActivationIsNotProductionEvidence)
+    );
+}
+```
+
+### `feature/sim-foundation/bounded-work-core`
+
+Specimen `spec-test/sim-foundation/crates/sim-work-core/tests/packet_contract` is checked by `cargo test`.
+
+Source `crates/sim-work-core/tests/packet_contract.rs`:
+
+```rust
+use sim_conformance_core::*;
+
+// conformance: pure bounded implementation packet construction and admission.
+use sim_kernel::Symbol;
+use sim_work_core::*;
+
+fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
+    SemanticId::from_text(value).unwrap()
+}
+
+fn command(value: &str) -> OwnerCommand {
+    OwnerCommand {
+        id: sid(value),
+        cwd: "repo".into(),
+        argv: vec![value.into()],
+        environment: "sealed".into(),
+    }
+}
+
+fn binding() -> OwnerBinding {
+    OwnerBinding::new(
+        "law/projection".into(),
+        OwnerDisposition::ExtractReusable,
+        vec!["sim-projection-core".into()],
+        vec![
+            BoundSurface {
+                key: SurfaceKey::new("api/local-adapter").unwrap(),
+                public_name: "adapter::Local".into(),
+                status: SurfaceStatus::Existing,
+            },
+            BoundSurface {
+                key: SurfaceKey::new("api/projection").unwrap(),
+                public_name: "projection::Projection".into(),
+                status: SurfaceStatus::Planned {
+                    producing_phase: "NV12.06".into(),
+                },
+            },
+        ],
+        vec!["sim-world".into(), "sim-prove".into()],
+        "products -> projection -> kernel".into(),
+        SurfaceKey::new("route/projection").unwrap(),
+        SurfaceKey::new("specimen/projection").unwrap(),
+        command("validate"),
+        command("docs"),
+    )
+    .unwrap()
+}
+
+fn uses(owner: OwnerBindingId) -> DependencyUseSet {
+    DependencyUseSet::new(
+        "NV12.06".into(),
+        owner,
+        vec![
+            SurfaceUse {
+                surface: SurfaceKey::new("api/local-adapter").unwrap(),
+                role: SurfaceUseRole::ReleasedDependency,
+            },
+            SurfaceUse {
+                surface: SurfaceKey::new("api/projection").unwrap(),
+                role: SurfaceUseRole::FundedTarget,
+            },
+        ],
+    )
+    .unwrap()
+}
+
+fn draft(owner: OwnerBindingId, budget: InputBudget) -> PacketDraft {
+    PacketDraft {
+        phase: "NV12.06".into(),
+        owner,
+        behavior: sid("behavior/projection"),
+        falsifier: sid("falsifier/map-order"),
+        allowed_api: vec![sid("type/datum")],
+        input_budget: budget,
+        output_contract: sid("shape/proposal"),
+        forbidden_edges: vec![ForbiddenEdge {
+            from: "projection".into(),
+            to: "host-process".into(),
+        }],
+        tests_first: vec![sid("proof/map-order")],
+        validation: sid("command/validate"),
+        docs: sid("command/docs"),
+        index_impact: IndexImpact::SourceFacts,
+        descent: DescentCertificate {
+            measure: Symbol::qualified("work", "unknowns"),
+            before: 2,
+            after: 1,
+        },
+        stop: StopCondition {
+            condition: Symbol::qualified("work", "gate-green"),
+            max_attempts: 2,
+        },
+        commit_subject: Some("Implement projection law".into()),
+    }
+}
+
+fn evidence(owner: &OwnerBindingId, uses: &DependencyUseSet) -> Vec<SurfaceEvidence> {
+    vec![
+        SurfaceEvidence {
+            key: SurfaceKey::new("api/local-adapter").unwrap(),
+            owner: sid("owner/adapter"),
+            state: SurfaceEvidenceState::Released {
+                dependency_uses: uses.id().clone(),
+            },
+        },
+        SurfaceEvidence {
+            key: SurfaceKey::new("api/projection").unwrap(),
+            owner: owner.clone(),
+            state: SurfaceEvidenceState::Planned {
+                producing_phase: "NV12.06".into(),
+            },
+        },
+    ]
+}
+
+#[test]
+fn deterministic_packet_accepts_qualified_dependency_and_planned_target() {
+    let binding = binding();
+    let uses = uses(binding.id().clone());
+    let mut left = FakeInputPort::default();
+    let location = left.insert(b"exact source".to_vec());
+    let input = PacketInputSpec {
+        surface: SurfaceKey::new("api/local-adapter").unwrap(),
+        location,
+        tokens: 2,
+    };
+    let budget = InputBudget {
+        bytes: 32,
+        files: 1,
+        tokens: 4,
+        output_bytes: 64,
+    };
+    let first = PacketBuilder::build(
+        draft(binding.id().clone(), budget),
+        &binding,
+        &uses,
+        &evidence(binding.id(), &uses),
+        vec![input.clone()],
+        &mut left,
+    )
+    .unwrap();
+    let mut right = FakeInputPort::default();
+    let right_location = right.insert(b"exact source".to_vec());
+    let second = PacketBuilder::build(
+        draft(binding.id().clone(), budget),
+        &binding,
+        &uses,
+        &evidence(binding.id(), &uses),
+        vec![PacketInputSpec {
+            location: right_location,
+            ..input
+        }],
+        &mut right,
+    )
+    .unwrap();
+    assert_eq!(first.id(), second.id());
+    assert_eq!(
+        first.funded_targets,
+        [SurfaceKey::new("api/projection").unwrap()]
+    );
+}
+
+#[test]
+fn unimplemented_dependency_wrong_target_phase_and_wrong_owner_refuse() {
+    let binding = binding();
+    let uses = uses(binding.id().clone());
+    let budget = InputBudget {
+        bytes: 32,
+        files: 1,
+        tokens: 4,
+        output_bytes: 64,
+    };
+    let input = |port: &mut FakeInputPort| PacketInputSpec {
+        surface: SurfaceKey::new("api/local-adapter").unwrap(),
+        location: port.insert(b"source".to_vec()),
+        tokens: 1,
+    };
+    let mut port = FakeInputPort::default();
+    let mut unimplemented = evidence(binding.id(), &uses);
+    unimplemented[0].state = SurfaceEvidenceState::Planned {
+        producing_phase: "NV12.05".into(),
+    };
+    assert!(matches!(
+        PacketBuilder::build(
+            draft(binding.id().clone(), budget),
+            &binding,
+            &uses,
+            &unimplemented,
+            vec![input(&mut port)],
+            &mut port,
+        ),
+        Err(WorkError::Qualification(message)) if message.contains("UnqualifiedDependency")
+    ));
+
+    let mut wrong_phase = evidence(binding.id(), &uses);
+    wrong_phase[1].state = SurfaceEvidenceState::Planned {
+        producing_phase: "NV12.07".into(),
+    };
+    let mut port = FakeInputPort::default();
+    let spec = input(&mut port);
+    assert!(matches!(
+        PacketBuilder::build(
+            draft(binding.id().clone(), budget),
+            &binding,
+            &uses,
+            &wrong_phase,
+            vec![spec],
+            &mut port,
+        ),
+        Err(WorkError::Qualification(message)) if message.contains("WrongProducingPhase")
+    ));
+
+    let mut wrong_owner = evidence(binding.id(), &uses);
+    wrong_owner[1].owner = sid("owner/other");
+    let mut port = FakeInputPort::default();
+    let spec = input(&mut port);
+    assert!(matches!(
+        PacketBuilder::build(
+            draft(binding.id().clone(), budget),
+            &binding,
+            &uses,
+            &wrong_owner,
+            vec![spec],
+            &mut port,
+        ),
+        Err(WorkError::Qualification(message)) if message.contains("WrongOwner")
+    ));
+}
+
+#[test]
+fn undeclared_and_oversize_sources_fail_without_truncation() {
+    let binding = binding();
+    let uses = uses(binding.id().clone());
+    let mut port = FakeInputPort::default();
+    let location = port.insert(b"source larger than budget".to_vec());
+    let budget = InputBudget {
+        bytes: 3,
+        files: 1,
+        tokens: 1,
+        output_bytes: 64,
+    };
+    let declared = PacketInputSpec {
+        surface: SurfaceKey::new("api/local-adapter").unwrap(),
+        location: location.clone(),
+        tokens: 1,
+    };
+    assert_eq!(
+        PacketBuilder::build(
+            draft(binding.id().clone(), budget),
+            &binding,
+            &uses,
+            &evidence(binding.id(), &uses),
+            vec![declared],
+            &mut port,
+        ),
+        Err(WorkError::ByteBudget)
+    );
+    let mut port = FakeInputPort::default();
+    let location = port.insert(b"x".to_vec());
+    assert!(matches!(
+        PacketBuilder::build(
+            draft(
+                binding.id().clone(),
+                InputBudget {
+                    bytes: 3,
+                    files: 1,
+                    tokens: 1,
+                    output_bytes: 64
+                }
+            ),
+            &binding,
+            &uses,
+            &evidence(binding.id(), &uses),
+            vec![PacketInputSpec {
+                surface: SurfaceKey::new("api/not-declared").unwrap(),
+                location,
+                tokens: 1,
+            }],
+            &mut port,
+        ),
+        Err(WorkError::UndeclaredInput(_))
+    ));
+}
+```
 
 ### `feature/sim-foundation/web-evidence-core`
 
