@@ -1,0 +1,3 @@
+title = "Packets"
+order = 10
+summary = "Shape exact source and dependency declarations before dispatch."

@@ -16,6 +16,13 @@
       "summary": "Table and Dir substrate for layered SIM configuration."
     },
     {
+      "crate_name": "sim_conformance_core",
+      "group": "workspace",
+      "manifest": "crates/sim-conformance-core/Cargo.toml",
+      "package": "sim-conformance-core",
+      "summary": "Neutral, effect-free conformance records for SIM."
+    },
+    {
       "crate_name": "sim_cookbook",
       "group": "workspace",
       "manifest": "crates/sim-cookbook/Cargo.toml",
@@ -154,6 +161,13 @@
       "manifest": "crates/sim-value/Cargo.toml",
       "package": "sim-value",
       "summary": "Ergonomic construction and access for kernel Expr data."
+    },
+    {
+      "crate_name": "sim_work_core",
+      "group": "workspace",
+      "manifest": "crates/sim-work-core/Cargo.toml",
+      "package": "sim-work-core",
+      "summary": "Pure bounded-work and implementation-packet contracts."
     },
     {
       "crate_name": "xtask",

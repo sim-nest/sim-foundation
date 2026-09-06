@@ -1,5 +1,5 @@
 {
-  "card_count": 9,
+  "card_count": 11,
   "cards": [
     {
       "id": "browse/catalog",
@@ -12,6 +12,12 @@
       "kind": "cookbook-recipe",
       "owner": "sim-cancel",
       "summary": "Executor-neutral request lifetime composition."
+    },
+    {
+      "id": "cookbook/conformance-core",
+      "kind": "cookbook-recipe",
+      "owner": "sim-conformance-core",
+      "summary": "Immutable ownership, scope, invocation, and receipt descriptors."
     },
     {
       "id": "cookbook/net-core",
@@ -48,6 +54,12 @@
       "kind": "cookbook-recipe",
       "owner": "sim-lib-web-core",
       "summary": "Network-free immutable representation and selector descriptors."
+    },
+    {
+      "id": "cookbook/work-core",
+      "kind": "cookbook-recipe",
+      "owner": "sim-work-core",
+      "summary": "Deterministic work-envelope and implementation-packet descriptors."
     },
     {
       "id": "registry/catalog",

@@ -1,0 +1,5 @@
+book = "conformance-core"
+title = "Conformance core"
+summary = "Immutable ownership, scope, invocation, and receipt descriptors."
+order = 354
+chapters = ["01-basics"]

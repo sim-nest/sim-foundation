@@ -14,6 +14,27 @@ major_entrypoints = "advisory"
 frameworks = "advisory"
 
 [[feature]]
+id = "feature/sim-foundation/conformance-core"
+title = "Scope-exact conformance records"
+summary = "Bind ownership, checker code, subjects, scopes, calls, evidence, and revocation into canonical acyclic records without acquiring host authority."
+owner = "crate/sim-conformance-core"
+audiences = ["code", "framework"]
+guidance = "Reuse these immutable bindings, typed templates, exact invocations, scoped receipts, digest-construction rows, and fake ports for conformance systems. Keep checker scenarios, proof storage, process execution, and domain policy in their existing owners."
+claims_anchors = ["anchor/crate/sim-conformance-core"]
+claims_specimens = ["spec-test/sim-foundation/crates/sim-conformance-core/tests/bootstrap_contract"]
+
+[[feature]]
+id = "feature/sim-foundation/bounded-work-core"
+title = "Pure bounded work packets"
+summary = "Materialize exact declared source into deterministic packets with hard byte, file, token, output, dependency, descent, and stop contracts."
+owner = "crate/sim-work-core"
+audiences = ["code", "framework"]
+guidance = "Reuse WorkEnvelope and ImplementationPacket for hostile proposal work. A released dependency needs exact qualification; only the binding's correctly phased target may remain Planned. Keep process, filesystem, Git, delivery, and approval effects in injected adapters."
+claims_anchors = ["anchor/crate/sim-work-core"]
+claims_specimens = ["spec-test/sim-foundation/crates/sim-work-core/tests/packet_contract"]
+supports = ["feature/sim-foundation/conformance-core"]
+
+[[feature]]
 id = "feature/sim-foundation/web-evidence-core"
 title = "Immutable web capture and evidence records"
 summary = "Separate raw capture and normalized representation identities, exact Unicode-scalar selectors, and complete fail-closed web policy receipts."

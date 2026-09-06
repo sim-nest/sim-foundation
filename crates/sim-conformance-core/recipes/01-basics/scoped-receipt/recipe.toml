@@ -1,0 +1,8 @@
+id = "scoped-receipt"
+title = "Scoped checker receipt descriptor"
+codec = "lisp"
+setup = "setup.siml"
+purpose = "purpose.md"
+order = 10
+tags = ["conformance", "receipt", "scope", "sandbox-descriptor"]
+requires = ["conformance-core", "codec/lisp"]

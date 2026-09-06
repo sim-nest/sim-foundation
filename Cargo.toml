@@ -10,6 +10,7 @@ members = [
   "crates/sim-index-vault-core",
   "crates/sim-host-core",
   "crates/sim-cancel",
+  "crates/sim-conformance-core",
   "crates/sim-lib-net-core",
   "crates/sim-lib-web-core",
   "crates/sim-lib-search-core",
@@ -24,6 +25,7 @@ members = [
   "crates/sim-table-core",
   "crates/sim-text",
   "crates/sim-value",
+  "crates/sim-work-core",
   "xtask",
 ]
 
