@@ -4,8 +4,10 @@ use sim_kernel::Datum;
 
 use crate::{
     CheckInvocation, CheckInvocationId, CheckScopeId, CheckedSubjectId, CheckerBinding,
-    CheckerBindingId, CheckerReceiptId, CheckerResultId, ConformanceError, ConformancePackId,
-    EvidenceProvenanceId, EvidenceSetId, PolicyId, ProofCodeId, SemanticId, field, text,
+    CheckerBindingId, CheckerReceiptId, CheckerResultId, CheckerRevocationKeyId,
+    CheckerRevocationObservation, CheckerRevocationSelection, ConformanceError, ConformancePackId,
+    EvidenceProvenanceId, EvidenceSetId, OwnerBindingId, PolicyId, ProofCodeId, RevocationSourceId,
+    RevocationStatus, SemanticId, field, text,
 };
 
 /// Strength of one immutable checker result.
@@ -29,17 +31,6 @@ impl EvidenceGrade {
     }
 }
 
-/// Canonical revocation state supplied by the checker's owner policy.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum RevocationStatus {
-    /// No authoritative revocation state was available.
-    Unknown,
-    /// The exact checker code and pack version remain current.
-    Current,
-    /// The result is revoked.
-    Revoked,
-}
-
 /// Immutable receipt tied to one exact invocation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CheckerReceipt {
@@ -55,22 +46,47 @@ pub struct CheckerReceipt {
     provenance: EvidenceProvenanceId,
     policy: PolicyId,
     support: EvidenceSetId,
+    revocation_issuer: OwnerBindingId,
+    revocation_source: RevocationSourceId,
+    revocation_key: CheckerRevocationKeyId,
 }
 
 impl CheckerReceipt {
     /// Constructs and verifies a receipt against its exact invocation.
     #[allow(clippy::too_many_arguments)]
     pub fn passing(
+        binding: &CheckerBinding,
         invocation: &CheckInvocation,
         result: CheckerResultId,
         grade: EvidenceGrade,
         provenance: EvidenceProvenanceId,
         policy: PolicyId,
         support: EvidenceSetId,
-        revocation: RevocationStatus,
+        revocation: &CheckerRevocationSelection,
     ) -> Result<Self, ConformanceError> {
-        if revocation != RevocationStatus::Current {
+        if revocation.status() != RevocationStatus::Current {
             return Err(ConformanceError::RevocationUnknownOrActive);
+        }
+        if invocation.binding() != binding.id() {
+            return Err(ConformanceError::InvocationMismatch("binding"));
+        }
+        if revocation.issuer() != binding.owner() {
+            return Err(ConformanceError::InvocationMismatch("revocation issuer"));
+        }
+        if revocation.source() != binding.revocation_source()
+            || revocation.key().source() != binding.revocation_source()
+        {
+            return Err(ConformanceError::InvocationMismatch("revocation source"));
+        }
+        if revocation.key().binding() != invocation.binding()
+            || revocation.key().subject() != invocation.subject()
+            || revocation.key().checker_code() != invocation.checker_code()
+            || revocation.key().pack() != invocation.pack()
+        {
+            return Err(ConformanceError::InvocationMismatch("revocation key"));
+        }
+        if revocation.policy() != &policy {
+            return Err(ConformanceError::InvocationMismatch("revocation policy"));
         }
         let id = SemanticId::from_fields(vec![
             field("binding", invocation.binding().to_datum())?,
@@ -84,6 +100,9 @@ impl CheckerReceipt {
             field("provenance", provenance.to_datum())?,
             field("policy", policy.to_datum())?,
             field("support", support.to_datum())?,
+            field("revocation-issuer", revocation.issuer().to_datum())?,
+            field("revocation-source", revocation.source().to_datum())?,
+            field("revocation-key", revocation.key().id().to_datum())?,
         ])?;
         Ok(Self {
             id,
@@ -98,6 +117,9 @@ impl CheckerReceipt {
             provenance,
             policy,
             support,
+            revocation_issuer: revocation.issuer().clone(),
+            revocation_source: revocation.source().clone(),
+            revocation_key: revocation.key().id().clone(),
         })
     }
 
@@ -106,9 +128,9 @@ impl CheckerReceipt {
         &self,
         binding: &CheckerBinding,
         invocation: &CheckInvocation,
-        revocation: RevocationStatus,
+        revocation: &CheckerRevocationObservation,
     ) -> Result<(), ConformanceError> {
-        if revocation != RevocationStatus::Current {
+        if revocation.status() != RevocationStatus::Current {
             return Err(ConformanceError::RevocationUnknownOrActive);
         }
         if &self.binding != binding.id() || &self.invocation != invocation.id() {
@@ -127,6 +149,29 @@ impl CheckerReceipt {
         }
         if !binding.allowed_scopes().contains(&self.scope) {
             return Err(ConformanceError::UnauthorizedScope);
+        }
+        if revocation.issuer() != binding.owner() || &self.revocation_issuer != revocation.issuer()
+        {
+            return Err(ConformanceError::InvocationMismatch("revocation issuer"));
+        }
+        if revocation.source() != binding.revocation_source()
+            || &self.revocation_source != revocation.source()
+        {
+            return Err(ConformanceError::InvocationMismatch("revocation source"));
+        }
+        if revocation.receipt() != &self.id {
+            return Err(ConformanceError::InvocationMismatch("revocation receipt"));
+        }
+        if revocation.key().id() != &self.revocation_key
+            || revocation.key().binding() != invocation.binding()
+            || revocation.key().subject() != invocation.subject()
+            || revocation.key().checker_code() != invocation.checker_code()
+            || revocation.key().pack() != invocation.pack()
+        {
+            return Err(ConformanceError::InvocationMismatch("revocation key"));
+        }
+        if revocation.policy() != &self.policy {
+            return Err(ConformanceError::InvocationMismatch("revocation policy"));
         }
         Ok(())
     }
@@ -189,5 +234,20 @@ impl CheckerReceipt {
     /// Returns the acyclic supporting-evidence set identity.
     pub const fn support(&self) -> &EvidenceSetId {
         &self.support
+    }
+
+    /// Returns the checker-owner binding that issued the selected revocation set.
+    pub const fn revocation_issuer(&self) -> &OwnerBindingId {
+        &self.revocation_issuer
+    }
+
+    /// Returns the exact selected revocation source.
+    pub const fn revocation_source(&self) -> &RevocationSourceId {
+        &self.revocation_source
+    }
+
+    /// Returns the pre-receipt lookup-key identity.
+    pub const fn revocation_key(&self) -> &CheckerRevocationKeyId {
+        &self.revocation_key
     }
 }

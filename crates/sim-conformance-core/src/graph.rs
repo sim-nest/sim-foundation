@@ -110,6 +110,8 @@ pub enum ConformanceError {
     CheckFailed,
     /// Revocation authority is absent or explicitly revokes this result.
     RevocationUnknownOrActive,
+    /// An owner snapshot tried to record `Unknown` as an affirmative decision.
+    InvalidRevocationDecision,
     /// A bounded collection or text value exceeded its ceiling.
     BoundExceeded(&'static str),
     /// A digest-construction key or source anchor was duplicated.

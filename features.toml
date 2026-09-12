@@ -16,10 +16,10 @@ frameworks = "advisory"
 [[feature]]
 id = "feature/sim-foundation/conformance-core"
 title = "Scope-exact conformance records"
-summary = "Bind ownership, checker code, subjects, scopes, calls, evidence, and revocation into canonical acyclic records without acquiring host authority."
+summary = "Bind ownership, checker code, subjects, scopes, calls, evidence, and owner-issued current revocation observations into canonical acyclic records without acquiring host authority."
 owner = "crate/sim-conformance-core"
 audiences = ["code", "framework"]
-guidance = "Reuse these immutable bindings, typed templates, exact invocations, scoped receipts, digest-construction rows, and fake ports for conformance systems. Keep checker scenarios, proof storage, process execution, and domain policy in their existing owners."
+guidance = "Reuse these immutable bindings, typed templates, exact invocations, scoped receipts, canonical revocation sets, exact result claims, digest-construction rows, and fake ports for conformance systems. Select revocation sets from the qualified checker owner and resolve them again on every reuse; missing decisions remain Unknown. Keep checker scenarios, currentness issuance, proof storage, process execution, and domain policy in their existing owners."
 claims_anchors = ["anchor/crate/sim-conformance-core"]
 claims_specimens = ["spec-test/sim-foundation/crates/sim-conformance-core/tests/bootstrap_contract"]
 

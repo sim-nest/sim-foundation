@@ -249,6 +249,12 @@ id_kinds! {
     OutputShapeKind, OutputShapeId, "conformance/output-shape-v1";
     /// Revocation source identity.
     RevocationSourceKind, RevocationSourceId, "conformance/revocation-source-v1";
+    /// Exact pre-receipt revocation lookup-key identity.
+    CheckerRevocationKeyKind, CheckerRevocationKeyId, "conformance/checker-revocation-key-v1";
+    /// Immutable owner-issued revocation-set identity.
+    CheckerRevocationSetKind, CheckerRevocationSetId, "conformance/checker-revocation-set-v1";
+    /// Owner-selected revocation-head identity.
+    CheckerRevocationHeadKind, CheckerRevocationHeadId, "conformance/checker-revocation-head-v1";
     /// Evidence support set identity.
     EvidenceSetKind, EvidenceSetId, "conformance/evidence-set-v1";
     /// Evidence provenance identity.

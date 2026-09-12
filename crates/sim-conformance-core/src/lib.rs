@@ -16,6 +16,8 @@ mod graph;
 mod identity;
 mod qualification;
 mod receipt;
+mod receipt_claim;
+mod revocation;
 
 pub use binding::*;
 pub use checker::*;
@@ -25,3 +27,5 @@ pub use graph::*;
 pub use identity::*;
 pub use qualification::*;
 pub use receipt::*;
+pub use receipt_claim::*;
+pub use revocation::*;

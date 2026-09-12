@@ -5,6 +5,9 @@ use std::collections::BTreeSet;
 use sim_conformance_core::*;
 use sim_kernel::{Datum, NumberLiteral, Symbol};
 
+#[path = "bootstrap_contract/revocation.rs"]
+mod revocation;
+
 fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
     SemanticId::from_text(value).unwrap()
 }
@@ -90,6 +93,30 @@ fn checker_binding(owner: OwnerBindingId) -> CheckerBinding {
         template,
     )
     .unwrap()
+}
+
+fn revocation_selection(
+    binding: &CheckerBinding,
+    invocation: &CheckInvocation,
+    status: RevocationStatus,
+    head: &str,
+) -> CheckerRevocationSelection {
+    let key = CheckerRevocationKey::for_invocation(binding.revocation_source().clone(), invocation)
+        .unwrap();
+    let decisions = if status == RevocationStatus::Unknown {
+        Vec::new()
+    } else {
+        vec![CheckerRevocationDecision::new(key.clone(), status).unwrap()]
+    };
+    CheckerRevocationSet::from_owner_snapshot(
+        binding.owner().clone(),
+        binding.revocation_source().clone(),
+        sid("policy/v1"),
+        sid(head),
+        decisions,
+    )
+    .unwrap()
+    .lookup(&key)
 }
 
 #[test]
@@ -183,24 +210,39 @@ fn wrong_scope_substitution_and_unknown_revocation_fail_closed() {
     );
     let invocation_a = build("subject/a", "scope/x");
     let invocation_b = build("subject/b", "scope/x");
+    let selected = revocation_selection(
+        &binding,
+        &invocation_a,
+        RevocationStatus::Current,
+        "head/one",
+    );
     let receipt = CheckerReceipt::passing(
+        &binding,
         &invocation_a,
         sid("result/pass"),
         EvidenceGrade::Bootstrap,
         sid("provenance/local"),
         sid("policy/v1"),
         sid("support/empty"),
-        RevocationStatus::Current,
+        &selected,
     )
     .unwrap();
+    let observed = selected.bind_receipt(receipt.id().clone());
     assert_eq!(
-        receipt.verify(&binding, &invocation_b, RevocationStatus::Current),
+        receipt.verify(&binding, &invocation_b, &observed),
         Err(ConformanceError::InvocationMismatch(
             "binding or invocation"
         ))
     );
+    let unknown = revocation_selection(
+        &binding,
+        &invocation_a,
+        RevocationStatus::Unknown,
+        "head/two",
+    )
+    .bind_receipt(receipt.id().clone());
     assert_eq!(
-        receipt.verify(&binding, &invocation_a, RevocationStatus::Unknown),
+        receipt.verify(&binding, &invocation_a, &unknown),
         Err(ConformanceError::RevocationUnknownOrActive)
     );
 }
