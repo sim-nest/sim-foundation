@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 //! Canonical owner-issued checker revocation data and lookup semantics.
 
 use std::collections::BTreeMap;
@@ -5,9 +10,10 @@ use std::collections::BTreeMap;
 use sim_kernel::Datum;
 
 use crate::{
-    CheckInvocation, CheckedSubjectId, CheckerBindingId, CheckerReceiptId, CheckerRevocationHeadId,
-    CheckerRevocationKeyId, CheckerRevocationSetId, ConformanceError, ConformancePackId,
-    OwnerBindingId, PolicyId, ProofCodeId, RevocationSourceId, SemanticId, field, text,
+    CheckInputClosureId, CheckInvocation, CheckScopeId, CheckedSubjectId, CheckerBindingId,
+    CheckerReceiptId, CheckerRevocationHeadId, CheckerRevocationKeyId, CheckerRevocationSetId,
+    ConformanceError, ConformancePackId, OwnerBindingId, PolicyId, ProofCodeId, RevocationSourceId,
+    SemanticId, field, text,
 };
 
 /// Canonical revocation state transported from the checker's owner policy.
@@ -34,7 +40,12 @@ impl RevocationStatus {
 /// Exact pre-receipt key selected by a checker owner's revocation policy.
 ///
 /// The key deliberately excludes a receipt id. It can therefore be resolved
-/// before receipt construction without creating an identity cycle.
+/// before receipt construction without creating an identity cycle. It
+/// includes every field an owner might reasonably revoke by (binding,
+/// subject, checker code, pack, scope and input closure) so that two
+/// invocations differing only in scope or input never collide on the same
+/// key: an owner decision made against one invocation must never be visible
+/// to a distinct invocation that merely shares a subject and checker.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CheckerRevocationKey {
     id: CheckerRevocationKeyId,
@@ -43,6 +54,8 @@ pub struct CheckerRevocationKey {
     subject: CheckedSubjectId,
     checker_code: ProofCodeId,
     pack: ConformancePackId,
+    scope: CheckScopeId,
+    input_closure: CheckInputClosureId,
 }
 
 impl CheckerRevocationKey {
@@ -57,16 +70,21 @@ impl CheckerRevocationKey {
             invocation.subject().clone(),
             invocation.checker_code().clone(),
             invocation.pack().clone(),
+            invocation.scope().clone(),
+            invocation.input_closure().clone(),
         )
     }
 
     /// Constructs an exact key without requiring a concrete invocation.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         source: RevocationSourceId,
         binding: CheckerBindingId,
         subject: CheckedSubjectId,
         checker_code: ProofCodeId,
         pack: ConformancePackId,
+        scope: CheckScopeId,
+        input_closure: CheckInputClosureId,
     ) -> Result<Self, ConformanceError> {
         let id = SemanticId::from_fields(vec![
             field("revocation-source", source.to_datum())?,
@@ -74,6 +92,8 @@ impl CheckerRevocationKey {
             field("subject", subject.to_datum())?,
             field("checker-code", checker_code.to_datum())?,
             field("pack", pack.to_datum())?,
+            field("scope", scope.to_datum())?,
+            field("input-closure", input_closure.to_datum())?,
         ])?;
         Ok(Self {
             id,
@@ -82,6 +102,8 @@ impl CheckerRevocationKey {
             subject,
             checker_code,
             pack,
+            scope,
+            input_closure,
         })
     }
 
@@ -115,6 +137,16 @@ impl CheckerRevocationKey {
         &self.pack
     }
 
+    /// Returns the exact authorized scope.
+    pub const fn scope(&self) -> &CheckScopeId {
+        &self.scope
+    }
+
+    /// Returns the exact input closure.
+    pub const fn input_closure(&self) -> &CheckInputClosureId {
+        &self.input_closure
+    }
+
     fn datum(&self) -> Result<Datum, ConformanceError> {
         Ok(Datum::Node {
             tag: crate::qualified("conformance/checker-revocation-entry-v1")?,
@@ -125,6 +157,8 @@ impl CheckerRevocationKey {
                 field("subject", self.subject.to_datum())?,
                 field("checker-code", self.checker_code.to_datum())?,
                 field("pack", self.pack.to_datum())?,
+                field("scope", self.scope.to_datum())?,
+                field("input-closure", self.input_closure.to_datum())?,
             ],
         })
     }

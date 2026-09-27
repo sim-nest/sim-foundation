@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | `sim-cancel` | `workspace` | Executor-neutral, explicitly owned cancellation for bounded work. |
 | `sim-config` | `workspace` | Table and Dir substrate for layered SIM configuration. |
+| `sim-conformance-core` | `workspace` | Neutral, effect-free conformance records for SIM. |
 | `sim-cookbook` | `workspace` | Cookbook engine for SIM's crate-local tutorial recipes. |
 | `sim-cookbook-build` | `workspace` | Portable host-side build support for cookbook recipe embedding. |
 | `sim-host-core` | `workspace` | Neutral contracts for domain-defined host ports. |
@@ -26,4 +27,5 @@
 | `sim-table-core` | `workspace` | Shared table substrate: path validation, path-reference resolution, and the table operation protocol. |
 | `sim-text` | `workspace` | Exact UTF-16 code-unit text with explicit scalar projections. |
 | `sim-value` | `workspace` | Ergonomic construction and access for kernel Expr data. |
+| `sim-work-core` | `workspace` | Pure bounded-work and implementation-packet contracts. |
 | `xtask` | `workspace` | SIM workspace package for xtask. |

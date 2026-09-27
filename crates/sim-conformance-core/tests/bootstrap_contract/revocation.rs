@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 use super::*;
 
 fn invocation(binding: &CheckerBinding, subject: &str, code: &str) -> CheckInvocation {
@@ -245,6 +250,63 @@ fn revocation_after_issue_invalidates_only_the_affected_receipt() {
             &second.lookup(&key_b).bind_receipt(receipt_b.id().clone()),
         )
         .unwrap();
+}
+
+#[test]
+fn distinct_scope_or_input_closure_produces_distinct_revocation_keys() {
+    let binding = checker_binding(owner_binding().id().clone());
+    let same_subject_and_code = |scope: &str, closure: &str| -> CheckInvocation {
+        binding
+            .instantiate(
+                sid("code/v1"),
+                sid("pack/demo"),
+                sid("subject/a"),
+                sid(scope),
+                sid(closure),
+            )
+            .unwrap()
+    };
+    let base = same_subject_and_code("scope/x", "closure/one");
+    let other_scope = same_subject_and_code("scope/y", "closure/one");
+    let other_closure = same_subject_and_code("scope/x", "closure/two");
+
+    let key = |invocation: &CheckInvocation| {
+        CheckerRevocationKey::for_invocation(binding.revocation_source().clone(), invocation)
+            .unwrap()
+    };
+    let base_key = key(&base);
+    let other_scope_key = key(&other_scope);
+    let other_closure_key = key(&other_closure);
+
+    // Same subject, checker code, and pack -- but a different scope or a
+    // different input closure must never collapse onto the same revocation
+    // key. Before the fix, `CheckerRevocationKey` omitted both fields and
+    // these three invocations shared exactly one key.
+    assert_ne!(base_key, other_scope_key);
+    assert_ne!(base_key, other_closure_key);
+    assert_ne!(other_scope_key, other_closure_key);
+    assert_ne!(base_key.id(), other_scope_key.id());
+    assert_ne!(base_key.id(), other_closure_key.id());
+
+    // A decision recorded only against `base` must not be visible when
+    // looking up `other_scope` or `other_closure`'s own key in the same set.
+    let selected = set(
+        &binding,
+        "head/one",
+        vec![(&base, RevocationStatus::Current)],
+    );
+    assert_eq!(
+        selected.lookup(&other_scope_key).status(),
+        RevocationStatus::Unknown
+    );
+    assert_eq!(
+        selected.lookup(&other_closure_key).status(),
+        RevocationStatus::Unknown
+    );
+    assert_eq!(
+        selected.lookup(&base_key).status(),
+        RevocationStatus::Current
+    );
 }
 
 #[test]

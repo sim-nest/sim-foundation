@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 //! Immutable checker receipts and revocation verification.
 
 use sim_kernel::Datum;
@@ -82,6 +87,8 @@ impl CheckerReceipt {
             || revocation.key().subject() != invocation.subject()
             || revocation.key().checker_code() != invocation.checker_code()
             || revocation.key().pack() != invocation.pack()
+            || revocation.key().scope() != invocation.scope()
+            || revocation.key().input_closure() != invocation.input_closure()
         {
             return Err(ConformanceError::InvocationMismatch("revocation key"));
         }
@@ -167,6 +174,8 @@ impl CheckerReceipt {
             || revocation.key().subject() != invocation.subject()
             || revocation.key().checker_code() != invocation.checker_code()
             || revocation.key().pack() != invocation.pack()
+            || revocation.key().scope() != invocation.scope()
+            || revocation.key().input_closure() != invocation.input_closure()
         {
             return Err(ConformanceError::InvocationMismatch("revocation key"));
         }
