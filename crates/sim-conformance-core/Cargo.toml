@@ -14,7 +14,7 @@ policy = "descriptor"
 reason = "The recipe is a machine-indexed description of an effect-free record contract."
 
 [dependencies]
-sha2 = "0.10"
+sha2 = "0.11"
 sim-kernel = { version = "0.4.0" }
 
 [lints]
