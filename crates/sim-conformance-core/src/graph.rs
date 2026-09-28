@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 //! Acyclic support-graph validation.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -110,6 +115,8 @@ pub enum ConformanceError {
     CheckFailed,
     /// Revocation authority is absent or explicitly revokes this result.
     RevocationUnknownOrActive,
+    /// An owner snapshot tried to record `Unknown` as an affirmative decision.
+    InvalidRevocationDecision,
     /// A bounded collection or text value exceeded its ceiling.
     BoundExceeded(&'static str),
     /// A digest-construction key or source anchor was duplicated.

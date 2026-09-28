@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 //! Canonical semantic and byte-address identity roles.
 
 use sha2::{Digest, Sha256};
@@ -249,6 +254,12 @@ id_kinds! {
     OutputShapeKind, OutputShapeId, "conformance/output-shape-v1";
     /// Revocation source identity.
     RevocationSourceKind, RevocationSourceId, "conformance/revocation-source-v1";
+    /// Exact pre-receipt revocation lookup-key identity.
+    CheckerRevocationKeyKind, CheckerRevocationKeyId, "conformance/checker-revocation-key-v1";
+    /// Immutable owner-issued revocation-set identity.
+    CheckerRevocationSetKind, CheckerRevocationSetId, "conformance/checker-revocation-set-v1";
+    /// Owner-selected revocation-head identity.
+    CheckerRevocationHeadKind, CheckerRevocationHeadId, "conformance/checker-revocation-head-v1";
     /// Evidence support set identity.
     EvidenceSetKind, EvidenceSetId, "conformance/evidence-set-v1";
     /// Evidence provenance identity.
@@ -259,4 +270,97 @@ id_kinds! {
     DigestConstructionKind, DigestConstructionId, "conformance/digest-construction-v1";
     /// Complete digest register identity.
     DigestRegisterKind, DigestConstructionRegisterId, "conformance/digest-register-v1";
+}
+
+/// Exact checker subject and input roles derived from one evidence snapshot and
+/// its independently identified support definition.
+///
+/// This record carries no authority. It exists so checker producers and receipt
+/// consumers use one canonical construction instead of reproducing the join in
+/// separate crates.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SupportedCheckInputs {
+    subject: CheckedSubjectId,
+    evidence_input: CheckInputClosureId,
+    support_definition: ContentId,
+    invocation_input: CheckInputClosureId,
+}
+
+impl SupportedCheckInputs {
+    /// Binds an evidence subject and closure to the exact support definition.
+    pub fn new(
+        subject: CheckedSubjectId,
+        evidence_input: CheckInputClosureId,
+        support_definition: ContentId,
+    ) -> Result<Self, ConformanceError> {
+        let invocation_input = CheckInputClosureId::from_fields(vec![
+            (
+                Symbol::qualified("conformance", "evidence-input"),
+                evidence_input.to_datum(),
+            ),
+            (
+                Symbol::qualified("conformance", "support-definition"),
+                content_id_datum(&support_definition),
+            ),
+        ])?;
+        Ok(Self {
+            subject,
+            evidence_input,
+            support_definition,
+            invocation_input,
+        })
+    }
+
+    /// Returns the exact evidence subject inspected by the checker.
+    pub const fn subject(&self) -> &CheckedSubjectId {
+        &self.subject
+    }
+
+    /// Returns the evidence-only input closure before support is joined.
+    pub const fn evidence_input(&self) -> &CheckInputClosureId {
+        &self.evidence_input
+    }
+
+    /// Returns the independently identified support definition.
+    pub const fn support_definition(&self) -> &ContentId {
+        &self.support_definition
+    }
+
+    /// Returns the canonical input closure committed by the invocation.
+    pub const fn invocation_input(&self) -> &CheckInputClosureId {
+        &self.invocation_input
+    }
+}
+
+#[cfg(test)]
+mod supported_check_inputs_tests {
+    use super::*;
+
+    fn content(value: &str) -> ContentId {
+        Datum::String(value.to_owned()).content_id().unwrap()
+    }
+
+    #[test]
+    fn evidence_and_support_mutations_change_the_shared_invocation_input() {
+        let subject = CheckedSubjectId::from_text("subject/a").unwrap();
+        let evidence_a = CheckInputClosureId::from_text("evidence/a").unwrap();
+        let evidence_b = CheckInputClosureId::from_text("evidence/b").unwrap();
+        let support_a = content("support/a");
+        let support_b = content("support/b");
+        let exact =
+            SupportedCheckInputs::new(subject.clone(), evidence_a.clone(), support_a.clone())
+                .unwrap();
+        let changed_evidence =
+            SupportedCheckInputs::new(subject.clone(), evidence_b, support_a).unwrap();
+        let changed_support =
+            SupportedCheckInputs::new(subject.clone(), evidence_a.clone(), support_b).unwrap();
+
+        assert_eq!(exact.subject(), &subject);
+        assert_eq!(exact.evidence_input(), &evidence_a);
+        assert_ne!(
+            exact.invocation_input(),
+            changed_evidence.invocation_input()
+        );
+        assert_ne!(exact.invocation_input(), changed_support.invocation_input());
+    }
 }

@@ -6,6 +6,7 @@
 | --- | --- | ---: | ---: |
 | `sim-cancel` | `workspace` | 0 | 0 |
 | `sim-config` | `workspace` | 0 | 0 |
+| `sim-conformance-core` | `workspace` | 0 | 0 |
 | `sim-cookbook` | `workspace` | 0 | 0 |
 | `sim-cookbook-build` | `workspace` | 0 | 0 |
 | `sim-host-core` | `workspace` | 0 | 0 |
@@ -26,4 +27,5 @@
 | `sim-table-core` | `workspace` | 0 | 0 |
 | `sim-text` | `workspace` | 0 | 0 |
 | `sim-value` | `workspace` | 0 | 0 |
+| `sim-work-core` | `workspace` | 0 | 0 |
 | `xtask` | `workspace` | 0 | 0 |

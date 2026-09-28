@@ -4,7 +4,7 @@ In one line: Keep every conformance claim tied to its exact owner, subject, scop
 
 ## What it gives you
 
-`sim-conformance-core` gives systems a durable vocabulary for declaring who owns a rule, which checks may judge it, and what a passing result actually covers. It keeps design activation separate from delivered behavior, prevents narrow evidence from being reused as a broader claim, and detects circular support before work begins. Exact identities make repeated checks comparable while preserving the difference between semantic meaning and stored bytes.
+`sim-conformance-core` gives systems a durable vocabulary for declaring who owns a rule, which checks may judge it, and what a passing result actually covers. It keeps design activation separate from delivered behavior, prevents narrow evidence from being reused as a broader claim, and detects circular support before work begins. Canonical owner-issued revocation sets bind the exact source, checker, subject, implementation, pack, policy, and head; missing decisions fail closed, and fresh lookup observations make post-issue revocation effective without invalidating unrelated current receipts. Exact identities make repeated checks comparable while preserving the difference between semantic meaning and stored bytes.
 
 ## Why you will be glad
 
