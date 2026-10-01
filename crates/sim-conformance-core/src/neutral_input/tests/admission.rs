@@ -165,3 +165,79 @@ fn previous_fixed_point_denominator_is_its_own_population_when_populations_diver
     assert_eq!((previous.retained, previous.denominator), (280, 280));
     assert_eq!(derived.facts.proof_classes.total, 281);
 }
+
+fn with_section(section: &str) -> String {
+    String::from_utf8(source()).unwrap().replace(
+        "A control-only repair retained 213 of 280 proof receipts. A change to three\npublic heads and their pins retained only one. Cache identity was too broad and\nproof invalidation had no single accountable projection. Every conclusion must\nname the exact semantic facts on which it depends and explain every reuse and\ninvalidation.\n",
+        section,
+    )
+}
+
+#[test]
+fn markdown_contexts_are_not_assertions() {
+    let control = "A control-only repair retained 213 of 280 proof receipts.";
+    let heads = "A change to three public heads and their pins retained only one.";
+    for section in [
+        format!("False claims:\n1. {control}\n2. {heads}\n"),
+        format!("```text\nExample.\n{control}\n{heads}\n```\n"),
+        format!("> False claims.\n{control}\n{heads}\n"),
+        format!("- {control} {heads}\n"),
+        format!("> {control} {heads}\n"),
+        format!("    {control} {heads}\n"),
+        format!("| {control} | {heads} |\n"),
+        format!("# {control} {heads}\n"),
+        format!("It is false that {control} {heads}\n"),
+        format!("{heads} {control}\n"),
+    ] {
+        let source = with_section(&section);
+        assert_eq!(
+            RestatedMeasurements::from_source(source.as_bytes())
+                .unwrap_err()
+                .gap,
+            NeutralInputGap::FactMismatch,
+            "{section:?}"
+        );
+    }
+    // The sentences placed outside the E1 section are not read either.
+    let moved = String::from_utf8(source()).unwrap().replace(
+        "### E1 - semantic identity must be declared, and must be narrow",
+        "### E2 - another section",
+    );
+    assert_eq!(
+        RestatedMeasurements::from_source(moved.as_bytes())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::FactMismatch
+    );
+    // A duplicated heading is refused.
+    let twice = format!(
+        "{}\n### E1 - semantic identity must be declared, and must be narrow\n\nx\n",
+        String::from_utf8(source()).unwrap()
+    );
+    assert_eq!(
+        RestatedMeasurements::from_source(twice.as_bytes())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::FactMismatch
+    );
+}
+
+#[test]
+fn the_real_section_structure_wraps_lines_and_may_continue_after_the_two_sentences() {
+    let derived = RestatedMeasurements::from_source(&source()).unwrap();
+    let control = derived
+        .facts
+        .contrast_reuse
+        .iter()
+        .find(|r| r.contrast == ReuseContrast::ControlOnlyRepair)
+        .unwrap();
+    assert_eq!((control.retained, control.denominator), (213, 280));
+    // CRLF line endings parse identically.
+    let crlf = String::from_utf8(source()).unwrap().replace('\n', "\r\n");
+    assert_eq!(
+        RestatedMeasurements::from_source(crlf.as_bytes())
+            .unwrap()
+            .facts,
+        derived.facts
+    );
+}

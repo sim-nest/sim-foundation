@@ -276,14 +276,52 @@ fn unique(text: &str, needle: &str) -> Result<usize> {
     }
 }
 
-/// Parses the two contrast statements as complete, unique sentences (whitespace
-/// runs, including line wraps, count as one space). Returns the control-only
-/// repair numerator and its stated denominator, and the public-head retention.
+/// The roadmap section that states the two contrast sentences.
+const CONTRAST_HEADING: &str = "### E1 - semantic identity must be declared, and must be narrow";
+
+/// Parses the two contrast statements from the E1 section's first ordinary
+/// prose paragraph. Block structure is preserved: the heading must appear
+/// exactly once, the paragraph must follow it directly (after blank lines) and
+/// must be plain prose, not a heading, list item, quotation, table row, code
+/// fence or indented block, so examples and false claims in other blocks are
+/// never read. Returns the control-only repair numerator and its stated
+/// denominator, and the public-head retention.
 fn contrast_sentences(text: &str) -> Result<(u64, u64, u64)> {
-    let flat = text.split_whitespace().collect::<Vec<_>>().join(" ");
     let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
-    // Whole sentences only: split at sentence ends, so an embedded or negated
-    // clause ("It is false that A control-only ...") is never a candidate.
+    let lines: Vec<&str> = text.lines().collect();
+    let mut headings = lines
+        .iter()
+        .enumerate()
+        .filter(|(_, line)| line.trim_end() == CONTRAST_HEADING)
+        .map(|(i, _)| i);
+    let (Some(at), None) = (headings.next(), headings.next()) else {
+        return Err(bad("contrast section heading absent or repeated"));
+    };
+    let mut rest = lines[at + 1..].iter().skip_while(|l| l.trim().is_empty());
+    let first = *rest
+        .next()
+        .ok_or_else(|| bad("contrast section is empty"))?;
+    let plain = !(first.starts_with("```")
+        || first.starts_with("~~~")
+        || first.starts_with('>')
+        || first.starts_with('#')
+        || first.starts_with('|')
+        || first.starts_with(' ')
+        || first.starts_with('\t')
+        || first.starts_with("- ")
+        || first.starts_with("* ")
+        || first.starts_with("+ ")
+        || first.chars().next().is_some_and(|c| c.is_ascii_digit()));
+    if !plain {
+        return Err(bad("contrast paragraph is not plain prose"));
+    }
+    let mut paragraph = vec![first];
+    paragraph.extend(rest.take_while(|l| !l.trim().is_empty()));
+    let flat = paragraph
+        .iter()
+        .flat_map(|l| l.split_whitespace())
+        .collect::<Vec<_>>()
+        .join(" ");
     let sentences: Vec<String> = flat
         .split(". ")
         .map(|s| {
@@ -296,28 +334,23 @@ fn contrast_sentences(text: &str) -> Result<(u64, u64, u64)> {
         .collect();
     let control_lead = "A control-only repair retained ";
     let control_tail = " proof receipts.";
-    let mut controls = sentences.iter().filter(|s| s.starts_with(control_lead));
-    let (Some(control_sentence), None) = (controls.next(), controls.next()) else {
-        return Err(bad("control-only sentence absent or repeated"));
+    let heads_sentence = "A change to three public heads and their pins retained only one.";
+    let [control_sentence, heads, ..] = sentences.as_slice() else {
+        return Err(bad("contrast paragraph lacks the two sentences"));
     };
-    let statement = control_sentence[control_lead.len()..]
-        .strip_suffix(control_tail)
-        .ok_or_else(|| bad("control-only sentence malformed"))?;
+    if heads != heads_sentence {
+        return Err(bad("public-head sentence is not the second sentence"));
+    }
+    let statement = control_sentence
+        .strip_prefix(control_lead)
+        .and_then(|rest| rest.strip_suffix(control_tail))
+        .ok_or_else(|| bad("control-only sentence is not the first sentence"))?;
     let (retained, denominator) = statement
         .split_once(" of ")
         .ok_or_else(|| bad("control-only sentence malformed"))?;
     let control = number(retained).ok_or_else(|| bad("control-only numerator malformed"))?;
     let control_denominator =
         number(denominator).ok_or_else(|| bad("control-only denominator malformed"))?;
-    let heads_sentence = "A change to three public heads and their pins retained only one.";
-    if sentences
-        .iter()
-        .filter(|s| s.as_str() == heads_sentence)
-        .count()
-        != 1
-    {
-        return Err(bad("public-head sentence absent or repeated"));
-    }
     Ok((control, control_denominator, 1))
 }
 
@@ -438,7 +471,9 @@ impl NeutralQualificationInput {
     }
 }
 
-/// The general expression codec, supplied by the caller. This crate stays pure
+/// The general expression codec, supplied by the caller. The caller must bind
+/// this to the trusted `codec/lisp` adapter: an arbitrary producer-supplied
+/// implementation is not a trust input.  This crate stays pure
 /// and codec-free: admission needs only the two directions, and refuses any
 /// stored form that is not exactly the codec's canonical encoding.
 pub trait SlotCodec {

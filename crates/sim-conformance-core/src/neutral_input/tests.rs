@@ -23,9 +23,14 @@ fn source() -> Vec<u8> {
 | Previous fixed point before retirement | 280 green leaves |\n\
 | Last raw epoch after revision | 26 green, 1 interrupted, 253 pending |\n\
 | Reused receipts in that last epoch | 2 |\n\n\
-The corpus is valuable.\n\n\
+The corpus is valuable because it contains controlled contrasts, not because\n\
+the successor should imitate its storage or scheduling model.\n\n\
+### E1 - semantic identity must be declared, and must be narrow\n\n\
 A control-only repair retained 213 of 280 proof receipts. A change to three\n\
-public heads and their pins retained only one. Cache identity was too broad.\n"
+public heads and their pins retained only one. Cache identity was too broad and\n\
+proof invalidation had no single accountable projection. Every conclusion must\n\
+name the exact semantic facts on which it depends and explain every reuse and\n\
+invalidation.\n"
         .as_bytes()
         .to_vec()
 }
