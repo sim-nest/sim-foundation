@@ -360,3 +360,131 @@ fn a_table_header_inside_a_fence_is_not_the_table() {
         NeutralInputGap::SourceMismatch
     );
 }
+
+#[test]
+fn raw_text_html_blocks_span_blank_lines_until_their_closing_tag() {
+    let base = without_real_section();
+    for tag in ["script", "pre", "style", "textarea", "SCRIPT"] {
+        let section = format!("<{tag}>\n\n{HEADING}\n\n{CLAIMS}\n\n</{tag}>\n");
+        let source = format!("{base}\n{section}");
+        assert_eq!(
+            RestatedMeasurements::from_source(source.as_bytes())
+                .unwrap_err()
+                .gap,
+            NeutralInputGap::FactMismatch,
+            "{tag}"
+        );
+    }
+    // The whole retained table inside a raw-text block is not the table.
+    let real = String::from_utf8(source()).unwrap();
+    let start = real.find("| Retained SUP20 measure").unwrap();
+    let end = real.find("\n\nThe corpus is valuable").unwrap();
+    let table = &real[start..end];
+    let wrapped = format!(
+        "{}<script>\n\n{table}\n\n</script>{}",
+        &real[..start],
+        &real[end..]
+    );
+    assert_eq!(
+        RestatedMeasurements::from_source(wrapped.as_bytes())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+}
+
+#[test]
+fn a_nested_list_example_is_not_a_top_level_section() {
+    let base = without_real_section();
+    let nested = format!("- Non-asserting example:\n\n  {HEADING}\n\n  {CLAIMS}\n");
+    let source = format!("{base}\n{nested}");
+    assert_eq!(
+        RestatedMeasurements::from_source(source.as_bytes())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::FactMismatch
+    );
+    // A nested look-alike beside the real section neither satisfies nor disturbs it.
+    let real = String::from_utf8(source_bytes_for_nested()).unwrap();
+    let expected = RestatedMeasurements::from_source(&source_bytes_for_nested())
+        .unwrap()
+        .facts;
+    let beside = format!("{real}\n{nested}");
+    assert_eq!(
+        RestatedMeasurements::from_source(beside.as_bytes())
+            .unwrap()
+            .facts,
+        expected
+    );
+}
+
+fn source_bytes_for_nested() -> Vec<u8> {
+    source()
+}
+
+#[test]
+fn setext_underlines_with_trailing_whitespace_are_headings_not_prose() {
+    for tail in ["---   ", "===   ", "---\t"] {
+        let source = with_section(&format!("{CLAIMS}\n{tail}\n"));
+        assert_eq!(
+            RestatedMeasurements::from_source(source.as_bytes())
+                .unwrap_err()
+                .gap,
+            NeutralInputGap::FactMismatch,
+            "{tail:?}"
+        );
+    }
+}
+
+#[test]
+fn ordinary_wrapped_prose_is_still_prose() {
+    let real = String::from_utf8(source()).unwrap();
+    let expected = RestatedMeasurements::from_source(real.as_bytes())
+        .unwrap()
+        .facts;
+    for section in [
+        "A control-only repair retained\n213 of 280 proof receipts. A change to three public heads and their pins retained only one.\n".to_owned(),
+        "A control-only repair retained 213 of 280 proof receipts. A change to three\n    public heads and their pins retained only one.\n".to_owned(),
+        "A control-only repair retained 213 of 280 proof receipts. A change to three public heads and their pins retained only one. 2024 was a long year.\n".to_owned(),
+    ] {
+        let source = with_section(&section);
+        assert_eq!(RestatedMeasurements::from_source(source.as_bytes()).unwrap().facts, expected, "{section:?}");
+    }
+    // An indented code block as the FIRST block after the heading is still refused.
+    let source = with_section(&format!("    {CLAIMS}\n"));
+    assert_eq!(
+        RestatedMeasurements::from_source(source.as_bytes())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::FactMismatch
+    );
+}
+
+#[test]
+fn list_paragraph_lines_and_ten_digit_numbers_do_not_confuse_the_scanner() {
+    let real = String::from_utf8(source()).unwrap();
+    let expected = RestatedMeasurements::from_source(real.as_bytes())
+        .unwrap()
+        .facts;
+    // A heading may interrupt a list paragraph: the real section directly after a list line.
+    let interrupted = real.replacen(
+        &format!("\n\n{HEADING}"),
+        &format!("\n- a list item\n{HEADING}"),
+        1,
+    );
+    assert_ne!(interrupted, real);
+    assert_eq!(
+        RestatedMeasurements::from_source(interrupted.as_bytes())
+            .unwrap()
+            .facts,
+        expected
+    );
+    // A ten-digit number is not an ordered-list marker.
+    let numbered = with_section(&format!("{CLAIMS}\n1234567890. a continuation line\n"));
+    assert_eq!(
+        RestatedMeasurements::from_source(numbered.as_bytes())
+            .unwrap()
+            .facts,
+        expected
+    );
+}

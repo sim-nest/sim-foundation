@@ -5,14 +5,15 @@
 
 //! A deliberately narrow Markdown block scanner for the selected roadmap.
 //!
-//! It answers one question per line: is this line ordinary document prose, or
-//! is it inside a context that asserts nothing (front matter, a code fence, an
-//! HTML comment or block, an indented code block)? Facts are read only from
-//! prose lines. It does not render Markdown; anything it cannot classify as
-//! prose is refused by the callers, never guessed.
+//! It answers one question per line: is this line ordinary top-level document
+//! prose, or is it inside a context that asserts nothing (front matter, a code
+//! fence, an HTML comment or block, a raw-text HTML element, an indented code
+//! block, a list item)? Facts are read only from prose lines. It does not
+//! render Markdown; anything it cannot classify as prose is refused by the
+//! callers, never guessed.
 
 /// One source line: its byte offset, its text without the line terminator, and
-/// whether it is ordinary prose.
+/// whether it is ordinary top-level prose.
 #[derive(Clone, Copy, Debug)]
 pub(super) struct Line<'a> {
     pub(super) start: usize,
@@ -34,6 +35,47 @@ fn fence(line: &str) -> Option<(char, usize)> {
     (run >= 3).then_some((marker, run))
 }
 
+/// Width of a list marker plus the following spaces (content indent), if the
+/// line starts a list item: `-`/`*`/`+` or 1-9 digits then `.`/`)`, followed by
+/// whitespace or the end of the line.
+fn list_item(line: &str) -> Option<usize> {
+    let lead = indent(line);
+    if lead > 3 {
+        return None;
+    }
+    let body = &line[lead..];
+    let marker = if let Some(c) = body.chars().next().filter(|c| matches!(c, '-' | '*' | '+')) {
+        c.len_utf8()
+    } else {
+        let digits = body.chars().take_while(char::is_ascii_digit).count();
+        let after = body[digits..].chars().next();
+        if (1..=9).contains(&digits) && matches!(after, Some('.' | ')')) {
+            digits + 1
+        } else {
+            return None;
+        }
+    };
+    let rest = &body[marker..];
+    if !(rest.is_empty() || rest.starts_with(' ') || rest.starts_with('\t')) {
+        return None;
+    }
+    let spaces = rest.chars().take_while(|c| *c == ' ').count().clamp(1, 4);
+    Some(lead + marker + spaces)
+}
+
+fn raw_text_tag(line: &str) -> Option<&'static str> {
+    let body = line
+        .trim_start_matches(' ')
+        .strip_prefix('<')?
+        .to_ascii_lowercase();
+    ["script", "pre", "style", "textarea"]
+        .into_iter()
+        .find(|tag| {
+            body.strip_prefix(tag)
+                .is_some_and(|rest| rest.is_empty() || rest.starts_with(['>', ' ', '\t']))
+        })
+}
+
 /// Classifies every line of `text`.
 pub(super) fn scan(text: &str) -> Vec<Line<'_>> {
     let mut out = Vec::new();
@@ -42,9 +84,15 @@ pub(super) fn scan(text: &str) -> Vec<Line<'_>> {
     let mut open_fence: Option<(char, usize)> = None;
     let mut in_comment = false;
     let mut in_html = false;
+    let mut raw_end: Option<String> = None;
+    let mut list_indent: Option<usize> = None;
+    let mut prev_blank = true;
+    let mut prev_prose_text = false;
     for (n, raw) in text.split_inclusive('\n').enumerate() {
         let line = raw.trim_end_matches(['\n', '\r']);
+        let blank = line.trim().is_empty();
         let mut prose = true;
+        let mut handled = true;
         if n == 0 && line.trim_end() == "---" {
             front_matter = true;
             prose = false;
@@ -66,29 +114,64 @@ pub(super) fn scan(text: &str) -> Vec<Line<'_>> {
             if line.contains("-->") {
                 in_comment = false;
             }
+        } else if let Some(end) = raw_end.clone() {
+            prose = false;
+            if line.to_ascii_lowercase().contains(&end) {
+                raw_end = None;
+            }
         } else if in_html {
             prose = false;
-            if line.trim().is_empty() {
+            if blank {
                 in_html = false;
             }
-        } else if let Some(f) = fence(line) {
-            prose = false;
-            open_fence = Some(f);
-        } else if indent(line) <= 3 && line.trim_start_matches(' ').starts_with("<!--") {
-            prose = false;
-            in_comment = !line.contains("-->");
-        } else if indent(line) <= 3
-            && line
-                .trim_start_matches(' ')
-                .strip_prefix('<')
-                .and_then(|r| r.chars().next())
-                .is_some_and(|c| c.is_ascii_alphabetic() || matches!(c, '/' | '!' | '?'))
-        {
-            prose = false;
-            in_html = !line.trim().is_empty();
-        } else if indent(line) >= 4 || line.starts_with('\t') {
-            prose = false;
+        } else if let Some(width) = list_indent {
+            // Inside a list item: indented or blank lines belong to it, and a
+            // non-indented line directly after a text line is a lazy
+            // continuation. Anything else leaves the list.
+            let continues =
+                blank || indent(line) >= width || (!prev_blank && !starts_other_block(line));
+            if continues {
+                prose = false;
+            } else {
+                list_indent = None;
+                handled = false;
+            }
+        } else {
+            handled = false;
         }
+        if !handled {
+            if let Some(f) = fence(line) {
+                prose = false;
+                open_fence = Some(f);
+            } else if indent(line) <= 3 && line.trim_start_matches(' ').starts_with("<!--") {
+                prose = false;
+                in_comment = !line.contains("-->");
+            } else if let Some(tag) = raw_text_tag(line) {
+                prose = false;
+                let end = format!("</{tag}");
+                if !line.to_ascii_lowercase().contains(&end) {
+                    raw_end = Some(end);
+                }
+            } else if indent(line) <= 3
+                && line
+                    .trim_start_matches(' ')
+                    .strip_prefix('<')
+                    .and_then(|r| r.chars().next())
+                    .is_some_and(|c| c.is_ascii_alphabetic() || matches!(c, '/' | '!' | '?'))
+            {
+                prose = false;
+                in_html = !blank;
+            } else if let Some(width) = list_item(line) {
+                prose = false;
+                list_indent = Some(width);
+            } else if (indent(line) >= 4 || line.starts_with('\t')) && !prev_prose_text {
+                // An indented line starts a code block only when no paragraph
+                // is in progress; otherwise it continues that paragraph.
+                prose = false;
+            }
+        }
+        prev_prose_text = prose && !blank;
+        prev_blank = blank;
         out.push(Line {
             start: offset,
             text: line,
@@ -123,15 +206,13 @@ pub(super) fn atx_heading(line: &str) -> Option<(usize, &str)> {
 /// block (list item, quotation, heading, table row, setext underline, fence).
 pub(super) fn starts_other_block(line: &str) -> bool {
     let body = line.trim_start_matches(' ');
+    let setext = body.trim_end();
     body.starts_with('>')
         || body.starts_with('#')
         || body.starts_with('|')
-        || body.starts_with("- ")
-        || body.starts_with("* ")
-        || body.starts_with("+ ")
         || body.starts_with("```")
         || body.starts_with("~~~")
         || body.starts_with('<')
-        || (!body.is_empty() && body.chars().all(|c| c == '=' || c == '-'))
-        || body.chars().next().is_some_and(|c| c.is_ascii_digit())
+        || list_item(line).is_some()
+        || (!setext.is_empty() && setext.chars().all(|c| c == '=' || c == '-'))
 }
