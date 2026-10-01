@@ -103,6 +103,12 @@ impl<'a> Fields<'a> {
 pub(super) fn read_content_id(datum: &Datum) -> Result<ContentId> {
     let f = open(datum, "content-id-v1", &["algorithm", "digest"])?;
     let algorithm = f.sym("algorithm")?.clone();
+    if algorithm != Symbol::qualified("core", "sha256-datum-v1") {
+        return Err(NeutralInputError::new(
+            NeutralInputGap::UnrecognizedTag,
+            "content id algorithm is not core/sha256-datum-v1",
+        ));
+    }
     let Datum::Bytes(bytes) = f.get("digest") else {
         return Err(NeutralInputError::new(
             NeutralInputGap::Malformed,
@@ -143,14 +149,19 @@ pub(super) fn bound(ok: bool, what: &str) -> Result<()> {
 }
 
 impl NeutralQualificationInput {
-    /// Strict decode of one input datum, with every Shape-level identity and
-    /// arithmetic check. It does not consult the selected source; use
-    /// [`Self::verify_restated_measurements`] for that.
+    /// Strict decode of one input datum, with every Shape-level identity,
+    /// arithmetic and canonical-size check. It does not consult the selected
+    /// source or the trusted commission: it is NOT admission. Use
+    /// [`Self::admit`], the only admission entry point.
     ///
     /// # Errors
     /// Returns the first named gap.
     pub fn from_datum(datum: &Datum) -> Result<Self> {
         reject_text(datum)?;
+        let encoded = datum
+            .canonical_bytes()
+            .map_err(|e| NeutralInputError::new(NeutralInputGap::Malformed, e.to_string()))?;
+        Self::check_encoded_size(encoded.len())?;
         let top = open(
             datum,
             "neutral-input-v1",
@@ -331,6 +342,10 @@ pub(super) fn check_facts(f: &NeutralFacts) -> Result<()> {
     let mut seen: Vec<ReuseContrast> = Vec::new();
     for r in &f.contrast_reuse {
         bound(r.retained <= r.denominator, "retained exceeds denominator")?;
+        bound(
+            r.contrast != ReuseContrast::PreviousFixedPoint || r.retained == r.denominator,
+            "previous fixed point is not all green",
+        )?;
         bound(!seen.contains(&r.contrast), "contrast named twice")?;
         seen.push(r.contrast);
     }
@@ -466,9 +481,9 @@ pub(super) fn read_receipt(
     let receipt = NeutralFactDerivationReceipt {
         basis,
         procedure: read_content_id(r.node("procedure"))?,
-        producer: r.sym("producer")?.clone(),
-        authority: r.sym("authority")?.clone(),
-        review: r.sym("review")?.clone(),
+        producer: checked_authoring(r.sym("producer")?, "producer")?,
+        authority: checked_authoring(r.sym("authority")?, "authority")?,
+        review: checked_authoring(r.sym("review")?, "review")?,
         source_digests,
         precision: MeasurementPrecision {
             source_decimal_places: pr.u64("source-decimal-places")?,
@@ -483,4 +498,31 @@ pub(super) fn read_receipt(
         ));
     }
     Ok(receipt)
+}
+
+/// Bounded identifier grammar for the three authoring symbols.
+pub(super) fn authoring_symbol(symbol: &Symbol, what: &str) -> Result<()> {
+    let ok_namespace = symbol.namespace.as_deref() == Some("authoring");
+    let name = &*symbol.name;
+    let ok_name = (1..=96).contains(&name.len())
+        && name
+            .bytes()
+            .next()
+            .is_some_and(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+    if ok_namespace && ok_name {
+        Ok(())
+    } else {
+        Err(NeutralInputError::new(
+            NeutralInputGap::ForbiddenText,
+            format!("{what} is not a bounded authoring identifier"),
+        ))
+    }
+}
+
+fn checked_authoring(symbol: &Symbol, what: &str) -> Result<Symbol> {
+    authoring_symbol(symbol, what)?;
+    Ok(symbol.clone())
 }

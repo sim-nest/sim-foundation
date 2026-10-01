@@ -38,6 +38,10 @@ pub struct RestatedMeasurements {
     pub facts: NeutralFacts,
     /// The exact bytes of the table region (header through last row).
     pub table_region: Vec<u8>,
+    /// Precision of the duration conversion, derived from the source spelling.
+    pub precision: MeasurementPrecision,
+    /// Identity of the conversion procedure record, derived from the source.
+    pub procedure: ContentId,
 }
 
 impl RestatedMeasurements {
@@ -113,6 +117,7 @@ impl RestatedMeasurements {
         if frac.len() != 2 {
             return Err(bad("hours precision"));
         }
+        let decimal_places = frac.len() as u64;
         let hundredths = number(whole)
             .and_then(|w| w.checked_mul(100))
             .and_then(|w| w.checked_add(number(frac)?))
@@ -139,8 +144,19 @@ impl RestatedMeasurements {
         let reused =
             number(row("Reused receipts in that last epoch")?).ok_or_else(|| bad("reused"))?;
         let proof_total = number(ptotal).ok_or_else(|| bad("proof total"))?;
-        let (control, heads) = contrast_sentences(text)?;
-        let last_frontier_total = green + interrupted + pending;
+        let (control, control_denominator, heads) = contrast_sentences(text)?;
+        if control_denominator != proof_total {
+            return Err(NeutralInputError::new(
+                NeutralInputGap::FactMismatch,
+                "control-only repair denominator is not the proof-leaf total",
+            ));
+        }
+        let last_frontier_total = green
+            .checked_add(interrupted)
+            .and_then(|v| v.checked_add(pending))
+            .ok_or_else(|| {
+                NeutralInputError::new(NeutralInputGap::Arithmetic, "frontier total overflows")
+            })?;
         let facts = NeutralFacts {
             scheduled: number(sch).ok_or_else(|| bad("scheduled"))?,
             materialized: number(mat).ok_or_else(|| bad("materialized"))?,
@@ -200,16 +216,53 @@ impl RestatedMeasurements {
                 ReuseCount {
                     contrast: ReuseContrast::PreviousFixedPoint,
                     retained: previous,
-                    denominator: proof_total,
+                    denominator: previous,
                 },
             ],
         };
         check_facts(&facts)?;
+        let procedure = restated_procedure_id(hundredths, facts.overlapping_span_milliseconds)?;
         Ok(Self {
             facts,
             table_region: table.as_bytes().to_vec(),
+            precision: MeasurementPrecision {
+                source_decimal_places: decimal_places,
+            },
+            procedure,
         })
     }
+}
+
+/// Identity of the restated-measurements conversion recipe for the given
+/// hundredths of hours and result milliseconds. The owner derives it; an
+/// author never supplies it.
+fn restated_procedure_id(hundredths: u64, milliseconds: u64) -> Result<ContentId> {
+    let n = |name: &'static str, value: u64| (Symbol::new(name), number_datum(value));
+    let sym = |value: &'static str| Datum::Symbol(Symbol::qualified("qualification", value));
+    Datum::Node {
+        tag: Symbol::qualified("qualification", "restated-measurements-procedure-v1"),
+        fields: vec![
+            (Symbol::new("basis"), sym("restated-measurements")),
+            (
+                Symbol::new("calculation"),
+                sym("exact-rational-hours-to-milliseconds"),
+            ),
+            n("milliseconds-per-hour", MS_PER_HOUR),
+            n("result-milliseconds", milliseconds),
+            n("source-hour-scale", 100),
+            n("source-hours-hundredths", hundredths),
+            (Symbol::new("source-precision"), sym("rounded-to-0.01-hour")),
+        ],
+    }
+    .content_id()
+    .map_err(|e| NeutralInputError::new(NeutralInputGap::Identity, e.to_string()))
+}
+
+fn number_datum(value: u64) -> Datum {
+    Datum::Number(sim_kernel::NumberLiteral {
+        domain: Symbol::qualified("qualification", "u64"),
+        canonical: value.to_string(),
+    })
 }
 
 fn unique(text: &str, needle: &str) -> Result<usize> {
@@ -223,31 +276,39 @@ fn unique(text: &str, needle: &str) -> Result<usize> {
     }
 }
 
-fn contrast_sentences(text: &str) -> Result<(u64, u64)> {
-    let sentence = |lead: &str| -> Result<u64> {
-        let i = unique(text, lead)?;
-        let tail = &text[i + lead.len()..];
-        let n: String = tail.chars().take_while(char::is_ascii_digit).collect();
-        number(&n).ok_or_else(|| {
-            NeutralInputError::new(NeutralInputGap::FactMismatch, "contrast sentence malformed")
-        })
-    };
-    let control = sentence("A control-only repair retained ")?;
-    if !text.contains(&format!(
-        "A control-only repair retained {control} of 280 proof receipts."
-    )) {
-        return Err(NeutralInputError::new(
+/// Parses the two contrast statements as complete, unique sentences (whitespace
+/// runs, including line wraps, count as one space). Returns the control-only
+/// repair numerator and its stated denominator, and the public-head retention.
+fn contrast_sentences(text: &str) -> Result<(u64, u64, u64)> {
+    let flat = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
+    let control_lead = "A control-only repair retained ";
+    let control_tail = " proof receipts.";
+    let at = unique_sentence(&flat, control_lead)?;
+    let rest = &flat[at + control_lead.len()..];
+    let end = rest
+        .find(control_tail)
+        .ok_or_else(|| bad("control-only sentence malformed"))?;
+    let (retained, denominator) = rest[..end]
+        .split_once(" of ")
+        .ok_or_else(|| bad("control-only sentence malformed"))?;
+    let control = number(retained).ok_or_else(|| bad("control-only numerator malformed"))?;
+    let control_denominator =
+        number(denominator).ok_or_else(|| bad("control-only denominator malformed"))?;
+    let heads_sentence = "A change to three public heads and their pins retained only one.";
+    unique_sentence(&flat, heads_sentence)?;
+    Ok((control, control_denominator, 1))
+}
+
+fn unique_sentence(flat: &str, needle: &str) -> Result<usize> {
+    let mut found = flat.match_indices(needle).map(|(i, _)| i);
+    match (found.next(), found.next()) {
+        (Some(i), None) => Ok(i),
+        _ => Err(NeutralInputError::new(
             NeutralInputGap::FactMismatch,
-            "control-only denominator is not 280 proof receipts",
-        ));
+            "contrast sentence absent or repeated",
+        )),
     }
-    if !text.contains("retained only one.") {
-        return Err(NeutralInputError::new(
-            NeutralInputGap::FactMismatch,
-            "public-head-and-pin-change sentence absent",
-        ));
-    }
-    Ok((control, 1))
 }
 
 impl NeutralQualificationInput {
@@ -258,12 +319,28 @@ impl NeutralQualificationInput {
     ///
     /// # Errors
     /// Returns the first named gap.
-    pub fn verify_restated_measurements(&self, source: &[u8]) -> Result<()> {
+    pub fn verify_restated_measurements(
+        &self,
+        source: &[u8],
+        commission: &TrustedCommission,
+    ) -> Result<()> {
         use sha2::{Digest, Sha256};
         if self.derivation.basis != DerivationBasis::RestatedMeasurements {
             return Err(NeutralInputError::new(
                 NeutralInputGap::FactMismatch,
                 "basis is not restated measurements",
+            ));
+        }
+        authoring_symbol(&commission.producer, "trusted producer")?;
+        authoring_symbol(&commission.authority, "trusted authority")?;
+        authoring_symbol(&commission.review, "trusted review")?;
+        if self.derivation.producer != commission.producer
+            || self.derivation.authority != commission.authority
+            || self.derivation.review != commission.review
+        {
+            return Err(NeutralInputError::new(
+                NeutralInputGap::Identity,
+                "producer, authority or review is not the trusted commission",
             ));
         }
         if source_byte_identity(source)? != self.selected_source {
@@ -277,6 +354,18 @@ impl NeutralQualificationInput {
             return Err(NeutralInputError::new(
                 NeutralInputGap::FactMismatch,
                 "facts differ from the retained table",
+            ));
+        }
+        if self.derivation.procedure != derived.procedure {
+            return Err(NeutralInputError::new(
+                NeutralInputGap::Identity,
+                "procedure is not the conversion recipe derived from the source",
+            ));
+        }
+        if self.derivation.precision != derived.precision {
+            return Err(NeutralInputError::new(
+                NeutralInputGap::FactMismatch,
+                "precision is not the precision of the source spelling",
             ));
         }
         let source_digest: [u8; 32] = Sha256::digest(source).into();
@@ -305,13 +394,10 @@ impl NeutralQualificationInput {
     ///
     /// # Errors
     /// Returns a gap if the table cannot be derived or an identity fails.
-    pub fn author_restated(
-        source: &[u8],
-        procedure: ContentId,
-        producer: Symbol,
-        authority: Symbol,
-        review: Symbol,
-    ) -> Result<Self> {
+    pub fn author_restated(source: &[u8], commission: &TrustedCommission) -> Result<Self> {
+        authoring_symbol(&commission.producer, "producer")?;
+        authoring_symbol(&commission.authority, "authority")?;
+        authoring_symbol(&commission.review, "review")?;
         use sha2::{Digest, Sha256};
         let derived = RestatedMeasurements::from_source(source)?;
         let source_digest: [u8; 32] = Sha256::digest(source).into();
@@ -321,10 +407,10 @@ impl NeutralQualificationInput {
             facts: derived.facts,
             derivation: NeutralFactDerivationReceipt {
                 basis: DerivationBasis::RestatedMeasurements,
-                procedure,
-                producer,
-                authority,
-                review,
+                procedure: derived.procedure,
+                producer: commission.producer.clone(),
+                authority: commission.authority.clone(),
+                review: commission.review.clone(),
                 source_digests: vec![
                     DerivationSource {
                         role: DerivationSourceRole::SelectedRoundSource,
@@ -335,11 +421,31 @@ impl NeutralQualificationInput {
                         digest: table_digest,
                     },
                 ],
-                precision: MeasurementPrecision {
-                    source_decimal_places: 2,
-                },
+                precision: derived.precision,
                 no_runtime_consumption: true,
             },
         })
+    }
+}
+
+impl NeutralQualificationInput {
+    /// The one admission entry point. It refuses an encoded form over 64 KiB,
+    /// strictly decodes the datum (which also bounds its canonical size), and
+    /// verifies the input against the exact selected source and the trusted
+    /// commission. `encoded_len` is the byte length of the slot exactly as read
+    /// from storage.
+    ///
+    /// # Errors
+    /// Returns the first named gap.
+    pub fn admit(
+        datum: &Datum,
+        encoded_len: usize,
+        source: &[u8],
+        commission: &TrustedCommission,
+    ) -> Result<Self> {
+        Self::check_encoded_size(encoded_len)?;
+        let input = Self::from_datum(datum)?;
+        input.verify_restated_measurements(source, commission)?;
+        Ok(input)
     }
 }

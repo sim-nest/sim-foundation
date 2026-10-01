@@ -112,6 +112,21 @@ pub struct FrontierCounts {
     pub total: u64,
 }
 
+/// The trusted commission an admitted input must carry: the exact producer,
+/// authority and review symbols the selection workflow commissioned. They are
+/// compared, never trusted from the input. Each must use the `authoring`
+/// namespace and the bounded identifier grammar (lowercase ASCII letters,
+/// digits and `-`, 1 to 96 characters, starting with a letter or digit).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TrustedCommission {
+    /// Commissioned producer of the facts.
+    pub producer: Symbol,
+    /// Commission that authorized the production.
+    pub authority: Symbol,
+    /// Review that verifies the production; naming it asserts no outcome.
+    pub review: Symbol,
+}
+
 /// Registered contrasts a [`ReuseCount`] may name (see the module table).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ReuseContrast {
@@ -121,7 +136,8 @@ pub enum ReuseContrast {
     PublicHeadAndPinChange,
     /// Receipts reused in the last raw epoch.
     LastRawEpoch,
-    /// Green leaves at the previous fixed point.
+    /// Green leaves at the previous fixed point, out of that fixed point's own
+    /// all-green leaf population (`retained == denominator`).
     PreviousFixedPoint,
 }
 
