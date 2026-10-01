@@ -201,6 +201,7 @@ impl NeutralFactDerivationReceipt {
                                             Datum::Symbol(Symbol::qualified("core", "sha256")),
                                         ),
                                         ("digest", Datum::Bytes(s.digest.to_vec())),
+                                        ("length", u64_datum(s.length)),
                                         (
                                             "role",
                                             symbol(match s.role {
@@ -210,8 +211,12 @@ impl NeutralFactDerivationReceipt {
                                                 DerivationSourceRole::MeasurementsTableRegion => {
                                                     "measurements-table-region"
                                                 }
+                                                DerivationSourceRole::ContrastStatementRegion => {
+                                                    "contrast-statement-region"
+                                                }
                                             }),
                                         ),
+                                        ("start", u64_datum(s.start)),
                                     ],
                                 )
                             })

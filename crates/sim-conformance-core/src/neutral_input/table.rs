@@ -37,8 +37,9 @@ fn number(text: &str) -> Option<u64> {
 pub struct RestatedMeasurements {
     /// Facts the table and the two contrast sentences state.
     pub facts: NeutralFacts,
-    /// The exact bytes of the table region (header through last row).
-    pub table_region: Vec<u8>,
+    /// The three source regions (whole source, table, contrast paragraph) with
+    /// their offsets, lengths and digests, as a receipt records them.
+    pub regions: Vec<DerivationSource>,
     /// Precision of the duration conversion, derived from the source spelling.
     pub precision: MeasurementPrecision,
     /// Identity of the conversion procedure record, derived from the source.
@@ -52,32 +53,82 @@ impl RestatedMeasurements {
     /// Returns a fact-mismatch gap if the table or a contrast sentence is
     /// absent, repeated or malformed.
     pub fn from_source(source: &[u8]) -> Result<Self> {
-        let text = core::str::from_utf8(source).map_err(|_| {
-            NeutralInputError::new(NeutralInputGap::SourceMismatch, "source is not UTF-8")
-        })?;
-        let lines = markdown::scan(text);
-        let headers: Vec<&markdown::Line<'_>> = lines
-            .iter()
-            .filter(|l| l.prose && l.text.trim_end() == TABLE_HEADER)
-            .collect();
-        let [header] = headers.as_slice() else {
-            return Err(NeutralInputError::new(
-                NeutralInputGap::SourceMismatch,
-                "retained-measurement table not found exactly once",
-            ));
+        let text = utf8(source)?;
+        let (table, paragraph) = locate(text)?;
+        Self::build(source, text, table, paragraph)
+    }
+
+    /// Derives the facts from the byte regions a receipt names. It slices and
+    /// parses exactly those regions and never searches the document: which
+    /// regions are designated is an authoring act pinned by offset, length and
+    /// digest, and judged by the independent reviewer of the slot. The only
+    /// structural anchor checked is that the contrast paragraph directly
+    /// follows the E1 heading.
+    ///
+    /// # Errors
+    /// Returns a gap if the regions are not the three expected, are out of
+    /// bounds or misaligned, or do not parse.
+    pub fn from_regions(source: &[u8], regions: &[DerivationSource]) -> Result<Self> {
+        let text = utf8(source)?;
+        let bad =
+            |what: &str| NeutralInputError::new(NeutralInputGap::SourceMismatch, what.to_owned());
+        let [whole, table, paragraph] = regions else {
+            return Err(bad("derivation must name exactly three source regions"));
         };
-        let start = header.start;
-        let rest = &text[start..];
-        let mut end = rest.len();
-        let mut offset = 0;
-        for line in rest.split_inclusive('\n') {
-            if !line.starts_with('|') {
-                end = offset;
-                break;
-            }
-            offset += line.len();
+        if whole.role != DerivationSourceRole::SelectedRoundSource
+            || table.role != DerivationSourceRole::MeasurementsTableRegion
+            || paragraph.role != DerivationSourceRole::ContrastStatementRegion
+        {
+            return Err(bad("source regions are not in role order"));
         }
-        let table = &rest[..end];
+        if whole.start != 0 || whole.length != source.len() as u64 {
+            return Err(bad("selected-round-source region is not the whole source"));
+        }
+        let range = |r: &DerivationSource| -> Result<core::ops::Range<usize>> {
+            let start = usize::try_from(r.start).map_err(|_| bad("region offset overflows"))?;
+            let end = start
+                .checked_add(usize::try_from(r.length).map_err(|_| bad("region length overflows"))?)
+                .ok_or_else(|| bad("region end overflows"))?;
+            let aligned =
+                |i: usize| i == 0 || i == text.len() || text.as_bytes().get(i - 1) == Some(&b'\n');
+            if end > text.len()
+                || start >= end
+                || !text.is_char_boundary(start)
+                || !text.is_char_boundary(end)
+                || !aligned(start)
+            {
+                return Err(bad("region is out of bounds or not line aligned"));
+            }
+            Ok(start..end)
+        };
+        let table_range = range(table)?;
+        let paragraph_range = range(paragraph)?;
+        if table_range.start < paragraph_range.end && paragraph_range.start < table_range.end {
+            return Err(bad("table and contrast regions overlap"));
+        }
+        let anchor = text[..paragraph_range.start]
+            .trim_end()
+            .lines()
+            .last()
+            .unwrap_or("");
+        if !markdown::atx_heading(anchor)
+            .is_some_and(|(level, content)| level == 3 && content == CONTRAST_HEADING)
+        {
+            return Err(bad(
+                "contrast paragraph does not directly follow the E1 heading",
+            ));
+        }
+        Self::build(source, text, table_range, paragraph_range)
+    }
+
+    fn build(
+        source: &[u8],
+        text: &str,
+        table_range: core::ops::Range<usize>,
+        paragraph_range: core::ops::Range<usize>,
+    ) -> Result<Self> {
+        use sha2::{Digest, Sha256};
+        let table = &text[table_range.clone()];
         let row = |label: &str| -> Result<&str> {
             let mut found = None;
             for line in table.lines() {
@@ -156,7 +207,7 @@ impl RestatedMeasurements {
         let reused =
             number(row("Reused receipts in that last epoch")?).ok_or_else(|| bad("reused"))?;
         let proof_total = number(ptotal).ok_or_else(|| bad("proof total"))?;
-        let (control, control_denominator, heads) = contrast_sentences(text)?;
+        let (control, control_denominator, heads) = parse_contrast(&text[paragraph_range.clone()])?;
         if control_denominator != proof_total {
             return Err(NeutralInputError::new(
                 NeutralInputGap::FactMismatch,
@@ -234,9 +285,29 @@ impl RestatedMeasurements {
         };
         check_facts(&facts)?;
         let procedure = restated_procedure_id(hundredths, facts.overlapping_span_milliseconds)?;
+        let region = |role, range: &core::ops::Range<usize>, bytes: &[u8]| DerivationSource {
+            role,
+            start: range.start as u64,
+            length: (range.end - range.start) as u64,
+            digest: Sha256::digest(bytes).into(),
+        };
+        let whole = 0..source.len();
+        let regions = vec![
+            region(DerivationSourceRole::SelectedRoundSource, &whole, source),
+            region(
+                DerivationSourceRole::MeasurementsTableRegion,
+                &table_range,
+                table.as_bytes(),
+            ),
+            region(
+                DerivationSourceRole::ContrastStatementRegion,
+                &paragraph_range,
+                text[paragraph_range.clone()].as_bytes(),
+            ),
+        ];
         Ok(Self {
             facts,
-            table_region: table.as_bytes().to_vec(),
+            regions,
             precision: MeasurementPrecision {
                 source_decimal_places: decimal_places,
             },
@@ -280,16 +351,39 @@ fn number_datum(value: u64) -> Datum {
 /// The roadmap section that states the two contrast sentences.
 const CONTRAST_HEADING: &str = "E1 - semantic identity must be declared, and must be narrow";
 
-/// Parses the two contrast statements from the E1 section's first ordinary
-/// prose paragraph. Block structure is preserved: the heading must appear
-/// exactly once, the paragraph must follow it directly (after blank lines) and
-/// must be plain prose, not a heading, list item, quotation, table row, code
-/// fence or indented block, so examples and false claims in other blocks are
-/// never read. Returns the control-only repair numerator and its stated
-/// denominator, and the public-head retention.
-fn contrast_sentences(text: &str) -> Result<(u64, u64, u64)> {
+fn utf8(source: &[u8]) -> Result<&str> {
+    core::str::from_utf8(source)
+        .map_err(|_| NeutralInputError::new(NeutralInputGap::SourceMismatch, "source is not UTF-8"))
+}
+
+/// AUTHORING AID, not a trust boundary: finds the table block and the E1
+/// section's first plain-prose paragraph with the narrow block scanner, so an
+/// author can designate the two regions a receipt then pins by offset, length
+/// and digest. Verification (`from_regions`) never calls this.
+fn locate(text: &str) -> Result<(core::ops::Range<usize>, core::ops::Range<usize>)> {
     let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
     let lines = markdown::scan(text);
+    let headers: Vec<&markdown::Line<'_>> = lines
+        .iter()
+        .filter(|l| l.prose && l.text.trim_end() == TABLE_HEADER)
+        .collect();
+    let [header] = headers.as_slice() else {
+        return Err(NeutralInputError::new(
+            NeutralInputGap::SourceMismatch,
+            "retained-measurement table not found exactly once",
+        ));
+    };
+    let rest = &text[header.start..];
+    let mut end = rest.len();
+    let mut offset = 0;
+    for line in rest.split_inclusive('\n') {
+        if !line.starts_with('|') {
+            end = offset;
+            break;
+        }
+        offset += line.len();
+    }
+    let table = header.start..header.start + end;
     let mut headings = lines.iter().enumerate().filter(|(_, l)| {
         l.prose
             && markdown::atx_heading(l.text)
@@ -307,7 +401,7 @@ fn contrast_sentences(text: &str) -> Result<(u64, u64, u64)> {
     if !first.prose || markdown::starts_other_block(first.text) {
         return Err(bad("contrast paragraph is not plain prose"));
     }
-    let mut paragraph = vec![first.text];
+    let mut last = first;
     for l in rest {
         if l.text.trim().is_empty() {
             break;
@@ -315,16 +409,20 @@ fn contrast_sentences(text: &str) -> Result<(u64, u64, u64)> {
         if !l.prose || markdown::starts_other_block(l.text) {
             return Err(bad("contrast paragraph is interrupted by another block"));
         }
-        paragraph.push(l.text);
+        last = l;
     }
-    if paragraph.iter().any(|l| l.contains('|')) {
+    Ok((table, first.start..last.start + last.text.len()))
+}
+
+/// Parses the two contrast statements from the designated paragraph text.
+/// Returns the control-only repair numerator and its stated denominator, and
+/// the public-head retention.
+fn parse_contrast(paragraph: &str) -> Result<(u64, u64, u64)> {
+    let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
+    if paragraph.contains('|') {
         return Err(bad("contrast paragraph contains table syntax"));
     }
-    let flat = paragraph
-        .iter()
-        .flat_map(|l| l.split_whitespace())
-        .collect::<Vec<_>>()
-        .join(" ");
+    let flat = paragraph.split_whitespace().collect::<Vec<_>>().join(" ");
     let sentences: Vec<String> = flat
         .split(". ")
         .map(|s| {
@@ -370,7 +468,6 @@ impl NeutralQualificationInput {
         source: &[u8],
         commission: &TrustedCommission,
     ) -> Result<()> {
-        use sha2::{Digest, Sha256};
         if self.derivation.basis != DerivationBasis::RestatedMeasurements {
             return Err(NeutralInputError::new(
                 NeutralInputGap::FactMismatch,
@@ -395,7 +492,7 @@ impl NeutralQualificationInput {
                 "selected-source is not the exact-byte identity of the source",
             ));
         }
-        let derived = RestatedMeasurements::from_source(source)?;
+        let derived = RestatedMeasurements::from_regions(source, &self.derivation.source_digests)?;
         if derived.facts != self.facts {
             return Err(NeutralInputError::new(
                 NeutralInputGap::FactMismatch,
@@ -414,22 +511,12 @@ impl NeutralQualificationInput {
                 "precision is not the precision of the source spelling",
             ));
         }
-        let source_digest: [u8; 32] = Sha256::digest(source).into();
-        let table_digest: [u8; 32] = Sha256::digest(&derived.table_region).into();
-        let want = [
-            DerivationSource {
-                role: DerivationSourceRole::SelectedRoundSource,
-                digest: source_digest,
-            },
-            DerivationSource {
-                role: DerivationSourceRole::MeasurementsTableRegion,
-                digest: table_digest,
-            },
-        ];
-        if self.derivation.source_digests != want {
+        // The regions were rebuilt from the recorded offsets and lengths: their
+        // digests must equal the recorded ones.
+        if self.derivation.source_digests != derived.regions {
             return Err(NeutralInputError::new(
                 NeutralInputGap::SourceMismatch,
-                "source digests are not the selected source and exact table region",
+                "a recorded region digest is not the digest of its bytes",
             ));
         }
         Ok(())
@@ -444,10 +531,7 @@ impl NeutralQualificationInput {
         authoring_symbol(&commission.producer, "producer")?;
         authoring_symbol(&commission.authority, "authority")?;
         authoring_symbol(&commission.review, "review")?;
-        use sha2::{Digest, Sha256};
         let derived = RestatedMeasurements::from_source(source)?;
-        let source_digest: [u8; 32] = Sha256::digest(source).into();
-        let table_digest: [u8; 32] = Sha256::digest(&derived.table_region).into();
         Ok(Self {
             selected_source: source_byte_identity(source)?,
             facts: derived.facts,
@@ -457,16 +541,7 @@ impl NeutralQualificationInput {
                 producer: commission.producer.clone(),
                 authority: commission.authority.clone(),
                 review: commission.review.clone(),
-                source_digests: vec![
-                    DerivationSource {
-                        role: DerivationSourceRole::SelectedRoundSource,
-                        digest: source_digest,
-                    },
-                    DerivationSource {
-                        role: DerivationSourceRole::MeasurementsTableRegion,
-                        digest: table_digest,
-                    },
-                ],
+                source_digests: derived.regions,
                 precision: derived.precision,
                 no_runtime_consumption: true,
             },

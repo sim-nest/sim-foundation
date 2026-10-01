@@ -231,13 +231,23 @@ pub enum DerivationSourceRole {
     SelectedRoundSource,
     /// The exact measurements-table region.
     MeasurementsTableRegion,
+    /// The exact paragraph that states the contrast sentences.
+    ContrastStatementRegion,
 }
 
-/// One digest the derivation names (SHA-256 over exact bytes).
+/// One byte region of the selected source the derivation names: its role, its
+/// offset and length in the source, and the SHA-256 digest of exactly those
+/// bytes. Verification slices these regions and parses them; it never searches
+/// the document, so which region is designated is an authoring act that an
+/// independent reviewer of the slot judges.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DerivationSource {
     /// The role of the bytes.
     pub role: DerivationSourceRole,
+    /// Byte offset of the region in the selected source.
+    pub start: u64,
+    /// Byte length of the region.
+    pub length: u64,
     /// SHA-256 digest.
     pub digest: [u8; 32],
 }

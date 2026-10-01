@@ -25,6 +25,21 @@
 //! | `public-head-and-pin-change` | proof receipts retained after a change to public heads and pins, of all proof leaves |
 //! | `last-raw-epoch` | receipts reused in the last raw epoch, of that epoch's frontier leaves |
 //! | `previous-fixed-point` | green leaves at the previous fixed point, of that fixed point's own all-green leaf population (`retained == denominator`) |
+//!
+//! # Source binding model
+//!
+//! The roadmap prescribes that the derivation binds "the selected file's exact
+//! source digest, table region and calculation recipe". Accordingly a receipt
+//! records three byte regions of the selected source (the whole source, the
+//! retained-measurement table, the paragraph that states the two contrast
+//! sentences), each by offset, length and SHA-256 digest. Verification
+//! ([`RestatedMeasurements::from_regions`]) slices exactly those regions,
+//! checks their digests and that the contrast paragraph directly follows the
+//! `E1` heading, and parses them; it never searches the document and does not
+//! interpret Markdown. Which regions are designated is an authoring act:
+//! authoring uses a narrow block scanner as an aid only, and the independent
+//! reviewer of the slot judges that the pinned regions are the source's own
+//! prose assertions.
 
 mod decode;
 mod encode;

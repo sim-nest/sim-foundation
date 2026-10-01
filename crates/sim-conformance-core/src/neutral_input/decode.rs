@@ -446,7 +446,11 @@ pub(super) fn read_receipt(
     };
     let mut source_digests = Vec::new();
     for s in sources {
-        let sf = open(s, "derivation-source-v1", &["algorithm", "digest", "role"])?;
+        let sf = open(
+            s,
+            "derivation-source-v1",
+            &["algorithm", "digest", "length", "role", "start"],
+        )?;
         if *sf.sym("algorithm")? != Symbol::qualified("core", "sha256") {
             return Err(NeutralInputError::new(
                 NeutralInputGap::UnrecognizedTag,
@@ -459,6 +463,9 @@ pub(super) fn read_receipt(
             }
             x if *x == Symbol::qualified(NS, "measurements-table-region") => {
                 DerivationSourceRole::MeasurementsTableRegion
+            }
+            x if *x == Symbol::qualified(NS, "contrast-statement-region") => {
+                DerivationSourceRole::ContrastStatementRegion
             }
             _ => {
                 return Err(NeutralInputError::new(
@@ -476,7 +483,12 @@ pub(super) fn read_receipt(
         let digest: [u8; 32] = b.as_slice().try_into().map_err(|_| {
             NeutralInputError::new(NeutralInputGap::Malformed, "source digest is not 32 bytes")
         })?;
-        source_digests.push(DerivationSource { role, digest });
+        source_digests.push(DerivationSource {
+            role,
+            start: sf.u64("start")?,
+            length: sf.u64("length")?,
+            digest,
+        });
     }
     let receipt = NeutralFactDerivationReceipt {
         basis,

@@ -3,6 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use sha2::Digest;
 use sim_kernel::{Datum, Symbol};
 
 use super::*;
@@ -486,5 +487,153 @@ fn list_paragraph_lines_and_ten_digit_numbers_do_not_confuse_the_scanner() {
             .unwrap()
             .facts,
         expected
+    );
+}
+
+fn regions_of(source: &[u8]) -> Vec<DerivationSource> {
+    RestatedMeasurements::from_source(source).unwrap().regions
+}
+
+#[test]
+fn verification_slices_the_pinned_regions_and_never_searches_the_document() {
+    let real = source();
+    let regions = regions_of(&real);
+    let expected = RestatedMeasurements::from_source(&real).unwrap().facts;
+    // A decoy duplicate of the heading makes LOCATING ambiguous (authoring refuses) ...
+    let decoy = format!(
+        "{}\n{HEADING}\n\nx\n",
+        String::from_utf8(real.clone()).unwrap()
+    );
+    assert!(RestatedMeasurements::from_source(decoy.as_bytes()).is_err());
+    // ... but the pinned regions still verify: the verifier reads exactly them.
+    let mut pinned = regions.clone();
+    pinned[0].length = decoy.len() as u64;
+    pinned[0].digest = sha2::Sha256::digest(decoy.as_bytes()).into();
+    assert_eq!(
+        RestatedMeasurements::from_regions(decoy.as_bytes(), &pinned)
+            .unwrap()
+            .facts,
+        expected
+    );
+}
+
+#[test]
+fn region_tampering_is_refused_for_its_own_reason() {
+    let input = authored();
+    let verify = |input: &NeutralQualificationInput| {
+        input.verify_restated_measurements(&source(), &commission())
+    };
+    let mutate = |f: &dyn Fn(&mut Vec<DerivationSource>)| {
+        let mut i = input.clone();
+        f(&mut i.derivation.source_digests);
+        i
+    };
+    assert_eq!(
+        verify(&mutate(&|r| r[1].digest = [1; 32])).unwrap_err().gap,
+        NeutralInputGap::SourceMismatch
+    );
+    assert_eq!(
+        verify(&mutate(&|r| r[2].digest = [1; 32])).unwrap_err().gap,
+        NeutralInputGap::SourceMismatch
+    );
+    assert_eq!(
+        verify(&mutate(&|r| r[0].digest = [1; 32])).unwrap_err().gap,
+        NeutralInputGap::SourceMismatch
+    );
+    assert_eq!(
+        verify(&mutate(&|r| r[1].start += 1)).unwrap_err().gap,
+        NeutralInputGap::SourceMismatch
+    );
+    assert_eq!(
+        verify(&mutate(&|r| r[2].length += 100_000))
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+    assert_eq!(
+        verify(&mutate(&|r| r[0].length -= 1)).unwrap_err().gap,
+        NeutralInputGap::SourceMismatch
+    );
+    assert_eq!(
+        verify(&mutate(&|r| r.swap(1, 2))).unwrap_err().gap,
+        NeutralInputGap::SourceMismatch
+    );
+    assert_eq!(
+        verify(&mutate(&|r| {
+            r.pop();
+        }))
+        .unwrap_err()
+        .gap,
+        NeutralInputGap::SourceMismatch
+    );
+    // The contrast region moved to another line range (here: the table's) overlaps/fails its anchor.
+    assert_eq!(
+        verify(&mutate(&|r| r[2] = r[1])).unwrap_err().gap,
+        NeutralInputGap::SourceMismatch
+    );
+    // A contrast region that does not directly follow the E1 heading is refused.
+    let mut moved = regions_of(&source());
+    let text = String::from_utf8(source()).unwrap();
+    let intro = text.find("The corpus is valuable").unwrap();
+    moved[2] = DerivationSource {
+        start: intro as u64,
+        length: 40,
+        digest: [0; 32],
+        ..moved[2]
+    };
+    assert_eq!(
+        RestatedMeasurements::from_regions(&source(), &moved)
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+}
+
+fn repinned(
+    source: &[u8],
+    mut regions: Vec<DerivationSource>,
+    f: &dyn Fn(&mut Vec<DerivationSource>),
+) -> Vec<DerivationSource> {
+    f(&mut regions);
+    for r in &mut regions {
+        let end = (r.start + r.length) as usize;
+        let start = (r.start as usize).min(source.len());
+        r.digest = sha2::Sha256::digest(&source[start..end.min(source.len()).max(start)]).into();
+    }
+    regions
+}
+
+#[test]
+fn consistently_repinned_but_malformed_regions_are_refused_structurally() {
+    let real = source();
+    let base = regions_of(&real);
+    // The table region grown to swallow the contrast paragraph (digests re-pinned consistently).
+    let grown = repinned(&real, base.clone(), &|r| {
+        r[1].length = r[2].start + r[2].length - r[1].start
+    });
+    assert_eq!(
+        RestatedMeasurements::from_regions(&real, &grown)
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+    // A region that starts mid-line.
+    let misaligned = repinned(&real, base.clone(), &|r| {
+        r[1].start += 1;
+        r[1].length -= 1;
+    });
+    assert_eq!(
+        RestatedMeasurements::from_regions(&real, &misaligned)
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+    // An empty region.
+    let empty = repinned(&real, base, &|r| r[2].length = 0);
+    assert_eq!(
+        RestatedMeasurements::from_regions(&real, &empty)
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
     );
 }
