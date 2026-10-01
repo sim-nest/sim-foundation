@@ -15,24 +15,29 @@ pub(super) const TABLE_HEADER: &str = "| Retained SUP20 measure | Observed value
 pub(super) const CONTRAST_HEADING: &str =
     "E1 - semantic identity must be declared, and must be narrow";
 
-pub(super) fn number(text: &str) -> Option<u64> {
-    // Plain digits, or thousands groups of exactly three after a leading group of
-    // one to three digits (`458,386`). No leading zeros, signs or stray commas.
-    let grouped = text.contains(',');
-    let valid = if grouped {
-        let mut groups = text.split(',');
-        let first = groups.next().unwrap_or("");
-        (1..=3).contains(&first.len())
-            && first.bytes().all(|b| b.is_ascii_digit())
-            && groups.all(|g| g.len() == 3 && g.bytes().all(|b| b.is_ascii_digit()))
-    } else {
-        !text.is_empty() && text.bytes().all(|b| b.is_ascii_digit())
-    };
-    let leading_zero = text.len() > 1 && text.starts_with('0');
-    if !valid || leading_zero {
-        return None;
+/// The canonical spelling of `value`: decimal digits grouped in threes from the
+/// right by commas, no sign, no leading zero (`458,386`, `230`, `0`).
+pub(super) fn grouped(value: u64) -> String {
+    let digits = value.to_string();
+    let mut out = String::with_capacity(digits.len() + digits.len() / 3);
+    for (i, ch) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(ch);
     }
-    text.replace(',', "").parse().ok()
+    out
+}
+
+/// Reads a source numeral. The accepted language is exactly the set of
+/// canonical spellings: a numeral is admitted only when it equals
+/// [`grouped`] of its own value, so no other spelling (ungrouped long runs,
+/// leading zeros or signs, misplaced or doubled commas, overflow) can be
+/// accepted regardless of which defect it exercises (the parse may be lenient: a
+/// sign or stray character cannot survive the equality).
+pub(super) fn number(text: &str) -> Option<u64> {
+    let value: u64 = text.replace(',', "").parse().ok()?;
+    (grouped(value) == text).then_some(value)
 }
 
 /// The registered data-row labels of the retained-measurement table, each of

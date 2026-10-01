@@ -329,3 +329,160 @@ fn malformed_numerals_and_bare_components_are_refused() {
     // Grouped thousands remain valid where the roadmap writes them.
     assert!(RestatedMeasurements::from_source(real.as_bytes()).is_ok());
 }
+
+/// The numeral language is the canonical-spelling bijection: independently
+/// formulated reference, exhaustive over a bounded alphabet (every string up to
+/// seven characters), so no single-token spelling can be accepted by accident.
+#[test]
+fn numeral_language_is_exactly_the_canonical_spellings() {
+    use super::super::grammar::{grouped, number};
+    // Reference written as the regular expression `0|[1-9][0-9]{0,2}(,[0-9]{3})*`
+    // (a lone zero; a leading zero never starts a longer numeral).
+    fn reference(s: &str) -> bool {
+        if s == "0" {
+            return true;
+        }
+        let mut groups = s.split(',');
+        let first = groups.next().unwrap_or("");
+        let head = match first.len() {
+            1..=3 => first.bytes().all(|b| b.is_ascii_digit()) && !first.starts_with('0'),
+            _ => false,
+        };
+        head && groups.all(|g| g.len() == 3 && g.bytes().all(|b| b.is_ascii_digit()))
+    }
+    let alphabet = ['0', '1', '9', ',', '+', ' ', 'x'];
+    let mut stack: Vec<String> = vec![String::new()];
+    while let Some(s) = stack.pop() {
+        assert_eq!(number(&s).is_some(), reference(&s), "{s:?}");
+        if let Some(v) = number(&s) {
+            assert_eq!(grouped(v), s);
+        }
+        if s.len() < 7 {
+            for c in alphabet {
+                stack.push(format!("{s}{c}"));
+            }
+        }
+    }
+    for v in (0..=5000u64).chain([999, 1_000, 999_999, 1_000_000, u64::MAX]) {
+        assert_eq!(number(&grouped(v)), Some(v));
+    }
+    for bad in [
+        "1000",
+        "18446744073709551615",
+        "18,446,744,073,709,551,616",
+        "+0,230",
+        "458386",
+    ] {
+        assert_eq!(number(bad), None, "{bad:?}");
+    }
+}
+
+fn mutated_source(from: &str, to: &str) -> String {
+    let real = String::from_utf8(source()).unwrap();
+    let out = real.replacen(from, to, 1);
+    assert_ne!(out, real, "{to:?}");
+    out
+}
+
+#[test]
+fn same_value_ungrouped_spellings_of_every_real_numeral_are_refused() {
+    for (from, to) in [
+        (
+            "| Lifecycle event rows | 458,386 |",
+            "| Lifecycle event rows | 458386 |",
+        ),
+        ("103,261, of which", "103261, of which"),
+        ("of which 103,213 finished", "of which 103213 finished"),
+        (
+            "| `unit.ready.carried` events | 188,393 |",
+            "| `unit.ready.carried` events | 188393 |",
+        ),
+        (
+            "| `focused.check.receipt.carried` events | 134,616 |",
+            "| `focused.check.receipt.carried` events | 134616 |",
+        ),
+        ("| Plan revisions | 230 |", "| Plan revisions | +0,230 |"),
+    ] {
+        let mutated = mutated_source(from, to);
+        assert!(
+            RestatedMeasurements::from_source(mutated.as_bytes()).is_err(),
+            "{to:?}"
+        );
+    }
+}
+
+#[test]
+fn bare_numeric_components_are_a_named_refusal_not_a_fallback() {
+    // `37` replaces the registered `failed` suffix: a fallback slot would absorb it.
+    let mutated = mutated_source(
+        "42: 37 failed, 4 invalidated, 1 interrupted/running raw state",
+        "42: 37, 4 invalidated, 1 interrupted/running raw state",
+    );
+    let error = RestatedMeasurements::from_source(mutated.as_bytes()).unwrap_err();
+    assert_eq!(error.gap, NeutralInputGap::FactMismatch);
+    assert!(
+        error.to_string().contains("unregistered component"),
+        "{error}"
+    );
+}
+
+#[test]
+fn a_missing_component_is_a_named_gap_never_an_unwind() {
+    let mutated = mutated_source(
+        "42: 37 failed, 4 invalidated, 1 interrupted/running raw state",
+        "42: 37 failed, 4 invalidated",
+    );
+    let result = std::panic::catch_unwind(|| RestatedMeasurements::from_source(mutated.as_bytes()));
+    let error = result.expect("no unwind").unwrap_err();
+    assert!(error.to_string().contains("missing a component"), "{error}");
+}
+
+/// Regions for `mutated` where the table region grew by `delta` bytes, so the
+/// contrast region (which follows it) moved by the same amount; digests re-pinned
+/// consistently so only the structural guards can refuse.
+fn shifted_regions(mutated: &[u8], delta: i64) -> Vec<DerivationSource> {
+    let base = regions_of(&source());
+    repinned(mutated, base, &|r| {
+        r[1].length = (r[1].length as i64 + delta) as u64;
+        r[2].start = (r[2].start as i64 + delta) as u64;
+        r[0].length = mutated.len() as u64;
+    })
+}
+
+#[test]
+fn table_header_and_separator_shape_are_enforced_on_the_pinned_path() {
+    for (from, to) in [
+        (
+            "| Retained SUP20 measure | Observed value |",
+            "| Retained SUP20 measurX | Observed value |",
+        ),
+        ("| --- | ---: |", "| --- | ---: | --- |"),
+        ("| --- | ---: |", "| -- | --: |"),
+        ("| --- | ---: |", "| abc | def: |"),
+    ] {
+        let mutated = mutated_source(from, to);
+        let delta = to.len() as i64 - from.len() as i64;
+        let regions = shifted_regions(mutated.as_bytes(), delta);
+        assert!(
+            RestatedMeasurements::from_regions(mutated.as_bytes(), &regions).is_err(),
+            "pinned path accepted {to:?}"
+        );
+        assert!(
+            RestatedMeasurements::from_source(mutated.as_bytes()).is_err(),
+            "{to:?}"
+        );
+    }
+}
+
+#[test]
+fn a_contrast_paragraph_ending_at_end_of_source_is_accepted_without_unwinding() {
+    let real = String::from_utf8(source()).unwrap();
+    let unterminated = real.trim_end_matches('\n');
+    assert_ne!(unterminated.len(), real.len());
+    let result =
+        std::panic::catch_unwind(|| RestatedMeasurements::from_source(unterminated.as_bytes()));
+    let measured = result
+        .expect("no unwind")
+        .expect("end-of-source paragraph verifies");
+    assert!(RestatedMeasurements::from_regions(unterminated.as_bytes(), &measured.regions).is_ok());
+}

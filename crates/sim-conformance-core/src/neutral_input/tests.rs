@@ -516,7 +516,7 @@ fn contrast_sentences_are_bound_to_their_subject_and_population() {
 fn overflowing_source_rows_are_a_named_gap_not_a_panic() {
     let s = String::from_utf8(source()).unwrap().replace(
         "26 green, 1 interrupted, 253 pending",
-        "18446744073709551615 green, 1 interrupted, 0 pending",
+        "18,446,744,073,709,551,615 green, 1 interrupted, 0 pending",
     );
     let result = std::panic::catch_unwind(|| RestatedMeasurements::from_source(s.as_bytes()));
     assert_eq!(
