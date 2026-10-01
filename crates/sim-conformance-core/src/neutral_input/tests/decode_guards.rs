@@ -152,6 +152,9 @@ fn whitespace_and_edge_pipe_spellings_are_not_part_of_the_source_language() {
         ("| --- | ---: |", "|| --- | ---: ||"),
         ("| --- | ---: |", "--- | ---:"),
         ("| Plan revisions | 230 |", "|| Plan revisions | 230 ||"),
+        ("| Plan revisions | 230 |", "|Plan revisions | 230 |"),
+        ("| Plan revisions | 230 |", "| Plan revisions  | 230 |"),
+        ("| Plan revisions | 230 |", "| Plan revisions | 230  |"),
         (
             "| Retained SUP20 measure | Observed value |",
             "| Retained SUP20 measure | Observed value | ",
