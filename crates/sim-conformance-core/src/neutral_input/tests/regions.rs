@@ -269,3 +269,63 @@ fn an_identical_duplicate_component_is_refused() {
         NeutralInputGap::FactMismatch
     );
 }
+
+#[test]
+fn crlf_regions_never_end_between_cr_and_lf() {
+    let crlf = String::from_utf8(source()).unwrap().replace('\n', "\r\n");
+    let regions = RestatedMeasurements::from_source(crlf.as_bytes())
+        .unwrap()
+        .regions;
+    assert!(RestatedMeasurements::from_regions(crlf.as_bytes(), &regions).is_ok());
+    // Cutting the contrast paragraph between its last CR and LF (digest re-pinned).
+    let cut = repinned(crlf.as_bytes(), regions, &|r| r[2].length += 1);
+    let end = (cut[2].start + cut[2].length) as usize;
+    assert_eq!(&crlf.as_bytes()[end - 1..end + 1], b"\r\n");
+    assert_eq!(
+        RestatedMeasurements::from_regions(crlf.as_bytes(), &cut)
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+}
+
+#[test]
+fn malformed_numerals_and_bare_components_are_refused() {
+    let real = String::from_utf8(source()).unwrap();
+    for (from, to) in [
+        ("| Plan revisions | 230 |", "| Plan revisions | 2,,30 |"),
+        ("| Plan revisions | 230 |", "| Plan revisions | 2,30 |"),
+        ("| Plan revisions | 230 |", "| Plan revisions | ,230 |"),
+        ("| Plan revisions | 230 |", "| Plan revisions | 0230 |"),
+        (
+            "| Lifecycle event rows | 458,386 |",
+            "| Lifecycle event rows | 4,58,386 |",
+        ),
+        (
+            "| Lifecycle event rows | 458,386 |",
+            "| Lifecycle event rows | 458386, |",
+        ),
+        (
+            "26 green, 1 interrupted, 253 pending",
+            "26 green, 1 interrupted, 253 pending, 7",
+        ),
+        (
+            "26 green, 1 interrupted, 253 pending",
+            "26 green, 7, 1 interrupted, 253 pending",
+        ),
+        ("| Plan revisions | 230 |", "| Plan revisions | +230 |"),
+        (
+            "| Plan revisions | 230 |",
+            "| Plan revisions | 18446744073709551616 |",
+        ),
+    ] {
+        let mutated = real.replacen(from, to, 1);
+        assert_ne!(mutated, real, "{to:?}");
+        assert!(
+            RestatedMeasurements::from_source(mutated.as_bytes()).is_err(),
+            "{to:?}"
+        );
+    }
+    // Grouped thousands remain valid where the roadmap writes them.
+    assert!(RestatedMeasurements::from_source(real.as_bytes()).is_ok());
+}

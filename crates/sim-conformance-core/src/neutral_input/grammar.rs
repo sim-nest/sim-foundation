@@ -16,9 +16,23 @@ pub(super) const CONTRAST_HEADING: &str =
     "E1 - semantic identity must be declared, and must be narrow";
 
 pub(super) fn number(text: &str) -> Option<u64> {
-    let digits: String = text.chars().filter(|c| *c != ',').collect();
-    (!digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()))
-        .then(|| digits.parse().ok())?
+    // Plain digits, or thousands groups of exactly three after a leading group of
+    // one to three digits (`458,386`). No leading zeros, signs or stray commas.
+    let grouped = text.contains(',');
+    let valid = if grouped {
+        let mut groups = text.split(',');
+        let first = groups.next().unwrap_or("");
+        (1..=3).contains(&first.len())
+            && first.bytes().all(|b| b.is_ascii_digit())
+            && groups.all(|g| g.len() == 3 && g.bytes().all(|b| b.is_ascii_digit()))
+    } else {
+        !text.is_empty() && text.bytes().all(|b| b.is_ascii_digit())
+    };
+    let leading_zero = text.len() > 1 && text.starts_with('0');
+    if !valid || leading_zero {
+        return None;
+    }
+    text.replace(',', "").parse().ok()
 }
 
 /// The registered data-row labels of the retained-measurement table, each of

@@ -97,7 +97,7 @@ impl RestatedMeasurements {
             let bytes = text.as_bytes();
             let end_aligned = end == text.len()
                 || bytes[end - 1] == b'\n'
-                || bytes[end] == b'\n'
+                || (bytes[end] == b'\n' && bytes[end - 1] != b'\r')
                 || bytes[end..].starts_with(b"\r\n");
             if !end_aligned {
                 return Err(bad("region does not end at a line boundary"));
