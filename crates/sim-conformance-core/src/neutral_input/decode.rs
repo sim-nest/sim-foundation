@@ -187,7 +187,7 @@ impl NeutralQualificationInput {
     ///
     /// # Errors
     /// Returns an oversize gap.
-    pub fn check_encoded_size(encoded_len: usize) -> Result<()> {
+    pub(super) fn check_encoded_size(encoded_len: usize) -> Result<()> {
         if encoded_len > MAX_NEUTRAL_INPUT_BYTES {
             return Err(NeutralInputError::new(
                 NeutralInputGap::Oversize,

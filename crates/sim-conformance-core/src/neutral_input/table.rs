@@ -282,33 +282,43 @@ fn unique(text: &str, needle: &str) -> Result<usize> {
 fn contrast_sentences(text: &str) -> Result<(u64, u64, u64)> {
     let flat = text.split_whitespace().collect::<Vec<_>>().join(" ");
     let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
+    // Whole sentences only: split at sentence ends, so an embedded or negated
+    // clause ("It is false that A control-only ...") is never a candidate.
+    let sentences: Vec<String> = flat
+        .split(". ")
+        .map(|s| {
+            if s.ends_with('.') {
+                s.to_owned()
+            } else {
+                format!("{s}.")
+            }
+        })
+        .collect();
     let control_lead = "A control-only repair retained ";
     let control_tail = " proof receipts.";
-    let at = unique_sentence(&flat, control_lead)?;
-    let rest = &flat[at + control_lead.len()..];
-    let end = rest
-        .find(control_tail)
+    let mut controls = sentences.iter().filter(|s| s.starts_with(control_lead));
+    let (Some(control_sentence), None) = (controls.next(), controls.next()) else {
+        return Err(bad("control-only sentence absent or repeated"));
+    };
+    let statement = control_sentence[control_lead.len()..]
+        .strip_suffix(control_tail)
         .ok_or_else(|| bad("control-only sentence malformed"))?;
-    let (retained, denominator) = rest[..end]
+    let (retained, denominator) = statement
         .split_once(" of ")
         .ok_or_else(|| bad("control-only sentence malformed"))?;
     let control = number(retained).ok_or_else(|| bad("control-only numerator malformed"))?;
     let control_denominator =
         number(denominator).ok_or_else(|| bad("control-only denominator malformed"))?;
     let heads_sentence = "A change to three public heads and their pins retained only one.";
-    unique_sentence(&flat, heads_sentence)?;
-    Ok((control, control_denominator, 1))
-}
-
-fn unique_sentence(flat: &str, needle: &str) -> Result<usize> {
-    let mut found = flat.match_indices(needle).map(|(i, _)| i);
-    match (found.next(), found.next()) {
-        (Some(i), None) => Ok(i),
-        _ => Err(NeutralInputError::new(
-            NeutralInputGap::FactMismatch,
-            "contrast sentence absent or repeated",
-        )),
+    if sentences
+        .iter()
+        .filter(|s| s.as_str() == heads_sentence)
+        .count()
+        != 1
+    {
+        return Err(bad("public-head sentence absent or repeated"));
     }
+    Ok((control, control_denominator, 1))
 }
 
 impl NeutralQualificationInput {
@@ -428,23 +438,52 @@ impl NeutralQualificationInput {
     }
 }
 
+/// The general expression codec, supplied by the caller. This crate stays pure
+/// and codec-free: admission needs only the two directions, and refuses any
+/// stored form that is not exactly the codec's canonical encoding.
+pub trait SlotCodec {
+    /// Decodes stored bytes to a datum.
+    ///
+    /// # Errors
+    /// Returns a diagnostic if the bytes are not a valid encoding.
+    fn decode(&self, bytes: &[u8]) -> core::result::Result<Datum, String>;
+    /// Encodes a datum to its canonical stored form.
+    ///
+    /// # Errors
+    /// Returns a diagnostic if the datum cannot be encoded.
+    fn encode(&self, datum: &Datum) -> core::result::Result<Vec<u8>, String>;
+}
+
 impl NeutralQualificationInput {
-    /// The one admission entry point. It refuses an encoded form over 64 KiB,
-    /// strictly decodes the datum (which also bounds its canonical size), and
-    /// verifies the input against the exact selected source and the trusted
-    /// commission. `encoded_len` is the byte length of the slot exactly as read
-    /// from storage.
+    /// The one admission entry point. It receives the exact stored bytes: it
+    /// refuses a stored form over 64 KiB before decoding, decodes through the
+    /// supplied codec, requires the bytes to equal the codec's canonical
+    /// re-encoding of what they decode to, strictly decodes the Shape (which
+    /// also bounds the canonical datum size), and verifies the input against the
+    /// exact selected source and the trusted commission.
     ///
     /// # Errors
     /// Returns the first named gap.
     pub fn admit(
-        datum: &Datum,
-        encoded_len: usize,
+        stored: &[u8],
+        codec: &dyn SlotCodec,
         source: &[u8],
         commission: &TrustedCommission,
     ) -> Result<Self> {
-        Self::check_encoded_size(encoded_len)?;
-        let input = Self::from_datum(datum)?;
+        Self::check_encoded_size(stored.len())?;
+        let datum = codec
+            .decode(stored)
+            .map_err(|e| NeutralInputError::new(NeutralInputGap::Malformed, e))?;
+        let canonical = codec
+            .encode(&datum)
+            .map_err(|e| NeutralInputError::new(NeutralInputGap::Malformed, e))?;
+        if canonical != stored {
+            return Err(NeutralInputError::new(
+                NeutralInputGap::Malformed,
+                "stored bytes are not the codec's canonical encoding",
+            ));
+        }
+        let input = Self::from_datum(&datum)?;
         input.verify_restated_measurements(source, commission)?;
         Ok(input)
     }

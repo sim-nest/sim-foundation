@@ -420,23 +420,6 @@ fn content_ids_must_use_the_registered_algorithm() {
 }
 
 #[test]
-fn oversize_is_refused_by_decode_and_by_admission() {
-    let d = authored().to_datum().unwrap();
-    let huge = edit(&d, &["derivation", "producer"], &|_| {
-        sym_datum("authoring", &"a".repeat(70_000))
-    });
-    assert_eq!(
-        gap(NeutralQualificationInput::from_datum(&huge)),
-        NeutralInputGap::Oversize
-    );
-    let ok = NeutralQualificationInput::admit(&d, 4_000, &source(), &commission());
-    assert!(ok.is_ok());
-    let over =
-        NeutralQualificationInput::admit(&d, MAX_NEUTRAL_INPUT_BYTES + 1, &source(), &commission());
-    assert_eq!(over.unwrap_err().gap, NeutralInputGap::Oversize);
-}
-
-#[test]
 fn admission_binds_the_trusted_commission_procedure_and_precision() {
     let good = authored();
     let mut other = commission();
@@ -553,3 +536,5 @@ fn previous_fixed_point_is_its_own_all_green_population() {
         NeutralInputGap::Arithmetic
     );
 }
+
+mod admission;

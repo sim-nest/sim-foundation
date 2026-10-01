@@ -24,7 +24,7 @@
 //! | `control-only-repair` | proof receipts retained after a control-only repair, of all proof leaves |
 //! | `public-head-and-pin-change` | proof receipts retained after a change to public heads and pins, of all proof leaves |
 //! | `last-raw-epoch` | receipts reused in the last raw epoch, of that epoch's frontier leaves |
-//! | `previous-fixed-point` | green leaves at the previous fixed point, of all proof leaves |
+//! | `previous-fixed-point` | green leaves at the previous fixed point, of that fixed point's own all-green leaf population (`retained == denominator`) |
 
 mod decode;
 mod encode;
@@ -34,7 +34,7 @@ mod types;
 #[cfg(test)]
 mod tests;
 
-pub use table::{RestatedMeasurements, source_byte_identity};
+pub use table::{RestatedMeasurements, SlotCodec, source_byte_identity};
 pub use types::*;
 
 /// Exact version carried by every input of this Shape.
