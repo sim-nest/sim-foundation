@@ -28,6 +28,7 @@
 
 mod decode;
 mod encode;
+mod markdown;
 mod table;
 mod types;
 

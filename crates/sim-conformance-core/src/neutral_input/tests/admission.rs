@@ -241,3 +241,122 @@ fn the_real_section_structure_wraps_lines_and_may_continue_after_the_two_sentenc
         derived.facts
     );
 }
+
+const HEADING: &str = "### E1 - semantic identity must be declared, and must be narrow";
+const REAL: &str = "A control-only repair retained 213 of 280 proof receipts. A change to three\npublic heads and their pins retained only one. Cache identity was too broad and\nproof invalidation had no single accountable projection. Every conclusion must\nname the exact semantic facts on which it depends and explain every reuse and\ninvalidation.\n";
+const CLAIMS: &str = "A control-only repair retained 213 of 280 proof receipts. A change to three public heads and their pins retained only one.";
+
+fn without_real_section() -> String {
+    String::from_utf8(source())
+        .unwrap()
+        .replace(&format!("{HEADING}\n\n{REAL}"), "")
+}
+
+#[test]
+fn contextual_e1_look_alikes_are_never_the_section() {
+    let base = without_real_section();
+    assert_ne!(base, String::from_utf8(source()).unwrap());
+    for wrapper in [
+        format!("```text\n{HEADING}\n\n{CLAIMS}\n```\n"),
+        format!("~~~\n{HEADING}\n\n{CLAIMS}\n~~~\n"),
+        format!("<!--\n{HEADING}\n\n{CLAIMS}\n-->\n"),
+        format!("<script type=\"text/plain\">\n{HEADING}\n\n{CLAIMS}\n</script>\n"),
+        format!("    {HEADING}\n\n    {CLAIMS}\n"),
+    ] {
+        let source = format!("{base}\n{wrapper}");
+        assert_eq!(
+            RestatedMeasurements::from_source(source.as_bytes())
+                .unwrap_err()
+                .gap,
+            NeutralInputGap::FactMismatch,
+            "{wrapper:?}"
+        );
+    }
+    let front = format!("---\n{HEADING}\n\n{CLAIMS}\n---\n{base}");
+    assert_eq!(
+        RestatedMeasurements::from_source(front.as_bytes())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::FactMismatch
+    );
+}
+
+#[test]
+fn setext_and_table_interruptions_are_refused() {
+    for tail in ["---\n", "===\n", " |\n:--- |\n"] {
+        let section = format!(
+            "{CLAIMS}{}\n{tail}",
+            if tail.starts_with(' ') { " |" } else { "" }
+        )
+        .replace(" |\n |\n", " |\n");
+        let source = with_section(&section);
+        assert_eq!(
+            RestatedMeasurements::from_source(source.as_bytes())
+                .unwrap_err()
+                .gap,
+            NeutralInputGap::FactMismatch,
+            "{tail:?}"
+        );
+    }
+}
+
+#[test]
+fn unrelated_contexts_do_not_disturb_the_real_section() {
+    let real = String::from_utf8(source()).unwrap();
+    let expected = RestatedMeasurements::from_source(real.as_bytes())
+        .unwrap()
+        .facts;
+    for extra in [
+        format!("\n```text\n{HEADING}\n```\n"),
+        format!("\n<!--\n{HEADING}\n-->\n"),
+        format!("\n~~~\n{HEADING}\n~~~\n"),
+        format!("\n    {HEADING}\n"),
+    ] {
+        let source = format!("{real}{extra}");
+        assert_eq!(
+            RestatedMeasurements::from_source(source.as_bytes())
+                .unwrap()
+                .facts,
+            expected,
+            "{extra:?}"
+        );
+    }
+    let front = format!("---\ntitle: x\n{HEADING}\n---\n{real}");
+    assert_eq!(
+        RestatedMeasurements::from_source(front.as_bytes())
+            .unwrap()
+            .facts,
+        expected
+    );
+    // Valid Markdown variants of the real section still parse: indentation up to
+    // three spaces and a decorated ATX heading.
+    for (from, to) in [
+        (HEADING.to_owned(), format!("   {HEADING} ###")),
+        ("A control-only".to_owned(), "   A control-only".to_owned()),
+    ] {
+        let variant = real.replacen(&from, &to, 1);
+        assert_ne!(variant, real);
+        assert_eq!(
+            RestatedMeasurements::from_source(variant.as_bytes())
+                .unwrap()
+                .facts,
+            expected,
+            "{to:?}"
+        );
+    }
+}
+
+#[test]
+fn a_table_header_inside_a_fence_is_not_the_table() {
+    let real = String::from_utf8(source()).unwrap();
+    let fenced = real.replace(
+        "| Retained SUP20 measure | Observed value |",
+        "```\n| Retained SUP20 measure | Observed value |",
+    );
+    assert_eq!(
+        RestatedMeasurements::from_source(fenced.as_bytes())
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::SourceMismatch
+    );
+}

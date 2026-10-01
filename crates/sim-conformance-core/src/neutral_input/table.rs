@@ -7,6 +7,7 @@ use sim_kernel::{ContentId, Datum, Symbol};
 
 use super::MS_PER_HOUR;
 use super::decode::*;
+use super::markdown;
 use super::types::*;
 
 /// Exact-byte identity of a source: tagged `source-deck/bytes-v1` datum over the
@@ -54,7 +55,18 @@ impl RestatedMeasurements {
         let text = core::str::from_utf8(source).map_err(|_| {
             NeutralInputError::new(NeutralInputGap::SourceMismatch, "source is not UTF-8")
         })?;
-        let start = unique(text, TABLE_HEADER)?;
+        let lines = markdown::scan(text);
+        let headers: Vec<&markdown::Line<'_>> = lines
+            .iter()
+            .filter(|l| l.prose && l.text.trim_end() == TABLE_HEADER)
+            .collect();
+        let [header] = headers.as_slice() else {
+            return Err(NeutralInputError::new(
+                NeutralInputGap::SourceMismatch,
+                "retained-measurement table not found exactly once",
+            ));
+        };
+        let start = header.start;
         let rest = &text[start..];
         let mut end = rest.len();
         let mut offset = 0;
@@ -265,19 +277,8 @@ fn number_datum(value: u64) -> Datum {
     })
 }
 
-fn unique(text: &str, needle: &str) -> Result<usize> {
-    let mut found = text.match_indices(needle).map(|(i, _)| i);
-    match (found.next(), found.next()) {
-        (Some(i), None) => Ok(i),
-        _ => Err(NeutralInputError::new(
-            NeutralInputGap::SourceMismatch,
-            "retained-measurement table not found exactly once",
-        )),
-    }
-}
-
 /// The roadmap section that states the two contrast sentences.
-const CONTRAST_HEADING: &str = "### E1 - semantic identity must be declared, and must be narrow";
+const CONTRAST_HEADING: &str = "E1 - semantic identity must be declared, and must be narrow";
 
 /// Parses the two contrast statements from the E1 section's first ordinary
 /// prose paragraph. Block structure is preserved: the heading must appear
@@ -288,35 +289,37 @@ const CONTRAST_HEADING: &str = "### E1 - semantic identity must be declared, and
 /// denominator, and the public-head retention.
 fn contrast_sentences(text: &str) -> Result<(u64, u64, u64)> {
     let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
-    let lines: Vec<&str> = text.lines().collect();
-    let mut headings = lines
-        .iter()
-        .enumerate()
-        .filter(|(_, line)| line.trim_end() == CONTRAST_HEADING)
-        .map(|(i, _)| i);
-    let (Some(at), None) = (headings.next(), headings.next()) else {
+    let lines = markdown::scan(text);
+    let mut headings = lines.iter().enumerate().filter(|(_, l)| {
+        l.prose
+            && markdown::atx_heading(l.text)
+                .is_some_and(|(level, content)| level == 3 && content == CONTRAST_HEADING)
+    });
+    let (Some((at, _)), None) = (headings.next(), headings.next()) else {
         return Err(bad("contrast section heading absent or repeated"));
     };
-    let mut rest = lines[at + 1..].iter().skip_while(|l| l.trim().is_empty());
-    let first = *rest
+    let mut rest = lines[at + 1..]
+        .iter()
+        .skip_while(|l| l.text.trim().is_empty());
+    let first = rest
         .next()
         .ok_or_else(|| bad("contrast section is empty"))?;
-    let plain = !(first.starts_with("```")
-        || first.starts_with("~~~")
-        || first.starts_with('>')
-        || first.starts_with('#')
-        || first.starts_with('|')
-        || first.starts_with(' ')
-        || first.starts_with('\t')
-        || first.starts_with("- ")
-        || first.starts_with("* ")
-        || first.starts_with("+ ")
-        || first.chars().next().is_some_and(|c| c.is_ascii_digit()));
-    if !plain {
+    if !first.prose || markdown::starts_other_block(first.text) {
         return Err(bad("contrast paragraph is not plain prose"));
     }
-    let mut paragraph = vec![first];
-    paragraph.extend(rest.take_while(|l| !l.trim().is_empty()));
+    let mut paragraph = vec![first.text];
+    for l in rest {
+        if l.text.trim().is_empty() {
+            break;
+        }
+        if !l.prose || markdown::starts_other_block(l.text) {
+            return Err(bad("contrast paragraph is interrupted by another block"));
+        }
+        paragraph.push(l.text);
+    }
+    if paragraph.iter().any(|l| l.contains('|')) {
+        return Err(bad("contrast paragraph contains table syntax"));
+    }
     let flat = paragraph
         .iter()
         .flat_map(|l| l.split_whitespace())
