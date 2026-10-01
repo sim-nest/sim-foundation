@@ -136,7 +136,7 @@ impl RestatedMeasurements {
         let row = |label: &str| -> Result<&str> {
             let mut found = None;
             for line in table.lines() {
-                let cells: Vec<&str> = line.trim_matches('|').split('|').map(str::trim).collect();
+                let cells = super::grammar::cells(line).unwrap_or_default();
                 if cells.len() == 2 && cells[0] == label {
                     if found.is_some() {
                         return Err(NeutralInputError::new(

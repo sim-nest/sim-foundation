@@ -440,7 +440,7 @@ fn a_missing_component_is_a_named_gap_never_an_unwind() {
 /// Regions for `mutated` where the table region grew by `delta` bytes, so the
 /// contrast region (which follows it) moved by the same amount; digests re-pinned
 /// consistently so only the structural guards can refuse.
-fn shifted_regions(mutated: &[u8], delta: i64) -> Vec<DerivationSource> {
+pub(super) fn shifted_regions(mutated: &[u8], delta: i64) -> Vec<DerivationSource> {
     let base = regions_of(&source());
     repinned(mutated, base, &|r| {
         r[1].length = (r[1].length as i64 + delta) as u64;

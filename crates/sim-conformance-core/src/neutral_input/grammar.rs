@@ -40,6 +40,22 @@ pub(super) fn number(text: &str) -> Option<u64> {
     (grouped(value) == text).then_some(value)
 }
 
+/// Splits one table line into its cells under the exact byte grammar:
+/// exactly one leading and one trailing pipe, then cells separated by single
+/// pipes, each cell a non-empty value padded by exactly one space on each
+/// side. Nothing is trimmed: extra edge pipes, empty cells, missing or doubled
+/// padding all refuse.
+pub(super) fn cells(line: &str) -> Option<Vec<&str>> {
+    let inner = line.strip_prefix('|')?.strip_suffix('|')?;
+    inner
+        .split('|')
+        .map(|cell| {
+            let value = cell.strip_prefix(' ')?.strip_suffix(' ')?;
+            (!value.is_empty() && !value.starts_with(' ') && !value.ends_with(' ')).then_some(value)
+        })
+        .collect()
+}
+
 /// The registered data-row labels of the retained-measurement table, each of
 /// which must appear exactly once.
 pub(super) const TABLE_LABELS: [&str; 12] = [
@@ -63,40 +79,27 @@ pub(super) const TABLE_LABELS: [&str; 12] = [
 pub(super) fn check_table_grammar(table: &str) -> Result<()> {
     let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
     let mut lines = table.lines();
-    if lines.next().map(str::trim_end) != Some(TABLE_HEADER) {
+    if lines.next() != Some(TABLE_HEADER) {
         return Err(bad("table does not start with the exact header"));
     }
     let separator = lines
         .next()
         .ok_or_else(|| bad("table has no separator row"))?;
-    let cells: Vec<&str> = separator
-        .trim()
-        .trim_matches('|')
-        .split('|')
-        .map(str::trim)
-        .collect();
     let dashes = |c: &str| {
         let core = c.trim_start_matches(':').trim_end_matches(':');
         core.len() >= 3 && core.chars().all(|ch| ch == '-')
     };
-    if cells.len() != 2 || !cells.iter().all(|c| dashes(c)) {
-        return Err(bad("table separator row is malformed"));
+    match cells(separator) {
+        Some(cs) if cs.len() == 2 && cs.iter().all(|c| dashes(c)) => {}
+        _ => return Err(bad("table separator row is malformed")),
     }
     let mut seen: Vec<&str> = Vec::new();
     for line in lines {
-        let trimmed = line.trim_end();
-        if !(trimmed.starts_with('|') && trimmed.ends_with('|')) {
-            return Err(bad("table row is not a closed pipe row"));
-        }
-        let cells: Vec<&str> = trimmed
-            .trim_matches('|')
-            .split('|')
-            .map(str::trim)
-            .collect();
-        if cells.len() != 2 || !TABLE_LABELS.contains(&cells[0]) || seen.contains(&cells[0]) {
+        let cs = cells(line).ok_or_else(|| bad("table row is not an exact closed pipe row"))?;
+        if cs.len() != 2 || !TABLE_LABELS.contains(&cs[0]) || seen.contains(&cs[0]) {
             return Err(bad("table has an unregistered, malformed or repeated row"));
         }
-        seen.push(cells[0]);
+        seen.push(cs[0]);
     }
     if seen.len() != TABLE_LABELS.len() {
         return Err(bad("table is missing a registered row"));
@@ -119,8 +122,7 @@ pub(super) fn components(text: &str, suffixes: &[&str]) -> Result<Vec<u64>> {
         if values[index].is_some() {
             return Err(bad("row repeats a component"));
         }
-        values[index] =
-            Some(number(number_text.trim()).ok_or_else(|| bad("row component malformed"))?);
+        values[index] = Some(number(number_text).ok_or_else(|| bad("row component malformed"))?);
     }
     values
         .into_iter()
@@ -142,7 +144,7 @@ pub(super) fn locate(text: &str) -> Result<(core::ops::Range<usize>, core::ops::
     let lines = markdown::scan(text);
     let headers: Vec<&markdown::Line<'_>> = lines
         .iter()
-        .filter(|l| l.prose && l.text.trim_end() == TABLE_HEADER)
+        .filter(|l| l.prose && l.text == TABLE_HEADER)
         .collect();
     let [header] = headers.as_slice() else {
         return Err(NeutralInputError::new(

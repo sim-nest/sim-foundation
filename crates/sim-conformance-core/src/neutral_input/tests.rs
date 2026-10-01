@@ -543,4 +543,5 @@ fn previous_fixed_point_is_its_own_all_green_population() {
 }
 
 mod admission;
+mod decode_guards;
 mod regions;
