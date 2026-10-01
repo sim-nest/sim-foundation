@@ -7,6 +7,7 @@ use sim_kernel::{ContentId, Datum, Symbol};
 
 use super::MS_PER_HOUR;
 use super::decode::*;
+use super::grammar::*;
 use super::markdown;
 use super::types::*;
 
@@ -22,14 +23,6 @@ pub fn source_byte_identity(bytes: &[u8]) -> Result<ContentId> {
     }
     .content_id()
     .map_err(|e| NeutralInputError::new(NeutralInputGap::Identity, e.to_string()))
-}
-
-const TABLE_HEADER: &str = "| Retained SUP20 measure | Observed value |";
-
-fn number(text: &str) -> Option<u64> {
-    let digits: String = text.chars().filter(|c| *c != ',').collect();
-    (!digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()))
-        .then(|| digits.parse().ok())?
 }
 
 /// The facts and table region derived from the selected source, by this owner.
@@ -99,6 +92,16 @@ impl RestatedMeasurements {
             {
                 return Err(bad("region is out of bounds or not line aligned"));
             }
+            // The end must be the end of the source, just after a line ending, or
+            // just before one: ordinary source bytes on both sides are a mid-line cut.
+            let bytes = text.as_bytes();
+            let end_aligned = end == text.len()
+                || bytes[end - 1] == b'\n'
+                || bytes[end] == b'\n'
+                || bytes[end..].starts_with(b"\r\n");
+            if !end_aligned {
+                return Err(bad("region does not end at a line boundary"));
+            }
             Ok(start..end)
         };
         let table_range = range(table)?;
@@ -129,6 +132,7 @@ impl RestatedMeasurements {
     ) -> Result<Self> {
         use sha2::{Digest, Sha256};
         let table = &text[table_range.clone()];
+        check_table_grammar(table)?;
         let row = |label: &str| -> Result<&str> {
             let mut found = None;
             for line in table.lines() {
@@ -162,13 +166,16 @@ impl RestatedMeasurements {
         let revisions = number(row("Plan revisions")?).ok_or_else(|| bad("revisions"))?;
         let epochs_row = row("Closeout epochs")?;
         let (total, parts) = epochs_row.split_once(": ").ok_or_else(|| bad("epochs"))?;
-        let pick = |haystack: &str, word: &str| -> Option<u64> {
-            haystack
-                .split(", ")
-                .find_map(|p| p.strip_suffix(word).and_then(|n| number(n.trim())))
-        };
+        let epoch_parts = components(
+            parts,
+            &[" failed", " invalidated", " interrupted/running raw state"],
+        )?;
         let proof_row = row("Proof leaves in the terminal graph")?;
         let (ptotal, pparts) = proof_row.split_once(": ").ok_or_else(|| bad("proof"))?;
+        let proof_parts = components(
+            pparts,
+            &[" generate", " standalone", " workspace", " package"],
+        )?;
         let spans_row = row("Telemetry spans")?;
         let (stotal, sfin) = spans_row
             .split_once(", of which ")
@@ -195,9 +202,11 @@ impl RestatedMeasurements {
             ));
         }
         let frontier_row = row("Last raw epoch after revision")?;
-        let green = pick(frontier_row, " green").ok_or_else(|| bad("frontier"))?;
-        let interrupted = pick(frontier_row, " interrupted").ok_or_else(|| bad("frontier"))?;
-        let pending = pick(frontier_row, " pending").ok_or_else(|| bad("frontier"))?;
+        let [green, interrupted, pending] =
+            components(frontier_row, &[" green", " interrupted", " pending"])?[..]
+        else {
+            return Err(bad("frontier"));
+        };
         let previous = number(
             row("Previous fixed point before retirement")?
                 .strip_suffix(" green leaves")
@@ -225,22 +234,16 @@ impl RestatedMeasurements {
             materialized: number(mat).ok_or_else(|| bad("materialized"))?,
             revisions,
             epochs: EpochCounts {
-                failed: pick(parts, " failed").ok_or_else(|| bad("epochs"))?,
-                invalidated: pick(parts, " invalidated").ok_or_else(|| bad("epochs"))?,
-                interrupted_running: parts
-                    .split(", ")
-                    .find_map(|p| {
-                        p.strip_suffix(" interrupted/running raw state")
-                            .and_then(|n| number(n.trim()))
-                    })
-                    .ok_or_else(|| bad("epochs"))?,
+                failed: epoch_parts[0],
+                invalidated: epoch_parts[1],
+                interrupted_running: epoch_parts[2],
                 total: number(total).ok_or_else(|| bad("epochs total"))?,
             },
             proof_classes: ProofClassCounts {
-                generate: pick(pparts, " generate").ok_or_else(|| bad("proof"))?,
-                standalone: pick(pparts, " standalone").ok_or_else(|| bad("proof"))?,
-                workspace: pick(pparts, " workspace").ok_or_else(|| bad("proof"))?,
-                package: pick(pparts, " package").ok_or_else(|| bad("proof"))?,
+                generate: proof_parts[0],
+                standalone: proof_parts[1],
+                workspace: proof_parts[2],
+                package: proof_parts[3],
                 total: proof_total,
             },
             lifecycle_rows: number(row("Lifecycle event rows")?).ok_or_else(|| bad("lifecycle"))?,
@@ -346,113 +349,6 @@ fn number_datum(value: u64) -> Datum {
         domain: Symbol::qualified("qualification", "u64"),
         canonical: value.to_string(),
     })
-}
-
-/// The roadmap section that states the two contrast sentences.
-const CONTRAST_HEADING: &str = "E1 - semantic identity must be declared, and must be narrow";
-
-fn utf8(source: &[u8]) -> Result<&str> {
-    core::str::from_utf8(source)
-        .map_err(|_| NeutralInputError::new(NeutralInputGap::SourceMismatch, "source is not UTF-8"))
-}
-
-/// AUTHORING AID, not a trust boundary: finds the table block and the E1
-/// section's first plain-prose paragraph with the narrow block scanner, so an
-/// author can designate the two regions a receipt then pins by offset, length
-/// and digest. Verification (`from_regions`) never calls this.
-fn locate(text: &str) -> Result<(core::ops::Range<usize>, core::ops::Range<usize>)> {
-    let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
-    let lines = markdown::scan(text);
-    let headers: Vec<&markdown::Line<'_>> = lines
-        .iter()
-        .filter(|l| l.prose && l.text.trim_end() == TABLE_HEADER)
-        .collect();
-    let [header] = headers.as_slice() else {
-        return Err(NeutralInputError::new(
-            NeutralInputGap::SourceMismatch,
-            "retained-measurement table not found exactly once",
-        ));
-    };
-    let rest = &text[header.start..];
-    let mut end = rest.len();
-    let mut offset = 0;
-    for line in rest.split_inclusive('\n') {
-        if !line.starts_with('|') {
-            end = offset;
-            break;
-        }
-        offset += line.len();
-    }
-    let table = header.start..header.start + end;
-    let mut headings = lines.iter().enumerate().filter(|(_, l)| {
-        l.prose
-            && markdown::atx_heading(l.text)
-                .is_some_and(|(level, content)| level == 3 && content == CONTRAST_HEADING)
-    });
-    let (Some((at, _)), None) = (headings.next(), headings.next()) else {
-        return Err(bad("contrast section heading absent or repeated"));
-    };
-    let mut rest = lines[at + 1..]
-        .iter()
-        .skip_while(|l| l.text.trim().is_empty());
-    let first = rest
-        .next()
-        .ok_or_else(|| bad("contrast section is empty"))?;
-    if !first.prose || markdown::starts_other_block(first.text) {
-        return Err(bad("contrast paragraph is not plain prose"));
-    }
-    let mut last = first;
-    for l in rest {
-        if l.text.trim().is_empty() {
-            break;
-        }
-        if !l.prose || markdown::starts_other_block(l.text) {
-            return Err(bad("contrast paragraph is interrupted by another block"));
-        }
-        last = l;
-    }
-    Ok((table, first.start..last.start + last.text.len()))
-}
-
-/// Parses the two contrast statements from the designated paragraph text.
-/// Returns the control-only repair numerator and its stated denominator, and
-/// the public-head retention.
-fn parse_contrast(paragraph: &str) -> Result<(u64, u64, u64)> {
-    let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
-    if paragraph.contains('|') {
-        return Err(bad("contrast paragraph contains table syntax"));
-    }
-    let flat = paragraph.split_whitespace().collect::<Vec<_>>().join(" ");
-    let sentences: Vec<String> = flat
-        .split(". ")
-        .map(|s| {
-            if s.ends_with('.') {
-                s.to_owned()
-            } else {
-                format!("{s}.")
-            }
-        })
-        .collect();
-    let control_lead = "A control-only repair retained ";
-    let control_tail = " proof receipts.";
-    let heads_sentence = "A change to three public heads and their pins retained only one.";
-    let [control_sentence, heads, ..] = sentences.as_slice() else {
-        return Err(bad("contrast paragraph lacks the two sentences"));
-    };
-    if heads != heads_sentence {
-        return Err(bad("public-head sentence is not the second sentence"));
-    }
-    let statement = control_sentence
-        .strip_prefix(control_lead)
-        .and_then(|rest| rest.strip_suffix(control_tail))
-        .ok_or_else(|| bad("control-only sentence is not the first sentence"))?;
-    let (retained, denominator) = statement
-        .split_once(" of ")
-        .ok_or_else(|| bad("control-only sentence malformed"))?;
-    let control = number(retained).ok_or_else(|| bad("control-only numerator malformed"))?;
-    let control_denominator =
-        number(denominator).ok_or_else(|| bad("control-only denominator malformed"))?;
-    Ok((control, control_denominator, 1))
 }
 
 impl NeutralQualificationInput {

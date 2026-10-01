@@ -43,6 +43,7 @@
 
 mod decode;
 mod encode;
+mod grammar;
 mod markdown;
 mod table;
 mod types;
