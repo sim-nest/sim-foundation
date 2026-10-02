@@ -332,3 +332,16 @@ fn reordered_contrast_entries_with_coherent_ids_are_refused_for_ordering() {
         "{error}"
     );
 }
+
+#[test]
+fn an_ordering_violation_in_only_the_last_pair_is_refused() {
+    let mut input = authored();
+    let n = input.facts.contrast_reuse.len();
+    input.facts.contrast_reuse.swap(n - 2, n - 1);
+    let datum = input.to_datum().unwrap();
+    let error = NeutralQualificationInput::from_datum(&datum).unwrap_err();
+    assert!(
+        error.to_string().contains("contrast-reuse is not ordered"),
+        "{error}"
+    );
+}
