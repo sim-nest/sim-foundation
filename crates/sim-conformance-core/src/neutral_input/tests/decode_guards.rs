@@ -319,3 +319,16 @@ fn duplicate_stored_fields_and_malformed_contrast_collections_are_refused() {
     assert!(NeutralQualificationInput::from_datum(&entries(&|v| v[1] = v[0].clone())).is_err());
     assert!(NeutralQualificationInput::from_datum(&entries(&|v| v.reverse())).is_err());
 }
+
+#[test]
+fn reordered_contrast_entries_with_coherent_ids_are_refused_for_ordering() {
+    // Recomputing the ids removes the id-mismatch refusal, leaving only the ordering guard.
+    let mut input = authored();
+    input.facts.contrast_reuse.reverse();
+    let datum = input.to_datum().unwrap();
+    let error = NeutralQualificationInput::from_datum(&datum).unwrap_err();
+    assert!(
+        error.to_string().contains("contrast-reuse is not ordered"),
+        "{error}"
+    );
+}
