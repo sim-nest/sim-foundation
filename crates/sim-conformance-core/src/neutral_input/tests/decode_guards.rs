@@ -30,7 +30,29 @@ fn source_entry(datum: &Datum, field: &str, value: Datum) -> Datum {
 }
 
 fn refused(datum: &Datum, message: &str) {
+    let gap = match message {
+        "revisions is not a u64" => NeutralInputGap::Malformed,
+        "revisions not canonical u64" => NeutralInputGap::Malformed,
+        "digest is not 32 bytes" => NeutralInputGap::Malformed,
+        "frontier total differs from proof-leaf total" => NeutralInputGap::Arithmetic,
+        "receipt facts reference is not the facts id" => NeutralInputGap::Identity,
+        "receipt and outer selected-source differ" => NeutralInputGap::Identity,
+        "unregistered basis" => NeutralInputGap::UnrecognizedTag,
+        "precision units or rounding unregistered" => NeutralInputGap::UnrecognizedTag,
+        "no-runtime-consumption is not a bool" => NeutralInputGap::Malformed,
+        "source digest algorithm" => NeutralInputGap::UnrecognizedTag,
+        "source role" => NeutralInputGap::UnrecognizedTag,
+        "source digest is not 32 bytes" => NeutralInputGap::Malformed,
+        "basis is not a symbol" => NeutralInputGap::Malformed,
+        "digest is not bytes" => NeutralInputGap::Malformed,
+        "source digest is not bytes" => NeutralInputGap::Malformed,
+        "contrast-reuse is not a vector" => NeutralInputGap::Malformed,
+        "source-digests is not a vector" => NeutralInputGap::Malformed,
+        "contrast-reuse is not ordered" => NeutralInputGap::Arithmetic,
+        other => panic!("no gap registered for {other:?}"),
+    };
     let error = NeutralQualificationInput::from_datum(datum).expect_err(message);
+    assert_eq!(error.gap, gap, "{message:?}: {error}");
     assert!(
         error.to_string().contains(message),
         "expected {message:?}, got {error}"

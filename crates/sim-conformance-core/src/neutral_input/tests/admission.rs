@@ -114,6 +114,8 @@ fn an_invalid_trusted_commission_is_refused_when_authoring_and_verifying() {
         Symbol::qualified("authoring", "PASS"),
         Symbol::qualified("foreign", "producer"),
         Symbol::qualified("authoring", "a".repeat(97).as_str()),
+        Symbol::qualified("authoring", "-review"),
+        Symbol::qualified("authoring", "a_b"),
     ] {
         for which in 0..3 {
             let mut c = commission();
@@ -164,6 +166,21 @@ fn previous_fixed_point_denominator_is_its_own_population_when_populations_diver
         .unwrap();
     assert_eq!((previous.retained, previous.denominator), (280, 280));
     assert_eq!(derived.facts.proof_classes.total, 281);
+    let all: Vec<(ReuseContrast, u64, u64)> = derived
+        .facts
+        .contrast_reuse
+        .iter()
+        .map(|r| (r.contrast, r.retained, r.denominator))
+        .collect();
+    assert_eq!(
+        all,
+        vec![
+            (ReuseContrast::ControlOnlyRepair, 213, 281),
+            (ReuseContrast::PublicHeadAndPinChange, 1, 281),
+            (ReuseContrast::LastRawEpoch, 2, 281),
+            (ReuseContrast::PreviousFixedPoint, 280, 280),
+        ]
+    );
 }
 
 pub(super) fn with_section(section: &str) -> String {

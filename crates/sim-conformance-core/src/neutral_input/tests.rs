@@ -543,6 +543,7 @@ fn previous_fixed_point_is_its_own_all_green_population() {
 }
 
 mod admission;
+mod classes;
 mod decode_guards;
 mod oracle_guards;
 mod regions;
