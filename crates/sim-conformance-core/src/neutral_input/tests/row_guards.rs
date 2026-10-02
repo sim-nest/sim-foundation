@@ -178,3 +178,74 @@ fn the_template_matcher_is_total_exact_and_never_defaults() {
     // The first slot is the longest canonical prefix: a following literal may open with a comma.
     assert_eq!(template("1,2", "{},{}"), Some(vec![1, 2]));
 }
+
+#[test]
+fn region_roles_and_the_whole_source_region_are_exact() {
+    let base = super::regions::regions_of_real();
+    let rebuild =
+        |f: &dyn Fn(&mut Vec<DerivationSource>)| super::regions::repinned_real(base.clone(), f);
+    let verify =
+        |regions: &Vec<DerivationSource>| RestatedMeasurements::from_regions(&source(), regions);
+    assert!(verify(&base).is_ok());
+    // Roles swapped: each region is otherwise coherent and consistently pinned.
+    assert!(
+        verify(&rebuild(&|r| {
+            let (a, b) = (r[1].role, r[2].role);
+            r[1].role = b;
+            r[2].role = a;
+        }))
+        .is_err()
+    );
+    // The whole-source region must start at zero and cover the whole source.
+    assert!(verify(&rebuild(&|r| r[0].start = 1)).is_err());
+    assert!(verify(&rebuild(&|r| r[0].length -= 1)).is_err());
+    // A region whose end overflows is refused for that reason.
+    let overflow = rebuild(&|r| {
+        r[1].start = u64::MAX - 1;
+        r[1].length = 8;
+    });
+    let error = verify(&overflow).unwrap_err();
+    assert!(error.to_string().contains("overflows"), "{error}");
+}
+
+#[test]
+fn counts_may_equal_their_bounds_but_never_exceed_them() {
+    let real = String::from_utf8(source()).unwrap();
+    let ok = |from: &str, to: &str| {
+        let m = real.replacen(from, to, 1);
+        assert_ne!(m, real);
+        NeutralQualificationInput::author_restated(m.as_bytes(), &commission())
+    };
+    assert!(ok("269 of 270", "270 of 270").is_ok());
+    assert!(ok("269 of 270", "271 of 270").is_err());
+    assert!(
+        ok(
+            "103,261, of which 103,213 finished",
+            "103,261, of which 103,261 finished"
+        )
+        .is_ok()
+    );
+    assert!(
+        ok(
+            "103,261, of which 103,213 finished",
+            "103,261, of which 103,262 finished"
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn frontier_overflow_is_a_named_arithmetic_gap() {
+    let real = String::from_utf8(source()).unwrap();
+    let m = real.replacen(
+        "26 green, 1 interrupted, 253 pending",
+        "18,446,744,073,709,551,615 green, 1 interrupted, 0 pending",
+        1,
+    );
+    let error = RestatedMeasurements::from_source(m.as_bytes()).unwrap_err();
+    assert_eq!(error.gap, NeutralInputGap::Arithmetic);
+    assert!(
+        error.to_string().contains("frontier total overflows"),
+        "{error}"
+    );
+}

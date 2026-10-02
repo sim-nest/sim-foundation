@@ -6,6 +6,9 @@
 use sim_kernel::{ContentId, Datum, Symbol};
 
 use super::MS_PER_HOUR;
+
+// Hundredths of an hour always convert to whole milliseconds (no remainder guard needed).
+const _: () = assert!(MS_PER_HOUR.is_multiple_of(100));
 use super::decode::*;
 use super::grammar::*;
 use super::markdown;
@@ -206,12 +209,6 @@ impl RestatedMeasurements {
         let ms_numer = hundredths
             .checked_mul(MS_PER_HOUR)
             .ok_or_else(|| bad("hours overflow"))?;
-        if ms_numer % 100 != 0 {
-            return Err(NeutralInputError::new(
-                NeutralInputGap::Arithmetic,
-                "hours do not convert to whole milliseconds",
-            ));
-        }
         let [ready_rows] = slots("`unit.ready.carried` events", "{}", 1)?[..] else {
             unreachable!("one slot")
         };

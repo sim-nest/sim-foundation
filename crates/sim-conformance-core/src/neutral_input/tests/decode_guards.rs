@@ -299,3 +299,23 @@ fn the_contrast_anchor_must_be_the_exact_e1_heading_and_the_size_limit_is_litera
         NeutralInputGap::Oversize
     );
 }
+
+#[test]
+fn duplicate_stored_fields_and_malformed_contrast_collections_are_refused() {
+    let base = authored().to_datum().unwrap();
+    // A duplicate field name in an in-memory node (canonical bytes would also refuse it).
+    let dup = add_field(&base, &["facts"], "revisions", number("u64", "230"));
+    assert!(NeutralQualificationInput::from_datum(&dup).is_err());
+    // Duplicated and reordered contrast entries.
+    let entries = |f: &dyn Fn(&mut Vec<Datum>)| {
+        edit(&base, &["facts", "contrast-reuse"], &|d| {
+            let Datum::Vector(mut items) = d else {
+                panic!("vector")
+            };
+            f(&mut items);
+            Datum::Vector(items)
+        })
+    };
+    assert!(NeutralQualificationInput::from_datum(&entries(&|v| v[1] = v[0].clone())).is_err());
+    assert!(NeutralQualificationInput::from_datum(&entries(&|v| v.reverse())).is_err());
+}

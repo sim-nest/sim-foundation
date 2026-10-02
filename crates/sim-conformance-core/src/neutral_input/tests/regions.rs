@@ -8,6 +8,17 @@ use sha2::Digest;
 use super::admission::HEADING;
 use super::*;
 
+pub(super) fn regions_of_real() -> Vec<DerivationSource> {
+    regions_of(&source())
+}
+
+pub(super) fn repinned_real(
+    regions: Vec<DerivationSource>,
+    f: &dyn Fn(&mut Vec<DerivationSource>),
+) -> Vec<DerivationSource> {
+    repinned(&source(), regions, f)
+}
+
 fn regions_of(source: &[u8]) -> Vec<DerivationSource> {
     RestatedMeasurements::from_source(source).unwrap().regions
 }
@@ -114,7 +125,7 @@ fn repinned(
 ) -> Vec<DerivationSource> {
     f(&mut regions);
     for r in &mut regions {
-        let end = (r.start + r.length) as usize;
+        let end = r.start.saturating_add(r.length) as usize;
         let start = (r.start as usize).min(source.len());
         r.digest = sha2::Sha256::digest(&source[start..end.min(source.len()).max(start)]).into();
     }
