@@ -76,7 +76,7 @@ fn differentiated() -> String {
         )
         .replace(
             "26 green, 1 interrupted, 253 pending",
-            "26 green, 2 interrupted, 252 pending",
+            "26 green, 3 interrupted, 251 pending",
         )
         .replace(
             "| Reused receipts in that last epoch | 2 |",
@@ -101,7 +101,7 @@ fn a_differentiated_fixture_exposes_every_wrong_semantic_slot_and_round_trips() 
     let fr = &f.last_frontier;
     assert_eq!(
         (fr.green, fr.interrupted, fr.pending, fr.total),
-        (26, 2, 252, 280)
+        (26, 3, 251, 280)
     );
     let reuse: Vec<(ReuseContrast, u64, u64)> = f
         .contrast_reuse
