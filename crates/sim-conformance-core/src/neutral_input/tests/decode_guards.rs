@@ -119,7 +119,12 @@ fn a_malformed_component_numeral_is_not_a_fallback_zero() {
     let mutated = real.replacen("26 green,", "x green,", 1);
     assert_ne!(mutated, real);
     let error = RestatedMeasurements::from_source(mutated.as_bytes()).unwrap_err();
-    assert!(error.to_string().contains("component malformed"), "{error}");
+    assert!(
+        error
+            .to_string()
+            .contains("row malformed: Last raw epoch after revision"),
+        "{error}"
+    );
 }
 
 #[test]
@@ -152,6 +157,9 @@ fn whitespace_and_edge_pipe_spellings_are_not_part_of_the_source_language() {
         ("| --- | ---: |", "|| --- | ---: ||"),
         ("| --- | ---: |", "--- | ---:"),
         ("| Plan revisions | 230 |", "|| Plan revisions | 230 ||"),
+        ("| Plan revisions | 230 |", " Plan revisions | 230 |"),
+        ("| Plan revisions | 230 |", "| Plan revisions | 230 "),
+        ("| Plan revisions | 230 |", "| Plan revisions | 230|"),
         ("| Plan revisions | 230 |", "|Plan revisions | 230 |"),
         ("| Plan revisions | 230 |", "| Plan revisions  | 230 |"),
         ("| Plan revisions | 230 |", "| Plan revisions | 230  |"),
@@ -174,4 +182,120 @@ fn whitespace_and_edge_pipe_spellings_are_not_part_of_the_source_language() {
             "pinned verification accepted {to:?}"
         );
     }
+}
+
+fn admit_datum(datum: &Datum, source_bytes: &[u8]) -> Result<NeutralQualificationInput> {
+    let stored = datum.canonical_bytes().unwrap();
+    let codec = super::admission::FakeCodec {
+        entries: vec![(stored.clone(), datum.clone())],
+    };
+    NeutralQualificationInput::admit(&stored, &codec, source_bytes, &commission())
+}
+
+fn bytes_as_numbers(bytes: &[u8]) -> Datum {
+    Datum::Vector(
+        bytes
+            .iter()
+            .map(|b| number("u64", &b.to_string()))
+            .collect(),
+    )
+}
+
+#[test]
+fn stored_value_kinds_are_exact_not_coerced() {
+    let base = authored().to_datum().unwrap();
+    let digest_bytes = [3u8; 32];
+    // A number-kind wrong value where a symbol is required, and the reverse.
+    refused(
+        &edit(&base, &["facts", "revisions"], &|_| {
+            Datum::Symbol(Symbol::qualified("qualification", "not-a-number"))
+        }),
+        "revisions is not a u64",
+    );
+    refused(
+        &edit(&base, &["derivation", "basis"], &|_| {
+            number("restated-measurements", "1")
+        }),
+        "basis is not a symbol",
+    );
+    // Digests are bytes, never a vector of byte-valued numbers.
+    refused(
+        &edit(&base, &["selected-source", "digest"], &|_| {
+            bytes_as_numbers(&digest_bytes)
+        }),
+        "digest is not bytes",
+    );
+    refused(
+        &source_entry(&base, "digest", bytes_as_numbers(&digest_bytes)),
+        "source digest is not bytes",
+    );
+    // Collections are vectors specifically.
+    let as_list = |d: Datum| match d {
+        Datum::Vector(items) => Datum::List(items),
+        other => other,
+    };
+    refused(
+        &edit(&base, &["facts", "contrast-reuse"], &|d| as_list(d)),
+        "contrast-reuse is not a vector",
+    );
+    refused(
+        &edit(&base, &["derivation", "source-digests"], &|d| as_list(d)),
+        "source-digests is not a vector",
+    );
+}
+
+#[test]
+fn each_precision_conjunct_is_independently_enforced() {
+    let base = authored().to_datum().unwrap();
+    refused(
+        &edit(&base, &["derivation", "precision", "source-unit"], &|_| {
+            Datum::Symbol(Symbol::qualified("unit", "second"))
+        }),
+        "precision units or rounding unregistered",
+    );
+    refused(
+        &edit(&base, &["derivation", "precision", "rounding"], &|_| {
+            Datum::Symbol(Symbol::qualified("qualification", "truncate"))
+        }),
+        "precision units or rounding unregistered",
+    );
+}
+
+#[test]
+fn admission_refuses_a_non_restated_basis_and_a_different_source() {
+    let mut input = authored();
+    input.derivation.basis = DerivationBasis::ReadOnlyAggregates;
+    let datum = input.to_datum().unwrap();
+    assert_eq!(
+        admit_datum(&datum, &source()).unwrap_err().gap,
+        NeutralInputGap::FactMismatch
+    );
+    // The exact canonical slot, admitted against a different source, is refused.
+    let good = authored().to_datum().unwrap();
+    assert!(admit_datum(&good, &source()).is_ok());
+    let other = String::from_utf8(source())
+        .unwrap()
+        .replace("| Plan revisions | 230 |", "| Plan revisions | 231 |");
+    assert!(admit_datum(&good, other.as_bytes()).is_err());
+}
+
+#[test]
+fn the_contrast_anchor_must_be_the_exact_e1_heading_and_the_size_limit_is_literal() {
+    let real = String::from_utf8(source()).unwrap();
+    let mutated = real.replacen(
+        "### E1 - semantic identity",
+        "### X1 - semantic identity",
+        1,
+    );
+    assert_ne!(mutated, real);
+    assert!(RestatedMeasurements::from_source(mutated.as_bytes()).is_err());
+    let regions = super::regions::shifted_regions(mutated.as_bytes(), 0);
+    assert!(RestatedMeasurements::from_regions(mutated.as_bytes(), &regions).is_err());
+    assert!(NeutralQualificationInput::check_encoded_size(65_536).is_ok());
+    assert_eq!(
+        NeutralQualificationInput::check_encoded_size(65_537)
+            .unwrap_err()
+            .gap,
+        NeutralInputGap::Oversize
+    );
 }

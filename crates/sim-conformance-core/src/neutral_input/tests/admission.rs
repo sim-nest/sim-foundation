@@ -7,8 +7,8 @@ use sim_kernel::{Datum, Symbol};
 
 use super::*;
 
-struct FakeCodec {
-    entries: Vec<(Vec<u8>, Datum)>,
+pub(super) struct FakeCodec {
+    pub(super) entries: Vec<(Vec<u8>, Datum)>,
 }
 
 impl SlotCodec for FakeCodec {

@@ -421,7 +421,7 @@ fn bare_numeric_components_are_a_named_refusal_not_a_fallback() {
     let error = RestatedMeasurements::from_source(mutated.as_bytes()).unwrap_err();
     assert_eq!(error.gap, NeutralInputGap::FactMismatch);
     assert!(
-        error.to_string().contains("unregistered component"),
+        error.to_string().contains("row malformed: Closeout epochs"),
         "{error}"
     );
 }
@@ -434,7 +434,10 @@ fn a_missing_component_is_a_named_gap_never_an_unwind() {
     );
     let result = std::panic::catch_unwind(|| RestatedMeasurements::from_source(mutated.as_bytes()));
     let error = result.expect("no unwind").unwrap_err();
-    assert!(error.to_string().contains("missing a component"), "{error}");
+    assert!(
+        error.to_string().contains("row malformed: Closeout epochs"),
+        "{error}"
+    );
 }
 
 /// Regions for `mutated` where the table region grew by `delta` bytes, so the

@@ -107,27 +107,46 @@ pub(super) fn check_table_grammar(table: &str) -> Result<()> {
     Ok(())
 }
 
-/// Parses a `", "`-separated list of `N<suffix>` components: every registered
-/// suffix exactly once, nothing unknown or repeated. Values come back in the
-/// order of `suffixes`.
-pub(super) fn components(text: &str, suffixes: &[&str]) -> Result<Vec<u64>> {
-    let bad = |what: &str| NeutralInputError::new(NeutralInputGap::FactMismatch, what.to_owned());
-    let mut values: Vec<Option<u64>> = vec![None; suffixes.len()];
-    for part in text.split(", ") {
-        let (index, number_text) = suffixes
-            .iter()
-            .enumerate()
-            .find_map(|(i, suffix)| part.strip_suffix(suffix).map(|n| (i, n)))
-            .ok_or_else(|| bad("row has an unregistered component"))?;
-        if values[index].is_some() {
-            return Err(bad("row repeats a component"));
-        }
-        values[index] = Some(number(number_text).ok_or_else(|| bad("row component malformed"))?);
+/// Matches `cell` against a template and returns its numeric slots in order.
+///
+/// The template is exact text with two placeholders: `{}` is a numeral
+/// (the longest canonical [`number`] prefix of the digit/comma run) and
+/// `{f2}` is exactly two ASCII digits. Literals match byte for byte; nothing is
+/// trimmed, searched or defaulted, and text after the template refuses. One
+/// function owns every row's shape, so a row cannot grow a private fallback.
+pub(super) fn template(cell: &str, template: &str) -> Option<Vec<u64>> {
+    let mut rest = cell;
+    let mut tail = template;
+    let mut values = Vec::new();
+    while let Some(open) = tail.find('{') {
+        rest = rest.strip_prefix(&tail[..open])?;
+        let close = tail[open..].find('}')? + open;
+        let (token_len, value) = match &tail[open + 1..close] {
+            "" => {
+                // The longest prefix of the digit/comma run that is a canonical numeral
+                // (a comma that opens the following literal is not part of it).
+                let run = rest
+                    .bytes()
+                    .take_while(|b| b.is_ascii_digit() || *b == b',')
+                    .count();
+                (1..=run)
+                    .rev()
+                    .find_map(|k| number(&rest[..k]).map(|v| (k, v)))?
+            }
+            "f2" => {
+                let token = rest.get(..2)?;
+                if !token.bytes().all(|b| b.is_ascii_digit()) {
+                    return None;
+                }
+                (2, token.parse().ok()?)
+            }
+            _ => return None,
+        };
+        values.push(value);
+        rest = &rest[token_len..];
+        tail = &tail[close + 1..];
     }
-    values
-        .into_iter()
-        .collect::<Option<Vec<u64>>>()
-        .ok_or_else(|| bad("row is missing a component"))
+    (rest == tail).then_some(values)
 }
 
 pub(super) fn utf8(source: &[u8]) -> Result<&str> {
@@ -212,8 +231,6 @@ pub(super) fn parse_contrast(paragraph: &str) -> Result<(u64, u64, u64)> {
             }
         })
         .collect();
-    let control_lead = "A control-only repair retained ";
-    let control_tail = " proof receipts.";
     let heads_sentence = "A change to three public heads and their pins retained only one.";
     let [control_sentence, heads, ..] = sentences.as_slice() else {
         return Err(bad("contrast paragraph lacks the two sentences"));
@@ -221,15 +238,12 @@ pub(super) fn parse_contrast(paragraph: &str) -> Result<(u64, u64, u64)> {
     if heads != heads_sentence {
         return Err(bad("public-head sentence is not the second sentence"));
     }
-    let statement = control_sentence
-        .strip_prefix(control_lead)
-        .and_then(|rest| rest.strip_suffix(control_tail))
-        .ok_or_else(|| bad("control-only sentence is not the first sentence"))?;
-    let (retained, denominator) = statement
-        .split_once(" of ")
-        .ok_or_else(|| bad("control-only sentence malformed"))?;
-    let control = number(retained).ok_or_else(|| bad("control-only numerator malformed"))?;
-    let control_denominator =
-        number(denominator).ok_or_else(|| bad("control-only denominator malformed"))?;
+    let [control, control_denominator] = template(
+        control_sentence,
+        "A control-only repair retained {} of {} proof receipts.",
+    )
+    .ok_or_else(|| bad("control-only sentence is not the first sentence"))?[..] else {
+        return Err(bad("control-only sentence malformed"));
+    };
     Ok((control, control_denominator, 1))
 }

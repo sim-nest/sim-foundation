@@ -160,37 +160,48 @@ impl RestatedMeasurements {
                 format!("row malformed: {what}"),
             )
         };
-        let (mat, sch) = row("Materialized schedule truth")?
-            .split_once(" of ")
-            .ok_or_else(|| bad("schedule"))?;
-        let revisions = number(row("Plan revisions")?).ok_or_else(|| bad("revisions"))?;
-        let epochs_row = row("Closeout epochs")?;
-        let (total, parts) = epochs_row.split_once(": ").ok_or_else(|| bad("epochs"))?;
-        let epoch_parts = components(
-            parts,
-            &[" failed", " invalidated", " interrupted/running raw state"],
-        )?;
-        let proof_row = row("Proof leaves in the terminal graph")?;
-        let (ptotal, pparts) = proof_row.split_once(": ").ok_or_else(|| bad("proof"))?;
-        let proof_parts = components(
-            pparts,
-            &[" generate", " standalone", " workspace", " package"],
-        )?;
-        let spans_row = row("Telemetry spans")?;
-        let (stotal, sfin) = spans_row
-            .split_once(", of which ")
-            .ok_or_else(|| bad("spans"))?;
-        let hours = row("Sum of overlapping span durations")?
-            .strip_suffix(" hours")
-            .ok_or_else(|| bad("hours"))?;
-        let (whole, frac) = hours.split_once('.').ok_or_else(|| bad("hours"))?;
-        if frac.len() != 2 {
-            return Err(bad("hours precision"));
-        }
-        let decimal_places = frac.len() as u64;
-        let hundredths = number(whole)
-            .and_then(|w| w.checked_mul(100))
-            .and_then(|w| w.checked_add(number(frac)?))
+        let slots = |label: &str, shape: &str, expected: usize| -> Result<Vec<u64>> {
+            template(row(label)?, shape)
+                .filter(|values| values.len() == expected)
+                .ok_or_else(|| bad(label))
+        };
+        let [materialized, scheduled] = slots("Materialized schedule truth", "{} of {}", 2)?[..]
+        else {
+            unreachable!("two slots")
+        };
+        let [revisions] = slots("Plan revisions", "{}", 1)?[..] else {
+            unreachable!("one slot")
+        };
+        let [epochs_total, failed, invalidated, interrupted_running] = slots(
+            "Closeout epochs",
+            "{}: {} failed, {} invalidated, {} interrupted/running raw state",
+            4,
+        )?[..] else {
+            unreachable!("four slots")
+        };
+        let [proof_total, generate, standalone, workspace, package] = slots(
+            "Proof leaves in the terminal graph",
+            "{}: {} generate, {} standalone, {} workspace, {} package",
+            5,
+        )?[..] else {
+            unreachable!("five slots")
+        };
+        let [lifecycle_rows] = slots("Lifecycle event rows", "{}", 1)?[..] else {
+            unreachable!("one slot")
+        };
+        let [spans_total, spans_finished] =
+            slots("Telemetry spans", "{}, of which {} finished", 2)?[..]
+        else {
+            unreachable!("two slots")
+        };
+        let [whole, frac] = slots("Sum of overlapping span durations", "{}.{f2} hours", 2)?[..]
+        else {
+            unreachable!("two slots")
+        };
+        let decimal_places = 2;
+        let hundredths = whole
+            .checked_mul(100)
+            .and_then(|w| w.checked_add(frac))
             .ok_or_else(|| bad("hours"))?;
         let ms_numer = hundredths
             .checked_mul(MS_PER_HOUR)
@@ -201,21 +212,29 @@ impl RestatedMeasurements {
                 "hours do not convert to whole milliseconds",
             ));
         }
-        let frontier_row = row("Last raw epoch after revision")?;
-        let [green, interrupted, pending] =
-            components(frontier_row, &[" green", " interrupted", " pending"])?[..]
-        else {
-            return Err(bad("frontier"));
+        let [ready_rows] = slots("`unit.ready.carried` events", "{}", 1)?[..] else {
+            unreachable!("one slot")
         };
-        let previous = number(
-            row("Previous fixed point before retirement")?
-                .strip_suffix(" green leaves")
-                .ok_or_else(|| bad("fixed point"))?,
-        )
-        .ok_or_else(|| bad("fixed point"))?;
-        let reused =
-            number(row("Reused receipts in that last epoch")?).ok_or_else(|| bad("reused"))?;
-        let proof_total = number(ptotal).ok_or_else(|| bad("proof total"))?;
+        let [receipt_rows] = slots("`focused.check.receipt.carried` events", "{}", 1)?[..] else {
+            unreachable!("one slot")
+        };
+        let [green, interrupted, pending] = slots(
+            "Last raw epoch after revision",
+            "{} green, {} interrupted, {} pending",
+            3,
+        )?[..] else {
+            unreachable!("three slots")
+        };
+        let [previous] = slots(
+            "Previous fixed point before retirement",
+            "{} green leaves",
+            1,
+        )?[..] else {
+            unreachable!("one slot")
+        };
+        let [reused] = slots("Reused receipts in that last epoch", "{}", 1)?[..] else {
+            unreachable!("one slot")
+        };
         let (control, control_denominator, heads) = parse_contrast(&text[paragraph_range.clone()])?;
         if control_denominator != proof_total {
             return Err(NeutralInputError::new(
@@ -230,33 +249,30 @@ impl RestatedMeasurements {
                 NeutralInputError::new(NeutralInputGap::Arithmetic, "frontier total overflows")
             })?;
         let facts = NeutralFacts {
-            scheduled: number(sch).ok_or_else(|| bad("scheduled"))?,
-            materialized: number(mat).ok_or_else(|| bad("materialized"))?,
+            scheduled,
+            materialized,
             revisions,
             epochs: EpochCounts {
-                failed: epoch_parts[0],
-                invalidated: epoch_parts[1],
-                interrupted_running: epoch_parts[2],
-                total: number(total).ok_or_else(|| bad("epochs total"))?,
+                failed,
+                invalidated,
+                interrupted_running,
+                total: epochs_total,
             },
             proof_classes: ProofClassCounts {
-                generate: proof_parts[0],
-                standalone: proof_parts[1],
-                workspace: proof_parts[2],
-                package: proof_parts[3],
+                generate,
+                standalone,
+                workspace,
+                package,
                 total: proof_total,
             },
-            lifecycle_rows: number(row("Lifecycle event rows")?).ok_or_else(|| bad("lifecycle"))?,
+            lifecycle_rows,
             spans: SpanCounts {
-                total: number(stotal).ok_or_else(|| bad("spans"))?,
-                finished: number(sfin.strip_suffix(" finished").ok_or_else(|| bad("spans"))?)
-                    .ok_or_else(|| bad("spans"))?,
+                total: spans_total,
+                finished: spans_finished,
             },
             overlapping_span_milliseconds: ms_numer / 100,
-            repeated_ready_rows: number(row("`unit.ready.carried` events")?)
-                .ok_or_else(|| bad("ready"))?,
-            repeated_receipt_rows: number(row("`focused.check.receipt.carried` events")?)
-                .ok_or_else(|| bad("receipt"))?,
+            repeated_ready_rows: ready_rows,
+            repeated_receipt_rows: receipt_rows,
             last_frontier: FrontierCounts {
                 green,
                 interrupted,
