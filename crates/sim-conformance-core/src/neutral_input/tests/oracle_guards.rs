@@ -158,3 +158,28 @@ fn authoring_names_of_exactly_ninety_six_characters_are_accepted() {
     };
     assert!(NeutralQualificationInput::author_restated(&source(), &too_long).is_err());
 }
+
+#[test]
+fn registered_shape_constants_are_pinned_to_independent_literals() {
+    assert_eq!(NEUTRAL_INPUT_VERSION, 1);
+    assert_eq!(MAX_NEUTRAL_INPUT_BYTES, 65_536);
+    let datum = authored().to_datum().unwrap();
+    let Datum::Node { tag, fields } = &datum else {
+        panic!("node")
+    };
+    // Independently spelled tag, namespace and stored version literal.
+    assert_eq!(*tag, Symbol::qualified("qualification", "neutral-input-v1"));
+    let version = fields.iter().find(|(n, _)| &*n.name == "version").unwrap();
+    assert_eq!(version.1, n(1));
+    // The stored version is exactly 1: 0 and 2 are both unsupported.
+    for stored in [0u64, 2] {
+        let mutated = edit(&datum, &["version"], &|_| n(stored));
+        assert_eq!(
+            NeutralQualificationInput::from_datum(&mutated)
+                .unwrap_err()
+                .gap,
+            NeutralInputGap::UnsupportedVersion,
+            "{stored}"
+        );
+    }
+}
