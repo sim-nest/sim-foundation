@@ -327,7 +327,11 @@ fn duplicate_stored_fields_and_malformed_contrast_collections_are_refused() {
     let base = authored().to_datum().unwrap();
     // A duplicate field name in an in-memory node (canonical bytes would also refuse it).
     let dup = add_field(&base, &["facts"], "revisions", number("u64", "230"));
-    assert!(NeutralQualificationInput::from_datum(&dup).is_err());
+    // Canonical bytes refuse a repeated field name before any field walk: a Malformed gap.
+    assert_eq!(
+        NeutralQualificationInput::from_datum(&dup).unwrap_err().gap,
+        NeutralInputGap::Malformed
+    );
     // Duplicated and reordered contrast entries.
     let entries = |f: &dyn Fn(&mut Vec<Datum>)| {
         edit(&base, &["facts", "contrast-reuse"], &|d| {

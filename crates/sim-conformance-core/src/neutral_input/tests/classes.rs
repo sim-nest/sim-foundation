@@ -65,8 +65,9 @@ fn region_roles_starts_lengths_and_digests_are_bound_to_their_own_bytes() {
 }
 
 fn differentiated() -> String {
-    // Unequal epoch-interrupted (2), frontier-interrupted (2 vs heads 1) and reused (3) values,
-    // arithmetic still conforming (43 = 37 + 4 + 2; 280 = 26 + 2 + 252).
+    // Pairwise-unequal epoch-interrupted (2), frontier-interrupted (3), public-head (1), reused (5)
+    // and decimal-places (2 is the only repeat, against epoch-interrupted: checked separately)
+    // values, arithmetic still conforming (43 = 37 + 4 + 2; 280 = 26 + 3 + 251).
     String::from_utf8(source())
         .unwrap()
         .replace(
@@ -79,7 +80,7 @@ fn differentiated() -> String {
         )
         .replace(
             "| Reused receipts in that last epoch | 2 |",
-            "| Reused receipts in that last epoch | 3 |",
+            "| Reused receipts in that last epoch | 5 |",
         )
 }
 
@@ -112,7 +113,7 @@ fn a_differentiated_fixture_exposes_every_wrong_semantic_slot_and_round_trips() 
         vec![
             (ReuseContrast::ControlOnlyRepair, 213, 280),
             (ReuseContrast::PublicHeadAndPinChange, 1, 280),
-            (ReuseContrast::LastRawEpoch, 3, 280),
+            (ReuseContrast::LastRawEpoch, 5, 280),
             (ReuseContrast::PreviousFixedPoint, 280, 280),
         ]
     );
