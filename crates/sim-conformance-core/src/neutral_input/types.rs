@@ -22,7 +22,7 @@ pub enum NeutralInputGap {
     ForbiddenText,
     /// The version is not exactly 1.
     UnsupportedVersion,
-    /// The encoded form exceeds [`MAX_NEUTRAL_INPUT_BYTES`].
+    /// The encoded form exceeds [`super::MAX_NEUTRAL_INPUT_BYTES`].
     Oversize,
     /// A stated bound or arithmetic identity fails.
     Arithmetic,
