@@ -14,7 +14,7 @@ policy = "descriptor"
 reason = "The recipe is a machine-indexed description of a pure bounded-work contract."
 
 [dependencies]
-sim-conformance-core = { version = "0.3.0", path = "../sim-conformance-core" }
+sim-conformance-core = { version = "0.3.1", path = "../sim-conformance-core" }
 sim-kernel = { version = "0.4.0" }
 
 [lints]
