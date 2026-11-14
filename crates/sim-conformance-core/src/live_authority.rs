@@ -15,8 +15,7 @@ use crate::{
     CheckInvocation, CheckerBinding, CheckerReceipt, CheckerResultId, CheckerRevocationDecision,
     CheckerRevocationHeadId, CheckerRevocationKey, CheckerRevocationKeyId,
     CheckerRevocationObservation, CheckerRevocationSelection, CheckerRevocationSet,
-    ConformanceError, EvidenceGrade, EvidenceProvenanceId, EvidenceSetId, PolicyId,
-    RevocationStatus,
+    ConformanceError, EvidenceGrade, EvidenceProvenanceId, PolicyId, RevocationStatus,
 };
 
 /// Failure while issuing or freshly observing a live checker receipt.
@@ -212,7 +211,8 @@ impl LiveCheckerIssuer {
         result: CheckerResultId,
         grade: EvidenceGrade,
         provenance: EvidenceProvenanceId,
-        support: EvidenceSetId,
+        support_bytes: &[u8],
+        support_datum: &Datum,
     ) -> Result<LiveCheckerReceipt, LiveCheckerError> {
         let strong = self.state.upgrade().ok_or(LiveCheckerError::Unavailable)?;
         let state = read(&strong)?;
@@ -233,7 +233,8 @@ impl LiveCheckerIssuer {
             grade,
             provenance,
             state.policy.clone(),
-            support,
+            support_bytes,
+            support_datum,
             &selection,
         )?;
         let issue_observation = selection.bind_receipt(receipt.id().clone());
@@ -433,8 +434,8 @@ mod tests {
     use super::*;
     use crate::{
         CheckArgument, CheckTemplate, CommandId, ConformancePackId, EnvironmentPolicyId,
-        EvidenceProvenanceId, EvidenceSetId, IdKind, OutputShapeId, OwnerBindingId, ProofCodeId,
-        SemanticId, WorkingDirectoryPolicyId,
+        EvidenceProvenanceId, IdKind, OutputShapeId, OwnerBindingId, ProofCodeId, SemanticId,
+        SupportGraph, SupportNode, WorkingDirectoryPolicyId,
     };
 
     fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
@@ -508,13 +509,20 @@ mod tests {
         let owner = Arc::new(owner);
         owner.mark_current(&invocation).unwrap();
         let authority = owner.authority();
+        let mut support = SupportGraph::default();
+        support
+            .add_support(SupportNode("binding".into()), SupportNode("command".into()))
+            .unwrap();
+        let support_datum = support.to_datum().unwrap();
+        let support_bytes = support_datum.canonical_bytes().unwrap();
         let receipt = issuer
             .issue(
                 invocation.clone(),
                 sid("result/test"),
                 EvidenceGrade::Bootstrap,
                 EvidenceProvenanceId::from_text("provenance/test").unwrap(),
-                EvidenceSetId::from_text("support/test").unwrap(),
+                &support_bytes,
+                &support_datum,
             )
             .unwrap();
         let (entered_tx, entered_rx) = mpsc::channel();

@@ -45,6 +45,12 @@ fn set(
     .unwrap()
 }
 
+fn admitted() -> (Vec<u8>, Datum, EvidenceSetId) {
+    let (bytes, datum) = super::admitted_support("command");
+    let id = SupportGraph::evidence_id(&bytes, &datum).unwrap();
+    (bytes, datum, id)
+}
+
 fn issue(
     binding: &CheckerBinding,
     invocation: &CheckInvocation,
@@ -52,6 +58,7 @@ fn issue(
 ) -> CheckerReceipt {
     let key = CheckerRevocationKey::for_invocation(binding.revocation_source().clone(), invocation)
         .unwrap();
+    let (bytes, datum, _) = admitted();
     CheckerReceipt::passing(
         binding,
         invocation,
@@ -59,7 +66,8 @@ fn issue(
         EvidenceGrade::Reproducible,
         sid("provenance/held-output"),
         sid("policy/v1"),
-        sid("support/exact"),
+        &bytes,
+        &datum,
         &selected.lookup(&key),
     )
     .unwrap()
@@ -92,6 +100,7 @@ fn missing_unknown_and_revoked_decisions_fail_closed() {
             .unwrap();
     let missing = set(&binding, "head/missing", vec![]);
     assert_eq!(missing.lookup(&key).status(), RevocationStatus::Unknown);
+    let (bytes, datum, _) = admitted();
     assert_eq!(
         CheckerReceipt::passing(
             &binding,
@@ -100,7 +109,8 @@ fn missing_unknown_and_revoked_decisions_fail_closed() {
             EvidenceGrade::Reproducible,
             sid("provenance/held-output"),
             sid("policy/v1"),
-            sid("support/exact"),
+            &bytes,
+            &datum,
             &missing.lookup(&key),
         ),
         Err(ConformanceError::RevocationUnknownOrActive)
@@ -114,6 +124,7 @@ fn missing_unknown_and_revoked_decisions_fail_closed() {
         "head/revoked",
         vec![(&invocation, RevocationStatus::Revoked)],
     );
+    let (bytes, datum, _) = admitted();
     assert_eq!(
         CheckerReceipt::passing(
             &binding,
@@ -122,7 +133,8 @@ fn missing_unknown_and_revoked_decisions_fail_closed() {
             EvidenceGrade::Reproducible,
             sid("provenance/held-output"),
             sid("policy/v1"),
-            sid("support/exact"),
+            &bytes,
+            &datum,
             &revoked.lookup(&key),
         ),
         Err(ConformanceError::RevocationUnknownOrActive)
@@ -142,7 +154,7 @@ fn wrong_source_and_stale_owner_selection_are_refused() {
     let result = sid("result/pass");
     let provenance = sid("provenance/held-output");
     let policy = sid("policy/v1");
-    let support = sid("support/exact");
+    let (bytes, datum, support) = admitted();
 
     let next = set(
         &binding,
@@ -182,7 +194,8 @@ fn wrong_source_and_stale_owner_selection_are_refused() {
             EvidenceGrade::Reproducible,
             provenance.clone(),
             policy.clone(),
-            support.clone(),
+            &bytes,
+            &datum,
             &wrong.lookup(&wrong_key),
         ),
         Err(ConformanceError::InvocationMismatch("revocation source"))
@@ -225,7 +238,7 @@ fn revocation_after_issue_invalidates_only_the_affected_receipt() {
     let result = sid("result/pass");
     let provenance = sid("provenance/held-output");
     let policy = sid("policy/v1");
-    let support = sid("support/exact");
+    let (_, _, support) = admitted();
     let expected = claim(&second, &result, &provenance, &policy, &support);
     let key_a =
         CheckerRevocationKey::for_invocation(binding.revocation_source().clone(), &invocation_a)
@@ -323,7 +336,7 @@ fn checker_code_substitution_cannot_reuse_an_old_receipt() {
     let result = sid("result/pass");
     let provenance = sid("provenance/held-output");
     let policy = sid("policy/v1");
-    let support = sid("support/exact");
+    let (_, _, support) = admitted();
     let substituted_key =
         CheckerRevocationKey::for_invocation(binding.revocation_source().clone(), &substituted)
             .unwrap();
@@ -361,8 +374,19 @@ fn exact_result_grade_provenance_policy_and_support_are_independent_claims() {
     let expected_result = sid("result/pass");
     let expected_provenance = sid("provenance/held-output");
     let expected_policy = sid("policy/v1");
-    let expected_support = sid("support/exact");
+    let (expected_bytes, expected_datum, expected_support) = admitted();
+    let (other_bytes, other_datum) = super::admitted_support("other-command");
     for changed in 0..5 {
+        let support_bytes = if changed == 4 {
+            &other_bytes
+        } else {
+            &expected_bytes
+        };
+        let support_datum = if changed == 4 {
+            &other_datum
+        } else {
+            &expected_datum
+        };
         let receipt = CheckerReceipt::passing(
             &binding,
             &invocation,
@@ -386,11 +410,8 @@ fn exact_result_grade_provenance_policy_and_support_are_independent_claims() {
             } else {
                 expected_policy.clone()
             },
-            if changed == 4 {
-                sid("support/substituted")
-            } else {
-                expected_support.clone()
-            },
+            support_bytes,
+            support_datum,
             &if changed == 3 {
                 let substituted_policy = CheckerRevocationSet::from_owner_snapshot(
                     binding.owner().clone(),
