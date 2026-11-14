@@ -12,7 +12,7 @@ use crate::{
     CheckerBindingId, CheckerReceiptId, CheckerResultId, CheckerRevocationKeyId,
     CheckerRevocationObservation, CheckerRevocationSelection, ConformanceError, ConformancePackId,
     EvidenceProvenanceId, EvidenceSetId, OwnerBindingId, PolicyId, ProofCodeId, RevocationSourceId,
-    RevocationStatus, SemanticId, field, text,
+    RevocationStatus, SemanticId, SupportGraph, field, text,
 };
 
 /// Strength of one immutable checker result.
@@ -58,6 +58,10 @@ pub struct CheckerReceipt {
 
 impl CheckerReceipt {
     /// Constructs and verifies a receipt against its exact invocation.
+    ///
+    /// The support graph is consumed from its canonical bytes before the receipt
+    /// id is hashed. A wrong evidence domain, a missing support field, a
+    /// non-string node, or a cycle refuses and leaves no receipt id.
     #[allow(clippy::too_many_arguments)]
     pub fn passing(
         binding: &CheckerBinding,
@@ -66,7 +70,8 @@ impl CheckerReceipt {
         grade: EvidenceGrade,
         provenance: EvidenceProvenanceId,
         policy: PolicyId,
-        support: EvidenceSetId,
+        support_bytes: &[u8],
+        support_datum: &Datum,
         revocation: &CheckerRevocationSelection,
     ) -> Result<Self, ConformanceError> {
         if revocation.status() != RevocationStatus::Current {
@@ -95,6 +100,7 @@ impl CheckerReceipt {
         if revocation.policy() != &policy {
             return Err(ConformanceError::InvocationMismatch("revocation policy"));
         }
+        let support = SupportGraph::evidence_id(support_bytes, support_datum)?;
         let id = SemanticId::from_fields(vec![
             field("binding", invocation.binding().to_datum())?,
             field("invocation", invocation.id().to_datum())?,

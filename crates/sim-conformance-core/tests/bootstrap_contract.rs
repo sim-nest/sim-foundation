@@ -17,6 +17,16 @@ fn sid<K: IdKind>(value: &str) -> SemanticId<K> {
     SemanticId::from_text(value).unwrap()
 }
 
+fn admitted_support(support: &str) -> (Vec<u8>, Datum) {
+    let mut graph = SupportGraph::default();
+    graph
+        .add_support(SupportNode("binding".into()), SupportNode(support.into()))
+        .unwrap();
+    let datum = graph.to_datum().unwrap();
+    let bytes = datum.canonical_bytes().unwrap();
+    (bytes, datum)
+}
+
 fn command(value: &str) -> OwnerCommand {
     OwnerCommand::new("repo".into(), vec![value.into()], "sealed".into()).unwrap()
 }
@@ -221,6 +231,7 @@ fn wrong_scope_substitution_and_unknown_revocation_fail_closed() {
         RevocationStatus::Current,
         "head/one",
     );
+    let (support_bytes, support_datum) = admitted_support("command");
     let receipt = CheckerReceipt::passing(
         &binding,
         &invocation_a,
@@ -228,7 +239,8 @@ fn wrong_scope_substitution_and_unknown_revocation_fail_closed() {
         EvidenceGrade::Bootstrap,
         sid("provenance/local"),
         sid("policy/v1"),
-        sid("support/empty"),
+        &support_bytes,
+        &support_datum,
         &selected,
     )
     .unwrap();
@@ -278,6 +290,155 @@ fn templates_and_support_graphs_reject_cycles_before_dispatch() {
         graph.validate(),
         Err(ConformanceError::SupportCycle(_))
     ));
+}
+
+#[test]
+fn serialized_support_keeps_its_domain_cycle_and_refusal() {
+    let (bytes, datum) = admitted_support("command");
+    let accepted = SupportGraph::consume(&bytes, &datum).unwrap();
+    assert_eq!(accepted, {
+        let mut graph = SupportGraph::default();
+        graph
+            .add_support(SupportNode("binding".into()), SupportNode("command".into()))
+            .unwrap();
+        graph
+    });
+    let support_id = SupportGraph::evidence_id(&bytes, &datum).unwrap();
+    assert_eq!(
+        EvidenceSetId::from_datum(&datum),
+        Err(ConformanceError::WrongIdentityDomain)
+    );
+
+    let binding = checker_binding(owner_binding().id().clone());
+    let invocation = binding
+        .instantiate(
+            sid("code/v1"),
+            sid("pack/demo"),
+            sid("subject/a"),
+            sid("scope/x"),
+            sid("closure/one"),
+        )
+        .unwrap();
+    let selected = revocation_selection(
+        &binding,
+        &invocation,
+        RevocationStatus::Current,
+        "head/support",
+    );
+    let receipt = CheckerReceipt::passing(
+        &binding,
+        &invocation,
+        sid("result/pass"),
+        EvidenceGrade::Bootstrap,
+        sid("provenance/local"),
+        sid("policy/v1"),
+        &bytes,
+        &datum,
+        &selected,
+    )
+    .unwrap();
+    assert_eq!(receipt.support(), &support_id);
+
+    let mut cyclic = SupportGraph::default();
+    cyclic
+        .add_support(SupportNode("binding".into()), SupportNode("command".into()))
+        .unwrap();
+    cyclic
+        .add_support(SupportNode("command".into()), SupportNode("receipt".into()))
+        .unwrap();
+    cyclic
+        .add_support(SupportNode("receipt".into()), SupportNode("binding".into()))
+        .unwrap();
+    let cyclic_datum = cyclic.to_datum().unwrap();
+    let cyclic_bytes = cyclic_datum.canonical_bytes().unwrap();
+    assert!(matches!(
+        CheckerReceipt::passing(
+            &binding,
+            &invocation,
+            sid("result/pass"),
+            EvidenceGrade::Bootstrap,
+            sid("provenance/local"),
+            sid("policy/v1"),
+            &cyclic_bytes,
+            &cyclic_datum,
+            &selected,
+        ),
+        Err(ConformanceError::SupportCycle(_))
+    ));
+
+    let wrong_domain = match datum.clone() {
+        Datum::Node { fields, .. } => Datum::Node {
+            tag: Symbol::qualified("conformance", "storage-id-v1"),
+            fields,
+        },
+        other => other,
+    };
+    let wrong_bytes = wrong_domain.canonical_bytes().unwrap();
+    assert_eq!(
+        SupportGraph::consume(&wrong_bytes, &wrong_domain),
+        Err(ConformanceError::WrongIdentityDomain)
+    );
+
+    let numbered = Datum::Node {
+        tag: Symbol::qualified("conformance", "evidence-support-graph-v1"),
+        fields: vec![
+            (
+                Symbol::qualified("conformance", "edges"),
+                Datum::Vector(vec![Datum::Node {
+                    tag: Symbol::qualified("conformance", "evidence-support-edge-v1"),
+                    fields: vec![
+                        (
+                            Symbol::qualified("conformance", "subject"),
+                            Datum::Number(NumberLiteral {
+                                domain: Symbol::qualified("numbers", "u64"),
+                                canonical: "0".into(),
+                            }),
+                        ),
+                        (
+                            Symbol::qualified("conformance", "support"),
+                            Datum::String("command".into()),
+                        ),
+                    ],
+                }]),
+            ),
+            (
+                Symbol::qualified("conformance", "nodes"),
+                Datum::Vector(vec![
+                    Datum::String("command".into()),
+                    Datum::String("0".into()),
+                ]),
+            ),
+        ],
+    };
+    let numbered_bytes = numbered.canonical_bytes().unwrap();
+    assert_eq!(
+        SupportGraph::consume(&numbered_bytes, &numbered),
+        Err(ConformanceError::InvalidTemplate("support node"))
+    );
+
+    let missing_nodes = Datum::Node {
+        tag: Symbol::qualified("conformance", "evidence-support-graph-v1"),
+        fields: vec![(
+            Symbol::qualified("conformance", "edges"),
+            Datum::Vector(vec![]),
+        )],
+    };
+    let missing_bytes = missing_nodes.canonical_bytes().unwrap();
+    assert_eq!(
+        SupportGraph::consume(&missing_bytes, &missing_nodes),
+        Err(ConformanceError::UnresolvedBinding)
+    );
+    assert_eq!(
+        SupportGraph::consume(&[], &datum),
+        Err(ConformanceError::UnresolvedBinding)
+    );
+    let mut flipped = bytes.clone();
+    let last = flipped.len() - 1;
+    flipped[last] ^= 0xff;
+    assert_eq!(
+        SupportGraph::consume(&flipped, &datum),
+        Err(ConformanceError::StorageDigestMismatch)
+    );
 }
 
 #[test]
