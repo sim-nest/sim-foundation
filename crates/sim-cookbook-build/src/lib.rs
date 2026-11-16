@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 //! Portable host-side build support for cookbook recipe embedding.
 //!
 //! Product crates use this library only from `build.rs`. Runtime cookbook
@@ -11,7 +16,7 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-/// Generate the embed slice and write it to `$OUT_DIR/cookbook_recipes.rs`.
+/// Generate the embed slice and write it to `cookbook_recipes.rs` in the Cargo output directory.
 /// `recipes_subdir` is relative to `$CARGO_MANIFEST_DIR`.
 pub fn write_embed(recipes_subdir: &str) -> io::Result<()> {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")

@@ -1,5 +1,14 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
+
+fn consume_fixture(relative: &str) -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(relative)
+}
 
 fn cargo_bin() -> String {
     std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned())
@@ -14,9 +23,7 @@ fn unique_target_dir() -> PathBuf {
 }
 
 fn fixture_dir(name: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/ui")
-        .join(name)
+    consume_fixture("tests/ui").join(name)
 }
 
 const UI_PATCHES: &[(&str, &str, &str)] = &[

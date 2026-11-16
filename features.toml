@@ -42,7 +42,7 @@ owner = "crate/sim-lib-web-core"
 audiences = ["code", "framework"]
 guidance = "Reuse these records for provider-independent web evidence. Keep sockets, HTML parsing, provider payloads, ranking, and office evidence outside foundation; a citation must retain an exact selector over an immutable representation."
 claims_anchors = ["anchor/crate/sim-lib-web-core"]
-claims_specimens = ["recipe/sim-foundation/crates/sim-lib-web-core/01-basics/exact-selector"]
+claims_specimens = ["spec-test/sim-foundation/crates/sim-lib-web-core/src/tests"]
 
 [[feature]]
 id = "feature/sim-foundation/search-evidence-core"
@@ -52,7 +52,7 @@ owner = "crate/sim-lib-search-core"
 audiences = ["code", "framework"]
 guidance = "Compose this vocabulary with web-evidence-core and installed general-purpose codecs. Provider snippets remain ProviderClaim values and cannot construct citations; provider I/O and rank algorithms belong downstream."
 claims_anchors = ["anchor/crate/sim-lib-search-core"]
-claims_specimens = ["recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation"]
+claims_specimens = ["spec-test/sim-foundation/crates/sim-lib-search-core/src/tests"]
 
 [[feature]]
 id = "feature/sim-foundation/study-core"
@@ -232,7 +232,7 @@ claims_anchors = [
   "anchor/crate/sim-lib-net-http",
 ]
 claims_specimens = [
-  "recipe/sim-foundation/crates/sim-lib-net-http/01-basics/bounded-get",
+  "spec-test/sim-foundation/crates/sim-lib-net-http/src/tests",
 ]
 supports = [
   "feature/sim-foundation/host-primitives",
@@ -251,7 +251,7 @@ claims_anchors = [
   "anchor/crate/sim-lib-surface-card",
 ]
 claims_specimens = [
-  "recipe/sim-foundation/crates/sim-lib-net-core/01-basics/response-head",
+  "spec-test/sim-foundation/crates/sim-host-core/tests/platform_time",
 ]
 
 [[feature]]
@@ -265,7 +265,7 @@ claims_anchors = [
   "anchor/crate/sim-cancel",
 ]
 claims_specimens = [
-  "recipe/sim-foundation/crates/sim-cancel/01-basics/request-lifetime",
+  "spec-test/sim-foundation/crates/sim-cancel/src/tests",
 ]
 supports = [
   "feature/sim-foundation/host-primitives",
@@ -282,7 +282,7 @@ claims_anchors = [
   "anchor/crate/sim-lib-protected-state",
 ]
 claims_specimens = [
-  "recipe/sim-foundation/crates/sim-lib-protected-state/01-basics/exact-binding",
+  "spec-test/sim-foundation/crates/sim-lib-protected-state/src/tests",
 ]
 supports = [
   "feature/sim-foundation/host-primitives",
@@ -370,7 +370,7 @@ audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/web-evidence-core", why = "The web row owns raw and normalized identities, exact selectors, and complete typed policy receipts." },
   { feature = "feature/sim-foundation/search-evidence-core", why = "The search row keeps provider claims distinct from observations and checked citations while exposing a pure wire boundary." },
-  { specimen = "recipe/sim-foundation/crates/sim-lib-search-core/01-basics/checked-citation", why = "The network-free checked specimen terminates at a provider claim beside an exact representation-bound citation." },
+  { specimen = "spec-test/sim-foundation/crates/sim-lib-search-core/src/tests", why = "The library tests keep query order distinct, refuse a provider claim as a citation, and require an exact quote before a citation round-trips." },
 ]
 
 [[route]]
@@ -405,7 +405,7 @@ audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/host-primitives", why = "The existing platform-time contracts own wall and monotonic values, timer behavior, explicit bindings, and the deterministic model." },
   { feature = "feature/sim-foundation/cancellation", why = "Cancellation composes with a supplied deadline without choosing an executor, timer implementation, or transport." },
-  { specimen = "recipe/sim-foundation/crates/sim-cancel/01-basics/request-lifetime", why = "The checked recipe demonstrates explicit host-to-request ownership; the crate race suite proves registration, propagation, timeout conversion, completion, and dropped-waiter behavior." },
+  { specimen = "spec-test/sim-foundation/crates/sim-cancel/src/tests", why = "The library tests prove registration, propagation, timeout conversion, completion, and dropped-waiter behavior." },
 ]
 
 [[route]]
@@ -424,7 +424,7 @@ audiences = ["code", "framework"]
 steps = [
   { feature = "feature/sim-foundation/host-primitives", why = "The shared WallClock contract supplies the explicit expiry observation without ambient host time." },
   { feature = "feature/sim-foundation/protected-state", why = "The protected-state owner supplies the bounded envelope, collision-free binding, injected key and nonce capabilities, rotation behavior, uniform rejection, and canonical Table consumption adapter." },
-  { specimen = "recipe/sim-foundation/crates/sim-lib-protected-state/01-basics/exact-binding", why = "The checked recipe keeps caller serialization, key custody, clock ownership, and optional replay claims explicit." },
+  { specimen = "spec-test/sim-foundation/crates/sim-lib-protected-state/src/tests", why = "The library tests keep exact bindings, key rotation, bounded rejection, nonce custody, and single-use consumption explicit." },
 ]
 
 [[route]]
