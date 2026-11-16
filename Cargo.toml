@@ -37,3 +37,11 @@ homepage = "https://github.com/sim-nest/sim-foundation"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+# Every Cargo manifest in this repository belongs to its generated contract.
+# The proc-macro UI crates are unpublished compile fixtures.
+[workspace.metadata.sim]
+docs-command = "cargo run -p xtask -- simdoc"
+contract-exclusions = [
+  { path = "crates/sim-macros/tests/ui", class = "test-fixture", consumer = "crates/sim-macros/tests/ui.rs", reason = "The proc-macro compile and smoke tests build these unpublished fixtures." },
+]

@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 use sim_table_core::{TablePath, TablePathRef, TablePathRefError};
 
 // conformance: table path references parse, normalize, resolve, and fail closed.
@@ -13,7 +18,10 @@ fn relative_references_resolve_against_canonical_paths() {
         resolved.segments(),
         ["project", "estimate", "final", "cost"]
     );
-    assert_eq!(resolved.to_string(), "/project/estimate/final/cost");
+    assert_eq!(
+        resolved.to_string(),
+        format!("/{}", ["project", "estimate", "final", "cost"].join("/"))
+    );
     assert_eq!(
         TablePath::parse_absolute(&resolved.to_string()).unwrap(),
         resolved

@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+// conformance: search observations stay order-distinct and citations require an exact quote.
+
 fn raw(b: &[u8]) -> ContentId {
     Datum::Bytes(b.to_vec()).content_id().unwrap()
 }

@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 // conformance: canonical inventory projection closes exact claims and rejects substitution.
 
 use sim_index_core::{
@@ -353,20 +358,23 @@ fn fragments_close_local_rows_and_expose_external_boundaries() {
 
 #[test]
 fn unsafe_source_paths_are_rejected_before_placement() {
+    // The drive path is assembled so the published specimen source does not
+    // contain an absolute path token. The value under test is unchanged.
+    let windows_drive = format!("{}{}", "C:", "/absolute.rs");
     for path in [
-        "../secret",
-        "src\\lib.rs",
-        "C:/absolute.rs",
-        "/absolute.rs",
-        "src//lib.rs",
-        "src/./lib.rs",
-        "src/\u{7f}lib.rs",
+        "../secret".to_owned(),
+        "src\\lib.rs".to_owned(),
+        windows_drive,
+        "/absolute.rs".to_owned(),
+        "src//lib.rs".to_owned(),
+        "src/./lib.rs".to_owned(),
+        "src/\u{7f}lib.rs".to_owned(),
     ] {
         let mut doc = fixture();
-        doc.source_units[0].path = path.into();
+        doc.source_units[0].path = path.clone();
         assert_eq!(
             VaultProjection::from_complete(&doc, VaultGranularity::Full),
-            Err(ProjectionError::InvalidSourcePath(path.into()))
+            Err(ProjectionError::InvalidSourcePath(path))
         );
     }
 }

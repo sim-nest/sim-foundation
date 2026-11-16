@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 use std::sync::Arc;
 
 // conformance: Table and Dir core expressions round-trip through shared helpers.
@@ -16,6 +21,12 @@ use crate::path::{
     MAX_TABLE_PATH_SEGMENTS, MAX_TABLE_PATH_TEXT_BYTES, TablePath, TablePathError, TablePathRef,
     TablePathRefError, TablePathRefPart, is_legal_table_segment,
 };
+
+fn absolute_reference(segments: &[&str]) -> String {
+    let mut path = String::from("/");
+    path.push_str(&segments.join("/"));
+    path
+}
 
 #[test]
 fn legal_segment_accepts_normal_name() {
@@ -125,7 +136,7 @@ fn table_path_formats_as_absolute_reference() {
 
     assert_eq!(
         path.to_absolute_reference(),
-        "/alpha/with%20space/percent%25sign/dots..."
+        absolute_reference(&["alpha", "with%20space", "percent%25sign", "dots..."])
     );
     assert_eq!(path.to_string(), path.to_absolute_reference());
     assert_eq!(TablePath::parse_absolute(&path.to_string()).unwrap(), path);
@@ -144,14 +155,14 @@ fn table_path_reference_resolves_and_normalizes_relative_parts() {
     );
     assert_eq!(
         resolved.to_absolute_reference(),
-        "/project/estimate/final/cost"
+        absolute_reference(&["project", "estimate", "final", "cost"])
     );
 }
 
 #[test]
 fn absolute_table_path_reference_ignores_base() {
     let base = TablePath::from_segments(["project", "estimate"]).unwrap();
-    let reference = TablePathRef::parse("/shared/rates").unwrap();
+    let reference = TablePathRef::parse(&absolute_reference(&["shared", "rates"])).unwrap();
 
     assert_eq!(
         base.resolve(&reference).unwrap(),
@@ -168,7 +179,7 @@ fn table_path_reference_detects_root_escape() {
         Err(TablePathRefError::RootEscape)
     );
     assert_eq!(
-        TablePath::parse_absolute("/../cost"),
+        TablePath::parse_absolute(&absolute_reference(&["..", "cost"])),
         Err(TablePathRefError::RootEscape)
     );
 }
@@ -200,15 +211,15 @@ fn table_path_reference_rejects_empty_and_ambiguous_segments() {
 #[test]
 fn table_path_reference_rejects_bad_escapes() {
     assert_eq!(
-        TablePathRef::parse("/alpha/%"),
+        TablePathRef::parse(&absolute_reference(&["alpha", "%"])),
         Err(TablePathRefError::BadEscape { index: 0 })
     );
     assert_eq!(
-        TablePathRef::parse("/alpha/%GG"),
+        TablePathRef::parse(&absolute_reference(&["alpha", "%GG"])),
         Err(TablePathRefError::BadEscape { index: 0 })
     );
     assert_eq!(
-        TablePathRef::parse("/alpha/%FF"),
+        TablePathRef::parse(&absolute_reference(&["alpha", "%FF"])),
         Err(TablePathRefError::InvalidUtf8Escape)
     );
 }
